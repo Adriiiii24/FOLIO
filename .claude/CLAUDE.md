@@ -24,11 +24,18 @@ Hecho (Fase 1, en local):
 - Scaffold con create-next-app 16.3.6, generado en una carpeta en minúsculas y movido aquí: con `.`, create-next-app falla en `FOLIO` porque npm no admite mayúsculas en el nombre. Versiones exactas (`.npmrc` con `save-exact`), React 19.3.0 (la plantilla traía 19.2.8), TypeScript 5.9.3 y ESLint 9 (los plugins de `eslint-config-next` aún no admiten ESLint 10).
 - Supabase local: migración de ARCHITECTURE §1.3 y `supabase/tests/database/rls.test.sql` con 64 aserciones sobre las 12 tablas, Storage, `anon` y las RPC (64/64).
 - Auth: enlace mágico con `token_hash` y `/auth/confirm` (funciona entre dispositivos), Google en `/auth/callback`, `proxy.ts`, grupo `(os)` y `/home` provisional. Probado de extremo a extremo con Playwright y Mailpit.
-- CI en `.github/workflows/ci.yml`, ensayada en local.
+- CI en `.github/workflows/ci.yml`, en verde en GitHub.
+- Repo público `github.com/Adriiiii24/FOLIO`. Los commits se firman con la identidad local del repo, `Adrián Martínez Panés <184400900+Adriiiii24@users.noreply.github.com>`; la global de git es la del trabajo y no se usa aquí. Remoto con `Adriiiii24@` en la URL, para que git use la credencial de esa cuenta.
+- El lockfile debe generarlo npm ≥ 11.19: con npm 11.6.2 en Windows faltan las dependencias opcionales `@emnapi/*` y `npm ci` falla en Linux. `devEngines` lo avisa (`onFail: "warn"`). Pasarlo a `"error"` cuando el Node local traiga npm 11.19 (Node 24.21+). Mientras tanto, no ejecutes `npm install` con el npm local: usa `npx npm@11.19.0 install …`.
+
+Decisiones del usuario:
+
+- Vercel se conecta al final del proyecto, así que el criterio de salida «despliegue de preview funcionando» de la Fase 1 queda aplazado hasta entonces. Ojo: el briefing de la Fase 3 necesita el cron de Vercel.
 
 Siguiente:
 
-- Parte remota de la Fase 1: crear el repo de GitHub (cuenta, visibilidad e identidad de git, pendientes de decidir con el usuario), el proyecto de Supabase (`link` y `db push`), Google OAuth, las plantillas de correo (copiar `supabase/templates/magic_link.html` a «Magic link» y «Confirm signup») y la URL de redirección de las previews, y conectar Vercel.
+- Supabase remoto (proyecto ya creado): `supabase login` (lo ejecuta el usuario), `link` y `db push`, y comprobar pgvector ≥ 0.8.0. Las URLs de Auth, las plantillas de correo (copiar `supabase/templates/magic_link.html` a «Magic link» y «Confirm signup») y la configuración de Google en remoto se hacen al desplegar.
+- Google OAuth: cliente web en Google Auth Platform (gratis, en modo Testing con el usuario como tester). Credenciales en local en `supabase/.env` (ignorado por git). Al activar Google en `config.toml`, añadir variables ficticias en el job `db` de la CI.
 - Actualizar los docs con lo que cambió al implementar: paso 1 de DESIGN_SYSTEM §9 (`create-next-app .` no funciona aquí), ARCHITECTURE §2.3 (suite ampliada), §2.4 (`/auth/confirm`, `safeNextPath` y el `\\.` del matcher) y §0 (TypeScript 5.9.3).
 - Comandos locales: `npm run db:start` (Docker Desktop arrancado), `npm run db:test`, `npm run db:types` tras cada migración y `npm run dev`. Mailpit (correos locales): http://127.0.0.1:54324.
 - Para la UI (Fase 2), Impeccable pedirá un `PRODUCT.md`; usa PROPOSAL.md como base.
