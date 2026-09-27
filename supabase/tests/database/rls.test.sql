@@ -4,6 +4,11 @@
 -- referenciar filas del usuario B en ninguna tabla. Amplía la suite de ARCHITECTURE §2.3,
 -- que solo cubría 6 de las 12 tablas, a todas ellas, a Storage, a `anon` y a las RPC.
 begin;
+-- Con `supabase test db --linked` la CLI entra como cli_login_postgres: miembro de postgres pero
+-- sin heredar sus permisos (NOINHERIT) y sin `extensions` en el search_path. Se asume el rol
+-- postgres y se fija el search_path para que la suite corra igual en local y en remoto.
+set local role postgres;
+set local search_path = public, extensions;
 create extension if not exists pgtap with schema extensions;
 select plan(64);
 
