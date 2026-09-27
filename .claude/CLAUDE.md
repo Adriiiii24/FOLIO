@@ -32,9 +32,12 @@ Decisiones del usuario:
 
 - Vercel se conecta al final del proyecto, así que el criterio de salida «despliegue de preview funcionando» de la Fase 1 queda aplazado hasta entonces. Ojo: el briefing de la Fase 3 necesita el cron de Vercel.
 
+- Supabase remoto: proyecto `FOLIO`, ref `chlxyzjrmjwtdnalffme`, eu-west-1, Postgres 17.6.1, enlazado. Migración subida y verificada: pgvector 0.8.2, 12 tablas con RLS, `anon` sin acceso, 3 buckets. `supabase test db --linked` pasa 64/64 sin dejar datos. Advisors: 0 avisos de seguridad.
+- El login interactivo de la CLI no funciona en la terminal del usuario. Lo que funcionó fue `supabase login --no-browser` (copiar la URL a mano).
+
 Siguiente:
 
-- Supabase remoto (proyecto ya creado): `supabase login` (lo ejecuta el usuario), `link` y `db push`, y comprobar pgvector ≥ 0.8.0. Las URLs de Auth, las plantillas de correo (copiar `supabase/templates/magic_link.html` a «Magic link» y «Confirm signup») y la configuración de Google en remoto se hacen al desplegar.
+- Las URLs de Auth, las plantillas de correo (copiar `supabase/templates/magic_link.html` a «Magic link» y «Confirm signup») y Google en el proyecto remoto se configuran al desplegar.
 - Google OAuth: cliente web en Google Auth Platform (gratis, en modo Testing con el usuario como tester). Credenciales en local en `supabase/.env` (ignorado por git). Al activar Google en `config.toml`, añadir variables ficticias en el job `db` de la CI.
 - Actualizar los docs con lo que cambió al implementar: paso 1 de DESIGN_SYSTEM §9 (`create-next-app .` no funciona aquí), ARCHITECTURE §2.3 (suite ampliada), §2.4 (`/auth/confirm`, `safeNextPath` y el `\\.` del matcher) y §0 (TypeScript 5.9.3).
 - Comandos locales: `npm run db:start` (Docker Desktop arrancado), `npm run db:test`, `npm run db:types` tras cada migración y `npm run dev`. Mailpit (correos locales): http://127.0.0.1:54324.
