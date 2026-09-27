@@ -1,10 +1,15 @@
 # DOSSIER_OS — Arquitectura técnica
 
-> **Documento:** `ARCHITECTURE.md` · **Versión:** 1.0 · **Estado:** especificación doc-first (previa al código) · **Fecha:** 2026-09-27
+> **Documento:** `ARCHITECTURE.md` · **Versión:** 1.1 · **Estado:** Fase 1 implementada (1.0: especificación doc-first) · **Fecha:** 2026-09-27
 > **Documentos hermanos:** [`PROPOSAL.md`](./PROPOSAL.md) (producto) · [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) (UI y motion)
 
 > [!NOTE]
-> **Qué está verificado y cómo.** El script SQL se ha **ejecutado** sobre Postgres 17 con pgvector 0.8.1, `unaccent` y pgTAP (PGlite), con un sustituto mínimo de lo que Supabase trae de serie (roles, `auth.users`, `auth.uid()`, tablas de Storage): la suite de aislamiento pasa 9 de 9 y todas las funciones RPC devuelven lo esperado. Todo el TypeScript de este documento **compila** con `tsc --strict` contra las versiones exactas de §0. No se ha probado todavía contra un proyecto real de Supabase ni contra las APIs de los modelos (requieren claves): el detalle está en §6.
+> **Qué está verificado y cómo.**
+>
+> - **Versión 1.0.** El script SQL se **ejecutó** sobre Postgres 17 con pgvector 0.8.1, `unaccent` y pgTAP (PGlite), con un sustituto mínimo de lo que Supabase trae de serie. Todo el TypeScript **compiló** con `tsc --strict` contra las versiones de §0.
+> - **Versión 1.1 (Fase 1).** La migración se aplica sin cambios sobre Supabase real: en local (CLI 2.118.0, Postgres 17.6.1, pgvector 0.8.2) y en el proyecto alojado. La suite de aislamiento ampliada (§2.3) pasa 64 de 64 en local, en la CI y en el remoto. El login (§2.4) está probado de extremo a extremo en Chromium. Los bloques de código de §2.4 son copia literal de los archivos del repositorio, que compilan con `tsc --strict` y `noUncheckedIndexedAccess`.
+>
+> Falta lo que requiere claves de los modelos y el diseño renderizado; el detalle está en §6.
 
 ---
 
@@ -27,7 +32,7 @@ Versiones estables consultadas en npm el 2026-09-27. Se fijan en `package.json` 
 | Paquete | Versión | Nota |
 |---|---|---|
 | `next` | 16.3.6 | `proxy.ts` sustituye a `middleware.ts`; APIs de petición solo asíncronas; Turbopack por defecto |
-| `react` / `react-dom` | 19.3.0 | `<ViewTransition>` estable |
+| `react` / `react-dom` | 19.3.0 | `<ViewTransition>` estable. La plantilla de `create-next-app` 16.3.6 instala la 19.2.8: hay que fijar la 19.3.0 a mano |
 | `tailwindcss` | 4.3.3 | Configuración CSS-first (`@theme`) |
 | `motion` | 13.4.4 | Antes Framer Motion; se importa de `motion/react` |
 | `ai` | 7.0.118 | Vercel AI SDK 7: `Output.object`, `isStepCount`, partes `file` |
@@ -38,6 +43,10 @@ Versiones estables consultadas en npm el 2026-09-27. Se fijan en `package.json` 
 | `@supabase/supabase-js` | 2.117.2 | — |
 | `@supabase/ssr` | 0.12.7 | `setAll(cookies, headers)` con cabeceras anti-caché |
 | `supabase` (CLI) | 2.118.0 | Migraciones, tipos, tests |
+| `typescript` | 5.9.3 | La plantilla de Next pide `^5`. En npm, `latest` ya es la 7 (el compilador nativo), que no se ha evaluado |
+| `eslint` / `eslint-config-next` | 9.39.5 / 16.3.6 | ESLint 9 no tiene soporte, pero los plugins que incluye `eslint-config-next` aún no declaran compatibilidad con ESLint 10 |
+| `vitest` | 5.0.2 | Tests unitarios |
+| npm | **≥ 11.19** | Con npm 11.6.2 en Windows, el lockfile omite las dependencias opcionales `@emnapi/*` y `npm ci` falla en Linux. `devEngines` lo avisa |
 | pgvector | **≥ 0.8.0** | Necesario para `hnsw.iterative_scan`. Comprobar en el proyecto: `select extversion from pg_extension where extname = 'vector';` |
 
 **Convenciones que atraviesan todo el documento:**
@@ -987,7 +996,7 @@ create policy user_files_delete_own on storage.objects
 | Contenido malicioso (ticket, nota) | *Prompt injection* | Herramientas de solo lectura; escritura solo con confirmación; los *prompts* declaran el contenido como datos |
 | Fuga de la clave secreta | Saltarse RLS | Solo en servidor (`import 'server-only'`), nunca con prefijo `NEXT_PUBLIC_`, solo en el job programado |
 | CDN o proxy intermedio | Cachear una respuesta con cookies de sesión y servirla a otro usuario | Cabeceras anti-caché que `@supabase/ssr` entrega en `setAll` y el proxy aplica |
-| Enlace de *callback* manipulado | Redirección abierta (`?next=https://…`) | Solo rutas internas |
+| Enlace de *callback* manipulado | Redirección abierta (`?next=https://…`, `/\evil.com`) | Solo rutas internas, resueltas como las resuelve el navegador (`safeNextPath`, §2.4) |
 | Uso abusivo | Bucles de IA o mensajes enormes | Presupuesto mensual, `isStepCount(5)`, límite de mensajes por petición |
 | El propio usuario | Borrar `ai_runs` para recuperar presupuesto | Sin permisos de `update` ni `delete` sobre `ai_runs` |
 
@@ -1011,77 +1020,46 @@ create policy user_files_delete_own on storage.objects
 
 ### 2.3 Tests de aislamiento (pgTAP)
 
-Ruta: `supabase/tests/database/rls.test.sql`. Se ejecutan con `npx supabase test db` (stack local en Docker) y deberían correr en CI en cada cambio de esquema.
+Ruta: `supabase/tests/database/rls.test.sql`, que es la fuente de verdad. Tiene 64 aserciones; la versión 1.0 de este documento tenía 9 y solo probaba el acceso a 6 de las 12 tablas. Se ejecuta con `npm run db:test` en el stack local (Docker), en la CI en cada push y contra el proyecto enlazado con `npx supabase test db --linked`. Todo corre dentro de una transacción que se deshace al final, así que no deja datos ni en el remoto.
 
-```sql
--- supabase/tests/database/rls.test.sql · ejecutar con `supabase test db`
-begin;
-create extension if not exists pgtap with schema extensions;
-select plan(9);
+| Bloque | Qué demuestra | Aserciones |
+|---|---|---|
+| Estructura | Ninguna tabla de `public` queda sin RLS. `anon` no tiene privilegios sobre ninguna tabla ni función de `public`, lo que también detecta tablas futuras que olviden el `revoke` | 3 |
+| Leer | A no ve ninguna fila de B en las 11 tablas con `user_id`, solo ve su propio perfil y no ve archivos de B en Storage | 13 |
+| Escribir como B | Insertar con el `user_id` de B falla con `42501` en las 10 tablas donde se puede escribir. Nadie puede crear briefings ni perfiles, y A no puede subir archivos a la carpeta de B | 13 |
+| Referenciar | Las FK compuestas impiden colgar series o check-ins de padres de B (`23503`), y los `CHECK` de ruta impiden apuntar a archivos de B (`23514`) | 5 |
+| Editar y borrar | `update` y `delete` sobre filas de B no tocan ninguna fila en ninguna tabla | 22 |
+| Lo propio | A puede escribir sin enviar `user_id` y marcar como leído y valorar su briefing, pero no reescribirlo. No puede editar ni borrar `ai_runs` ni cambiar el id de su perfil. Las RPC con el `p_user_id` de otro usuario devuelven vacío | 8 |
 
--- Dos usuarios; el trigger de registro crea sus perfiles.
-insert into auth.users (id, email) values
-  ('11111111-1111-4111-8111-111111111111', 'a@dossier.test'),
-  ('22222222-2222-4222-8222-222222222222', 'b@dossier.test');
+La suite necesita tres técnicas:
 
--- Datos de B, creados como superusuario.
-insert into public.workouts (id, user_id, title)
-values ('bbbbbbbb-0000-4000-8000-000000000001', '22222222-2222-4222-8222-222222222222', 'Pierna B');
-insert into public.notes (user_id, entry_date, content)
-values ('22222222-2222-4222-8222-222222222222', '2026-09-27', 'Nota privada de B');
-insert into public.financial_transactions (user_id, amount, category, merchant)
-values ('22222222-2222-4222-8222-222222222222', 42.00, 'restaurants', 'Bar de B');
+- **Contar filas afectadas.** Editar o borrar filas ajenas no da error: RLS las filtra en silencio. Para comprobarlo, una función temporal ejecuta la sentencia y devuelve su `row_count`:
 
--- Todas las tablas de public tienen RLS activado.
-select is_empty(
-  $$ select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
-     where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity $$,
-  'Ninguna tabla de public queda sin RLS');
+  ```sql
+  create function pg_temp.affected(statement text) returns integer
+  language plpgsql as $$
+  declare
+    n integer;
+  begin
+    execute statement;
+    get diagnostics n = row_count;
+    return n;
+  end;
+  $$;
 
--- A partir de aquí, sesión de A.
-set local role authenticated;
-set local request.jwt.claim.sub = '11111111-1111-4111-8111-111111111111';
+  select is(pg_temp.affected($$ update public.notes set content = 'x' where user_id <> auth.uid() $$), 0, 'A no puede editar las notas de B');
+  ```
 
-select is_empty($$ select id from public.notes $$, 'A no ve las notas de B');
-select is_empty($$ select id from public.workouts $$, 'A no ve los entrenos de B');
-select is_empty($$ select id from public.financial_transactions $$, 'A no ve los movimientos de B');
-select results_eq($$ select count(*)::int from public.profiles $$, $$ values (1) $$, 'A solo ve su perfil');
+- **Fijar el rol y el `search_path`.** Con `--linked`, la CLI entra como `cli_login_postgres`, que es miembro de `postgres` pero con `NOINHERIT` y sin `extensions` en el `search_path`, así que no encuentra las funciones de pgTAP. Por eso la suite empieza con `set local role postgres` y `set local search_path = public, extensions`.
+- **Evitar choques con restricciones únicas.** Si un intento de A coincide con una fila de B en una restricción única, salta `23505` antes que la comprobación de la FK. Por eso el intento de colgar series de un entreno ajeno usa un ejercicio distinto del que tiene la serie de B.
 
-select throws_ok(
-  $$ insert into public.notes (user_id, entry_date, content)
-     values ('22222222-2222-4222-8222-222222222222', '2026-09-27', 'x') $$,
-  '42501', null, 'A no puede escribir como B');
-
-select throws_ok(
-  $$ insert into public.workout_logs (workout_id, exercise, set_index, reps)
-     values ('bbbbbbbb-0000-4000-8000-000000000001', 'Sentadilla', 1, 5) $$,
-  '23503', null, 'La FK compuesta impide colgar series de un entreno de B');
-
-select lives_ok(
-  $$ insert into public.notes (entry_date, content) values ('2026-09-27', 'Nota de A') $$,
-  'A escribe sin enviar user_id: lo pone auth.uid()');
-
-select throws_ok(
-  $$ update public.daily_briefings set content = '{}' $$,
-  '42501', null, 'A no puede reescribir el contenido de un briefing');
-
-select * from finish();
-rollback;
-```
-
-Resultado en la verificación:
+Resultado, igual en local, en la CI y contra el proyecto remoto:
 
 ```text
-1..9
-ok 1 - Ninguna tabla de public queda sin RLS
-ok 2 - A no ve las notas de B
-ok 3 - A no ve los entrenos de B
-ok 4 - A no ve los movimientos de B
-ok 5 - A solo ve su perfil
-ok 6 - A no puede escribir como B
-ok 7 - La FK compuesta impide colgar series de un entreno de B
-ok 8 - A escribe sin enviar user_id: lo pone auth.uid()
-ok 9 - A no puede reescribir el contenido de un briefing
+supabase/tests/database/rls.test.sql .. ok
+All tests successful.
+Files=1, Tests=64
+Result: PASS
 ```
 
 ### 2.4 Clientes de Supabase y sesión
@@ -1234,34 +1212,182 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   // Fuera: estáticos, imágenes y el cron (se autentica con CRON_SECRET, no con sesión).
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/cron|.*\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/cron|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)'],
 };
 ```
 
-Canje del código del enlace mágico o de OAuth:
+El `\\.` del *matcher* es intencionado. Dentro de un string de JavaScript, `'\.'` equivale a `'.'`, y con él la expresión dejaría fuera del proxy cualquier ruta que acabe en «png» o «svg», como `/vault/png`, no solo los archivos con esa extensión.
+
+#### `?next=`: solo rutas internas
+
+Tras el login, la app vuelve a la ruta que indique `?next=`. Si ese valor pudiera apuntar fuera, sería una redirección abierta. Comprobar que empieza por `/` y no por `//` no basta: el navegador lee `/\evil.com` como `//evil.com` si acaba en un `redirect()` relativo. `safeNextPath` resuelve la ruta como lo haría el navegador y exige que el origen no cambie. Tiene tests unitarios en `tests/unit/safe-next.test.ts`.
+
+```ts
+// src/lib/auth/safe-next.ts
+const BASE = 'http://dossier.invalid';
+
+/**
+ * Normaliza el `?next=` de los flujos de login a una ruta interna; cualquier otra cosa cae en `fallback`.
+ * Evita redirecciones abiertas (`?next=https://sitio-malicioso`). No basta con comprobar que empieza
+ * por `/` y no por `//`: el navegador lee `/\evil.com` y `/\t/evil.com` como `//evil.com`. Por eso se
+ * resuelve como lo haría el navegador y se exige que el origen no cambie.
+ */
+export function safeNextPath(next: string | null | undefined, fallback = '/home'): string {
+  if (!next?.startsWith('/')) return fallback;
+  try {
+    const url = new URL(next, BASE);
+    if (url.origin !== BASE) return fallback;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return fallback;
+  }
+}
+```
+
+#### Google: `/auth/callback`
 
 ```ts
 // src/app/auth/callback/route.ts
 import { NextResponse } from 'next/server';
+import { safeNextPath } from '@/lib/auth/safe-next';
 import { createClient } from '@/lib/supabase/server';
 
-// Destino del enlace mágico y de OAuth: canjea el código por una sesión.
+// Destino de OAuth (Google): canjea el código por una sesión. Flujo PKCE: el verificador está en
+// una cookie del mismo navegador que empezó el login, así que aquí siempre coinciden.
+// El enlace mágico no pasa por aquí, sino por /auth/confirm, que funciona entre dispositivos.
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/home';
-  // Solo rutas internas: evita redirecciones abiertas (?next=https://sitio-malicioso).
-  const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/home';
+  const next = safeNextPath(searchParams.get('next'));
 
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(`${origin}${safeNext}`);
+    if (!error) return NextResponse.redirect(`${origin}${next}`);
   }
 
   return NextResponse.redirect(`${origin}/login?error=auth`);
 }
 ```
+
+#### Enlace mágico entre dispositivos: `/auth/confirm`
+
+El `?code=` de PKCE solo se puede canjear en el navegador que pidió el enlace, porque el verificador vive en una cookie suya. La documentación de Supabase lo dice así: «the code exchange must be initiated on the same browser and device where the flow was started». Si se pide el enlace en el ordenador y se abre en el móvil, o en el navegador interno de una app de correo, el canje falla.
+
+Por eso el correo lleva un `token_hash`, que `/auth/confirm` canjea con `verifyOtp` sin necesidad de ninguna cookie previa. `/auth/callback` queda solo para Google, donde todo el flujo ocurre en el mismo navegador.
+
+La plantilla sirve para «Magic link» y para «Confirm signup», porque `signInWithOtp` envía la segunda a los usuarios nuevos. En local la configura `supabase/config.toml`; en el proyecto remoto hay que copiarla en *Authentication → Emails*. `{{ .RedirectTo }}` es el `emailRedirectTo` de la acción, así que el enlace funciona igual en localhost, en las *previews* y en producción, siempre que el origen esté en la lista de redirecciones permitidas.
+
+```html
+<!--
+  Plantilla de «Magic link» y de «Confirm signup».
+  {{ .RedirectTo }} es el emailRedirectTo de signInWithOtp: <origen>/auth/confirm?next=<ruta>.
+  Por eso el enlace sirve igual en localhost, en las previews de Vercel y en producción,
+  siempre que el origen esté en la lista de redirecciones permitidas de Supabase.
+-->
+<h2>Entrar en DOSSIER_OS</h2>
+
+<p>Pulsa el enlace para entrar. Caduca en una hora y solo sirve una vez.</p>
+
+<p><a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email">Entrar</a></p>
+
+<p>Si no has pedido este enlace, ignora este correo.</p>
+```
+
+```ts
+// src/modules/auth/actions.ts
+'use server';
+
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { z } from 'zod';
+import { safeNextPath } from '@/lib/auth/safe-next';
+import { createClient } from '@/lib/supabase/server';
+
+export type MagicLinkState =
+  { status: 'idle' } | { status: 'sent'; email: string } | { status: 'error'; message: string };
+
+const EmailSchema = z.email();
+
+/** Origen de la petición (localhost, preview de Vercel o producción): los enlaces de vuelta apuntan a él. */
+async function requestOrigin(): Promise<string> {
+  const h = await headers();
+  const origin = h.get('origin');
+  if (origin) return origin;
+  return `${h.get('x-forwarded-proto') ?? 'http'}://${h.get('x-forwarded-host') ?? h.get('host')}`;
+}
+
+function nextFrom(formData: FormData): string {
+  const next = formData.get('next');
+  return safeNextPath(typeof next === 'string' ? next : null);
+}
+
+/**
+ * Envía el enlace mágico. La plantilla de correo añade `&token_hash=…&type=email` a emailRedirectTo,
+ * y /auth/confirm lo canjea. El origen debe estar en la lista de redirecciones permitidas de Supabase.
+ */
+export async function sendMagicLink(_previous: MagicLinkState, formData: FormData): Promise<MagicLinkState> {
+  const email = EmailSchema.safeParse(String(formData.get('email') ?? '').trim());
+  if (!email.success) return { status: 'error', message: 'Escribe un email válido.' };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithOtp({
+    email: email.data,
+    options: {
+      emailRedirectTo: `${await requestOrigin()}/auth/confirm?next=${encodeURIComponent(nextFrom(formData))}`,
+    },
+  });
+  if (error)
+    return { status: 'error', message: 'No se ha podido enviar el enlace. Inténtalo de nuevo en unos minutos.' };
+
+  return { status: 'sent', email: email.data };
+}
+
+export async function signInWithGoogle(formData: FormData) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: `${await requestOrigin()}/auth/callback?next=${encodeURIComponent(nextFrom(formData))}` },
+  });
+  if (error || !data.url) redirect('/login?error=oauth');
+  redirect(data.url);
+}
+
+/** Cierra la sesión de este dispositivo. Cerrar todas es una opción de 08 // SETTINGS. */
+export async function signOut() {
+  const supabase = await createClient();
+  await supabase.auth.signOut({ scope: 'local' });
+  redirect('/login');
+}
+```
+
+```ts
+// src/app/auth/confirm/route.ts
+import { NextResponse } from 'next/server';
+import { safeNextPath } from '@/lib/auth/safe-next';
+import { createClient } from '@/lib/supabase/server';
+
+// Destino del enlace mágico: verifica el token_hash de la plantilla de correo (supabase/templates).
+// A diferencia del ?code= de PKCE, no necesita una cookie del navegador que pidió el enlace, así que
+// funciona aunque el correo se abra en el móvil o en el navegador interno de una app de correo.
+export async function GET(request: Request) {
+  const { searchParams, origin } = new URL(request.url);
+  const tokenHash = searchParams.get('token_hash');
+  const type = searchParams.get('type');
+  const next = safeNextPath(searchParams.get('next'));
+
+  if (tokenHash && type === 'email') {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
+    if (!error) return NextResponse.redirect(`${origin}${next}`);
+  }
+
+  return NextResponse.redirect(`${origin}/login?error=link`);
+}
+```
+
+> [!WARNING]
+> **Enlaces de un solo uso y filtros de correo.** Algunos filtros corporativos, como Safe Links de Outlook, abren los enlaces antes que la persona y gastan el `token_hash`. Si hace falta dar soporte a esos buzones, la alternativa es que `/auth/confirm` muestre una página con un botón y que el canje se haga al pulsarlo.
 
 ---
 
@@ -2971,16 +3097,19 @@ function offsetMinutes(timeZone: string, at: Date): number {
 ### 4.1 Árbol del proyecto
 
 ```text
-dossier-os/
+dossier-os/                               ← paquete «dossier-os»; en disco, la carpeta FOLIO/
+├── .github/workflows/ci.yml              ← formato, lint, tipos, Vitest y pgTAP (§5)
 ├── docs/
 │   ├── PROPOSAL.md
 │   ├── DESIGN_SYSTEM.md
 │   ├── ARCHITECTURE.md
 │   └── BENCHMARK.md                      ← Fase 4
 ├── supabase/
-│   ├── config.toml
+│   ├── config.toml                       ← Auth local: URLs, plantillas de correo, Google
+│   ├── .env                              ← credenciales de Google en local (no se versiona)
 │   ├── migrations/
 │   │   └── 20260928000000_init.sql       ← §1.3
+│   ├── templates/magic_link.html         ← §2.4
 │   ├── seed.sql                          ← datos SINTÉTICOS de demostración
 │   └── tests/database/
 │       └── rls.test.sql                  ← §2.3
@@ -2997,8 +3126,9 @@ dossier-os/
 │   │   ├── globals.css                   ← tokens (DESIGN_SYSTEM §2.7)
 │   │   ├── fonts.ts
 │   │   ├── page.tsx                      ← redirige a /home
-│   │   ├── (auth)/login/page.tsx
-│   │   ├── auth/callback/route.ts        ← §2.4
+│   │   ├── (auth)/login/{page,magic-link-form}.tsx
+│   │   ├── auth/callback/route.ts        ← §2.4 (Google)
+│   │   ├── auth/confirm/route.ts         ← §2.4 (enlace mágico)
 │   │   ├── (os)/                         ← grupo protegido: el archivador
 │   │   │   ├── layout.tsx                ← FolderShell: SystemBar + FolderTabs + QuickInputDock
 │   │   │   ├── home/{page,loading}.tsx       01
@@ -3021,6 +3151,7 @@ dossier-os/
 │   │   ├── chat/ChatPanel.tsx
 │   │   └── providers/MotionProvider.tsx
 │   ├── modules/                          ← dominio, una carpeta por pestaña
+│   │   ├── auth/actions.ts               ← §2.4: enlace mágico, Google, cerrar sesión
 │   │   ├── home/briefing/{metrics,validate,generate}.ts
 │   │   ├── gym/{actions,queries,schemas}.ts
 │   │   ├── vault/{actions,queries,schemas,receipt-rules}.ts
@@ -3032,6 +3163,7 @@ dossier-os/
 │   ├── lib/
 │   │   ├── ai/{models,pricing,prompts,tools,telemetry,budget}.ts
 │   │   ├── ai/schemas/{ticket,meal,voice,briefing}.ts
+│   │   ├── auth/safe-next.ts             ← §2.4
 │   │   ├── supabase/{client,server,admin,proxy,types}.ts
 │   │   ├── supabase/database.types.ts    ← GENERADO, no se edita
 │   │   ├── media/{compress-image,upload}.ts
@@ -3044,11 +3176,14 @@ dossier-os/
 │   ├── config/tabs.ts
 │   └── proxy.ts                          ← §2.4 (antes middleware.ts)
 ├── tests/
-│   ├── unit/                             ← Vitest: reglas de dominio, validador del briefing
+│   ├── unit/                             ← Vitest: safeNextPath, reglas de dominio, validador del briefing
 │   └── e2e/                              ← Playwright: flujos por pestaña
 ├── .env.example
+├── .gitattributes                        ← LF siempre (Prettier y CI), aunque git use autocrlf
+├── .npmrc                                ← save-exact
 ├── next.config.ts
 ├── vercel.json
+├── vitest.config.mts
 ├── tsconfig.json
 └── package.json
 ```
@@ -3091,6 +3226,8 @@ OPENAI_API_KEY=
 CRON_SECRET=
 ```
 
+En desarrollo, `.env.local` apunta al Supabase local: sus valores salen de `npx supabase status -o env`, en `API_URL`, `PUBLISHABLE_KEY` y `SECRET_KEY`. Aparte, `supabase/.env` guarda las credenciales de Google para el Auth local, en `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` y `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`, que `config.toml` lee con `env()`. Ninguno de los dos archivos se versiona.
+
 ```ts
 // next.config.ts
 import type { NextConfig } from 'next';
@@ -3109,30 +3246,38 @@ export default nextConfig;
 
 ## 5. Puesta en marcha
 
+**Cómo se creó el proyecto (Fase 1).** Se usó `create-next-app@16.3.6` con TypeScript, Tailwind CSS, ESLint, App Router, carpeta `src/`, alias `@/*` y sin React Compiler, que los documentos no contemplan. Luego se fijaron con versión exacta todas las dependencias de §0. Ojo: `npx create-next-app .` falla en una carpeta cuyo nombre tiene mayúsculas, como FOLIO, porque usa ese nombre para el paquete y npm no admite mayúsculas. La solución es generar el proyecto en una carpeta en minúsculas y mover los archivos.
+
 ```bash
-# 1 · Proyecto (DESIGN_SYSTEM.md §9) y dependencias de datos e IA
-npm install ai @ai-sdk/react @ai-sdk/anthropic @ai-sdk/openai zod @supabase/supabase-js @supabase/ssr motion server-only
-npm install -D supabase
+# 0 · Requisitos: Node 24 con npm ≥ 11.19 (§0) y Docker Desktop arrancado
+npm ci
 
-# 2 · Supabase
-npx supabase login
-npx supabase init
+# 1 · Supabase local: aplica la migración y levanta Postgres, Auth, Storage y Mailpit
+npm run db:start
+npm run db:test          # suite de aislamiento (§2.3): 64/64
+npm run db:types         # repetir tras cada migración; la CI comprueba que coinciden
+# .env.local y supabase/.env: ver §4.3
+
+# 2 · Desarrollo
+npm run dev              # correos del enlace mágico en Mailpit: http://127.0.0.1:54324
+
+# 3 · Proyecto remoto
+npx supabase login --no-browser      # si el navegador no se abre, copiar la URL a mano
 npx supabase link --project-ref <project-ref>
-# guardar el script de §1.3 en supabase/migrations/20260928000000_init.sql
+npx supabase db query --linked "select default_version from pg_available_extensions where name = 'vector'"   # ≥ 0.8.0
 npx supabase db push
-
-# 3 · Tipos generados (repetir tras cada migración)
-npx supabase gen types typescript --linked > src/lib/supabase/database.types.ts
-
-# 4 · Tests de aislamiento (stack local: requiere Docker)
-npx supabase start
-npx supabase test db
-
-# 5 · Desarrollo
-npm run dev
+npx supabase test db --linked        # la misma suite contra el remoto, sin dejar datos
+npx supabase db advisors --linked    # linter de seguridad y rendimiento de Supabase
 ```
 
-En el proyecto de Supabase, antes de aplicar la migración: comprobar la versión de pgvector (§0) y activar el enlace mágico y Google en *Authentication → Providers*. En Vercel: definir las variables de §4.3; el cron se registra solo al desplegar `vercel.json`.
+Al desplegar, en el proyecto remoto de Supabase:
+
+- *Authentication → URL Configuration*: la URL del sitio y las URLs de redirección, incluidas las de las *previews*.
+- *Authentication → Emails*: la plantilla de §2.4 en «Magic link» y en «Confirm signup».
+- *Sign In / Providers → Google*: el mismo cliente OAuth, que ya admite `https://<project-ref>.supabase.co/auth/v1/callback`.
+- Un SMTP propio, porque el correo incluido tiene límites de envío muy bajos.
+
+En Vercel hay que definir las variables de §4.3; el cron se registra solo al desplegar `vercel.json`.
 
 ---
 
@@ -3141,15 +3286,20 @@ En el proyecto de Supabase, antes de aplicar la migración: comprobar la versió
 | Qué | Cómo se verificó | Resultado |
 |---|---|---|
 | Script SQL completo | Ejecutado en PGlite 0.5.8 (Postgres 17) con pgvector 0.8.1, `unaccent` y pgTAP 1.1, sobre un sustituto de lo que Supabase trae de serie | Se aplica sin errores |
-| Aislamiento entre usuarios | Suite pgTAP de §2.3 | 9 de 9 |
+| Migración sobre Supabase real (1.1) | `supabase start` (CLI 2.118.0, Postgres 17.6.1, pgvector 0.8.2) y `db push` al proyecto alojado | Se aplica sin cambios. Los advisors no dan ningún aviso de seguridad, solo avisos informativos de rendimiento por tener la base vacía |
+| Aislamiento entre usuarios | Suite pgTAP de §2.3: 9 aserciones en la versión 1.0 (PGlite); 64 en la 1.1, en local, en la CI y con `--linked` | 9 de 9 y 64 de 64 |
+| Tipos generados (1.1) | `supabase gen types --local`, comparados en la CI con los versionados | Coinciden |
+| Login (1.1) | Playwright y Mailpit contra `next dev` y el Supabase local | 16 de 16. El enlace pedido en un navegador abre sesión en otro, se respeta `next`, el enlace es de un solo uso, el cierre de sesión funciona y Google arranca con PKCE. Google, además, llega a su pantalla de acceso sin `redirect_uri_mismatch` |
 | RPC | Datos de prueba realistas, como usuario autenticado | Resultados correctos: búsqueda híbrida insensible a tildes, gasto por categoría, 1RM de Epley, rachas, foco |
 | Permisos | `anon`, usuario ajeno, clave de servicio | `anon` sin acceso; usuario ajeno recibe vacío; solo la clave de servicio lee por `p_user_id` |
 | Triggers y restricciones | Casos dirigidos | El embedding no toca `updated_at`; editar el texto lo invalida; zona horaria inválida rechazada; rutas ajenas rechazadas |
 | TypeScript | `tsc --strict` con `noUncheckedIndexedAccess` sobre todo el código de este documento y de `DESIGN_SYSTEM.md`, contra las versiones de §0 | Sin errores |
 
-**No verificado todavía**, y a cubrir en la Fase 1:
+Cubierto en la Fase 1: el proyecto real de Supabase, en local y alojado, y los tipos generados, que sustituyen a los escritos a mano.
 
-- Un proyecto real de Supabase: sus esquemas `auth` y `storage` son los suyos (el sustituto solo reproduce lo que el script usa) y la versión de pgvector depende del proyecto.
-- Los tipos de base de datos se escribieron a mano como sustituto de los generados; tras la migración hay que generarlos y volver a compilar.
-- Llamadas reales a los modelos (requieren claves): calidad de extracción, latencias y coste real, que mide el eval de la Fase 4.
-- El renderizado en navegadores y el diseño visual.
+**No verificado todavía:**
+
+- Llamadas reales a los modelos, que requieren claves: la calidad de extracción, las latencias y el coste real. Los mide el eval de la Fase 4.
+- El diseño visual renderizado (Fase 2).
+- El último paso del login con Google, elegir la cuenta y volver a la app, necesita una persona con una cuenta de prueba de la app de Google.
+- La configuración de Auth del proyecto remoto (§5), que se hace al desplegar.

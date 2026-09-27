@@ -1,6 +1,6 @@
 # DOSSIER_OS — Design System
 
-> **Documento:** `DESIGN_SYSTEM.md` · **Versión:** 1.0 · **Estado:** especificación doc-first (previa al código) · **Fecha:** 2026-09-27
+> **Documento:** `DESIGN_SYSTEM.md` · **Versión:** 1.1 · **Estado:** especificación doc-first (previa al código) · **Fecha:** 2026-09-27
 > **Documentos hermanos:** [`PROPOSAL.md`](./PROPOSAL.md) (producto) · [`ARCHITECTURE.md`](./ARCHITECTURE.md) (datos, IA, carpetas)
 > **Stack de UI:** Next.js 16 · React 19.3 · Tailwind CSS 4.3 · Motion 13 (`motion/react`) · `next/font`
 
@@ -1538,19 +1538,9 @@ Objetivo: **WCAG 2.2 AA**.
 
 ## 9. Guía de implementación paso a paso
 
-1. **Crear el proyecto** en la carpeta del repositorio (la carpeta `docs/` no bloquea a `create-next-app`):
+1. **Crear el proyecto.** Ya está hecho en la Fase 1 ([`ARCHITECTURE.md`](./ARCHITECTURE.md) §5), con `create-next-app@16.3.6`: TypeScript, Tailwind CSS, App Router, carpeta `src/` y alias `@/*`. Si hubiera que repetirlo, `npx create-next-app .` falla en una carpeta cuyo nombre tiene mayúsculas, como FOLIO: usa ese nombre para el paquete y npm no admite mayúsculas. Se genera en una carpeta en minúsculas y se mueven los archivos. `docs/` y `.claude/` no bloquean el scaffold.
 
-   ```bash
-   npx create-next-app@latest .
-   ```
-
-   Opciones: TypeScript · Tailwind CSS · App Router · carpeta `src/` · alias `@/*`.
-
-2. **Instalar Motion:**
-
-   ```bash
-   npm install motion
-   ```
+2. **Motion:** ya está instalado con versión fija (`motion` 13.4.4, ARCHITECTURE §0). No uses `npm install motion`, que instalaría la última versión.
 
 3. **Fuentes:** crear `src/app/fonts.ts` (§3.2).
 

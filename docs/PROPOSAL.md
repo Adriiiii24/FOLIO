@@ -1,6 +1,6 @@
 # DOSSIER_OS — Propuesta de producto
 
-> **Documento:** `PROPOSAL.md` · **Versión:** 1.0 · **Estado:** propuesta doc-first (previa al código) · **Fecha:** 2026-09-27
+> **Documento:** `PROPOSAL.md` · **Versión:** 1.1 · **Estado:** propuesta doc-first (previa al código) · **Fecha:** 2026-09-27
 > **Documentos hermanos:** [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) (identidad, tokens, componentes, motion) · [`ARCHITECTURE.md`](./ARCHITECTURE.md) (esquema SQL, RLS, pipeline de IA, estructura de carpetas)
 
 ---
@@ -480,6 +480,13 @@ Supuesto de planificación: **dedicación parcial, unas 15 h/semana**. Las fecha
 - Auth con enlace mágico y Google OAuth; refresco de sesión en `proxy.ts`; grupo de rutas protegido.
 
 **Criterios de salida:** un test automático demuestra que el usuario A no puede leer, escribir ni referenciar filas del usuario B en ninguna tabla · CI en verde · despliegue de *preview* funcionando.
+
+> [!NOTE]
+> **Estado a 2026-09-27.**
+>
+> - **Cumplido:** el aislamiento pasa 64 de 64 en local, en la CI y en el proyecto remoto ([`ARCHITECTURE.md`](./ARCHITECTURE.md) §2.3), y la CI está en verde.
+> - **Aplazado por decisión del autor:** el despliegue de *preview*. Vercel se conecta al final del proyecto.
+> - **Consecuencia:** el criterio de salida de la Fase 3 («briefing generado 7 días seguidos») necesita el cron de Vercel, así que exige haber desplegado para entonces.
 
 ### Fase 2 — UI Folder Tabs & CRUDs
 
