@@ -1,6 +1,6 @@
 # DOSSIER_OS
 
-Proyecto doc-first: el diseño completo está en `docs/` y todavía no hay código (estado a 2026-09-27).
+Proyecto doc-first: el diseño completo está en `docs/`. Fase 1 (Setup & Auth) en curso: pasos locales hechos el 2026-09-27; falta la parte remota.
 
 ## Leer antes de trabajar
 
@@ -18,8 +18,17 @@ Proyecto doc-first: el diseño completo está en `docs/` y todavía no hay códi
 
 ## Estado y siguiente paso
 
-- Siguiente: Fase 1 (Setup & Auth), PROPOSAL §5.
-- Esta carpeta está dentro del repositorio git de `C:\Users\adrmp`, así que `create-next-app` no ejecutará `git init`. Antes de hacer scaffold, confírmalo con el usuario y ejecuta `git init` aquí.
-- `create-next-app` acepta `docs/` y `.claude/` en una carpeta no vacía. No crees otros archivos en la raíz antes del scaffold.
-- `docs/reference/referencia-22-98.png` parece la imagen promocional de un mockup comercial: no debe llegar a un repositorio público. Tras el scaffold, añade `docs/reference/` al `.gitignore`.
+Hecho (Fase 1, en local):
+
+- Repo git propio en esta carpeta, rama `main`. El `.gitignore` del home ya ignora FOLIO. `docs/reference/` está fuera del repo.
+- Scaffold con create-next-app 16.3.6, generado en una carpeta en minúsculas y movido aquí: con `.`, create-next-app falla en `FOLIO` porque npm no admite mayúsculas en el nombre. Versiones exactas (`.npmrc` con `save-exact`), React 19.3.0 (la plantilla traía 19.2.8), TypeScript 5.9.3 y ESLint 9 (los plugins de `eslint-config-next` aún no admiten ESLint 10).
+- Supabase local: migración de ARCHITECTURE §1.3 y `supabase/tests/database/rls.test.sql` con 64 aserciones sobre las 12 tablas, Storage, `anon` y las RPC (64/64).
+- Auth: enlace mágico con `token_hash` y `/auth/confirm` (funciona entre dispositivos), Google en `/auth/callback`, `proxy.ts`, grupo `(os)` y `/home` provisional. Probado de extremo a extremo con Playwright y Mailpit.
+- CI en `.github/workflows/ci.yml`, ensayada en local.
+
+Siguiente:
+
+- Parte remota de la Fase 1: crear el repo de GitHub (cuenta, visibilidad e identidad de git, pendientes de decidir con el usuario), el proyecto de Supabase (`link` y `db push`), Google OAuth, las plantillas de correo (copiar `supabase/templates/magic_link.html` a «Magic link» y «Confirm signup») y la URL de redirección de las previews, y conectar Vercel.
+- Actualizar los docs con lo que cambió al implementar: paso 1 de DESIGN_SYSTEM §9 (`create-next-app .` no funciona aquí), ARCHITECTURE §2.3 (suite ampliada), §2.4 (`/auth/confirm`, `safeNextPath` y el `\\.` del matcher) y §0 (TypeScript 5.9.3).
+- Comandos locales: `npm run db:start` (Docker Desktop arrancado), `npm run db:test`, `npm run db:types` tras cada migración y `npm run dev`. Mailpit (correos locales): http://127.0.0.1:54324.
 - Para la UI (Fase 2), Impeccable pedirá un `PRODUCT.md`; usa PROPOSAL.md como base.
