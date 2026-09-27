@@ -1,0 +1,12 @@
+# Documentación: Prettier reformatearía las tablas y los bloques de código ya verificados.
+docs/
+.claude/
+
+# Los reescribe `next dev`.
+AGENTS.md
+CLAUDE.md
+
+# Generados.
+package-lock.json
+src/lib/supabase/database.types.ts
+supabase/.temp/
