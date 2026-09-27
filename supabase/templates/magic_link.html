@@ -1,0 +1,13 @@
+<!--
+  Plantilla de «Magic link» y de «Confirm signup».
+  {{ .RedirectTo }} es el emailRedirectTo de signInWithOtp: <origen>/auth/confirm?next=<ruta>.
+  Por eso el enlace sirve igual en localhost, en las previews de Vercel y en producción,
+  siempre que el origen esté en la lista de redirecciones permitidas de Supabase.
+-->
+<h2>Entrar en DOSSIER_OS</h2>
+
+<p>Pulsa el enlace para entrar. Caduca en una hora y solo sirve una vez.</p>
+
+<p><a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email">Entrar</a></p>
+
+<p>Si no has pedido este enlace, ignora este correo.</p>
