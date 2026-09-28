@@ -7,6 +7,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Fuera: estáticos, imágenes y el cron (se autentica con CRON_SECRET, no con sesión).
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/cron|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)'],
+  // Fuera: estáticos, imágenes, el cron (se autentica con CRON_SECRET, no con sesión) y las rutas de Vercel
+  // (script y recogida de Speed Insights), que redirigidas al login devolvían HTML en lugar de JavaScript.
+  matcher: ['/((?!_next/static|_next/image|_vercel|favicon.ico|api/cron|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)'],
 };

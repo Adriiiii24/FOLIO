@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { SubmitButton } from '@/components/ui/FormControls';
 import { formatIndex, TABS } from '@/config/tabs';
@@ -72,7 +73,16 @@ export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
             </SubmitButton>
           </form>
           <p className="text-small text-steel">
-            Sin contraseñas. Tus datos son solo tuyos: puedes exportarlos o borrarlos cuando quieras.
+            Sin contraseñas. Tus datos son solo tuyos: puedes exportarlos o borrarlos cuando quieras. Al entrar aceptas
+            las{' '}
+            <Link href="/terminos" className="text-black underline underline-offset-4">
+              condiciones
+            </Link>{' '}
+            y la{' '}
+            <Link href="/privacidad" className="text-black underline underline-offset-4">
+              política de privacidad
+            </Link>
+            .
           </p>
         </section>
       </main>
@@ -98,6 +108,14 @@ export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
             </li>
           ))}
         </ol>
+        <nav aria-label="Información legal" className="mt-4 flex flex-wrap gap-x-6 font-mono text-micro uppercase">
+          <Link href="/privacidad" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
+            Privacidad
+          </Link>
+          <Link href="/terminos" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
+            Condiciones
+          </Link>
+        </nav>
       </footer>
     </div>
   );

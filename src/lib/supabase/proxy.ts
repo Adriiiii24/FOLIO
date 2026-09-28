@@ -2,9 +2,18 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import type { Database } from './database.types';
 
-const PUBLIC_PATHS = ['/login', '/auth'];
+// Las páginas legales se leen sin sesión: Google las revisa antes de publicar el acceso con Google.
+const PUBLIC_PATHS = ['/login', '/auth', '/privacidad', '/terminos'];
+
+// En Vercel, Speed Insights puede servir su script bajo una ruta aleatoria que se fija al compilar. El
+// matcher es estático y no la conoce: se deja pasar aquí, sin tocar la sesión.
+const OBSERVABILITY_BASE_PATH = process.env.NEXT_PUBLIC_VERCEL_OBSERVABILITY_BASEPATH;
 
 export async function updateSession(request: NextRequest) {
+  if (OBSERVABILITY_BASE_PATH && request.nextUrl.pathname.startsWith(OBSERVABILITY_BASE_PATH)) {
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient<Database>(

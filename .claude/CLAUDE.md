@@ -50,6 +50,7 @@ Decisiones del usuario:
 - **La IA tiene que ser gratis** (2026-09-28): nivel gratuito de la Gemini API en un proyecto de Google Cloud sin facturación (en AI Studio, la columna «Plan» no debe decir «Paid»). Desde el EEE, Google no usa esos datos para entrenar.
 - Vercel se conecta al final del proyecto. El criterio «despliegue de *preview*» de la Fase 1 queda aplazado, y el de la Fase 3 (briefing 7 días seguidos) exigirá tener el cron desplegado.
 - La configuración de Auth del proyecto remoto se hace al desplegar: URLs, plantillas de correo, Google y SMTP propio (ARCHITECTURE §5).
+- Páginas legales públicas `/privacidad` y `/terminos` (2026-09-28), con el contacto `folio.app.soporte@gmail.com`, que eligió el usuario. Si cambia qué datos se guardan o a quién se envían (proveedores, región, IA), hay que actualizarlas y su fecha.
 
 Siguiente:
 

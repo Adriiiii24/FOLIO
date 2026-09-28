@@ -3507,7 +3507,9 @@ Al desplegar, en el proyecto remoto de Supabase:
 - *Sign In / Providers → Google*: el mismo cliente OAuth, que ya admite `https://<project-ref>.supabase.co/auth/v1/callback`.
 - Un SMTP propio, porque el correo incluido tiene límites de envío muy bajos.
 
-En Vercel hay que definir las variables de §4.3; el cron se registra solo al desplegar `vercel.json`.
+En Vercel hay que definir las variables de §4.3; el cron se registra solo al desplegar `vercel.json`, que además fija la región de las funciones en Dublín (`dub1`), junto a la base de datos (eu-west-1, Irlanda).
+
+Para publicar el acceso con Google (pantalla de consentimiento «En producción»), Google exige una página de inicio pública que describa la app y enlace la política de privacidad, la política de privacidad, las condiciones del servicio y los dominios autorizados. FOLIO los cubre con `/login` como página de inicio y con `/privacidad` y `/terminos`, públicas en el proxy. El proxy tampoco intercepta `/_vercel` ni la ruta aleatoria de Speed Insights (`NEXT_PUBLIC_VERCEL_OBSERVABILITY_BASEPATH`): redirigidas al login, devolvían HTML en lugar del script.
 
 ---
 
