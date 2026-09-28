@@ -1,6 +1,6 @@
 # FOLIO — Design System
 
-> **Documento:** `DESIGN_SYSTEM.md` · **Versión:** 1.3 · **Estado:** Fase 2 implementada; Fase 3 en curso (1.0 y 1.1: especificación doc-first) · **Fecha:** 2026-09-28
+> **Documento:** `DESIGN_SYSTEM.md` · **Versión:** 1.4 · **Estado:** Fase 2 implementada; Fase 3 en curso; 1.4: refinado de la interfaz (1.0 y 1.1: especificación doc-first) · **Fecha:** 2026-09-28
 > **Documentos hermanos:** [`PROPOSAL.md`](./PROPOSAL.md) (producto) · [`ARCHITECTURE.md`](./ARCHITECTURE.md) (datos, IA, carpetas)
 > **Stack de UI:** Next.js 16 · React 19.3 · Tailwind CSS 4.3 · Motion 13 (`motion/react`) · `next/font`
 
@@ -40,6 +40,27 @@
 >   - Titular en `text-headline`.
 >   - Cada hallazgo lleva su pestaña, una señal (`Signal`: «! Atención», «▲ Bien», «● Dato») y su acción.
 >   - La cascada de §6.5 solo aparece la primera vez que se ve cada día (`read_at`).
+>
+> **Versión 1.4 (2026-09-28): refinado de la interfaz.** Lo pidió el autor antes de la Fase 4. Está verificado en el navegador a 1440 y 390 px, y los bloques de §2.7, §5.0, §5.2, §5.5, §5.6 y §6.2 ya lo recogen.
+>
+> - **Etiquetas de módulo en español (§5.0):** INICIO, GIMNASIO, FINANZAS, DIARIO, NUTRICIÓN, CULTURA, RUTINA y AJUSTES. Desaparecen `lang="en"` y el nombre duplicado para lectores de pantalla. Las rutas conservan el slug en inglés (`/vault`) para no romper enlaces guardados.
+> - **Barra de sistema (§5.1):**
+>   - La hora lleva segundos, con un `setTimeout` alineado con cada segundo del reloj.
+>   - El estado dice «En línea», «Ausente» o «Sin conexión». Pasa a ausente tras 30 s sin ratón, teclado, rueda ni toque, o en cuanto la ventana pierde el foco.
+>   - El punto va detrás del texto, anclado a la esquina: lleno, hueco o tachado.
+>   - Solo la pérdida de red se anuncia a los lectores de pantalla.
+> - **Barra de entrada (§5.6):** deja de ser una barra fija de 96 px. Son cuatro pestañas de papel, solo con el icono (REGISTRAR, PREGUNTAR, FOTO y VOZ), enterradas en el borde inferior, con la silueta troquelada de §5.2.
+>   - Al pasar por encima, la pestaña sube, se enciende en naranja y aparece su nombre en una etiqueta de papel.
+>   - Al pulsar una sale su ficha, con solo esa función. La abierta se queda encendida y con su nombre.
+>   - El autor probó botones circulares y volvió a las líneas rectas: la única curva sigue siendo el punto de estado.
+>   - El interruptor PREGUNTAR y el cambio VOZ ↔ ENVIAR desaparecen: cada función tiene su pestaña.
+>   - VOZ graba al pulsarla y tiene CANCELAR. FOTO abre el selector en el mismo gesto.
+> - **Foco del campo:** el anillo naranja de 3 px alrededor de toda la barra chocaba con su sombra dura y quedaba descuadrado. El campo es ahora una línea de escritura que pasa de acero a negro al enfocarse.
+> - **Láminas (§5.3):** la rejilla alinea arriba (`items-start`), así que cada ficha tiene su altura natural. Estiradas hasta la más alta de su fila dejaban huecos negros de hasta 1300 px junto a las listas largas. Desde 1024 px, la ficha corta que acompaña a una lista larga se queda fija al desplazarse (`lg:sticky lg:top-6`): «Nueva entrada» en DIARIO, «Progresión» en GIMNASIO y «Últimos 7 días» en NUTRICIÓN.
+> - **INICIO:** en escritorio, la fecha ocupa media lámina y la otra mitad, antes vacía, lleva el índice de las seis carpetas en 3 × 2. Con la cuenta vacía, esa mitad es «Empieza por aquí» y el índice pasa a una fila de seis. Las fichas del índice son compactas: cifra ajustada al ancho (tope de 36 px), pie en micro y dos por fila en móvil. El aviso del briefing deja de ser una frase entera en mayúsculas (The Label Case Rule).
+> - **Botones (§5.4):** `min-h-11`, `max-w-full` y `shrink-0` en lugar de altura fija y `whitespace-nowrap`. Si la etiqueta no cabe en su contenedor, se parte en dos líneas centradas en vez de salirse («Cerrar sesión en todos los dispositivos» en móvil).
+> - **Desarrollo:** `devIndicators: false` en `next.config.ts`. La «N» de Next.js tapaba la barra de entrada; los errores se siguen mostrando.
+> - **Movimiento (§6.4):** hay filas nuevas para las pestañas de la barra y su nombre, su ficha, el estado de presencia, la marca de guardado, la barra de confianza y los mensajes del chat. La cifra protagonista rueda hasta su valor nuevo cuando cambia con la lámina abierta, es decir, al guardar. Al entrar en una pestaña sigue sin animarse (§5.5).
 
 ---
 
@@ -95,7 +116,7 @@ La referencia visual (archivo local, fuera del repositorio público) es un póst
 ```text
 ┌──────────────────────────────────────────────┐  canvas  · #FF3B00 · la mesa del archivador
 │  FOLIO                 DOM 27·09   ● EN LÍNEA │
-│  ┌01┐ ┌02┐ ┌03 // VAULT┐ ┌04┐ ┌05┐ ┌06┐ …     │  pestañas: la de delante está izada y es negra
+│  ┌01┐ ┌02┐ ┌03 // FINANZAS┐ ┌04┐ ┌05┐ ┌06┐ …     │  pestañas: la de delante está izada y es negra
 ├──┴──┴─┴──┴─┘           └─┴──┴─┴──┴─┴──┴───────┤
 │  folder · #000000 · la carpeta abierta        │
 │  ┌──────────────────┐  ┌──────────────────┐   │
@@ -370,7 +391,8 @@ Ruta: `src/app/globals.css`.
     --duration-base: 240ms;
     --duration-exit: 200ms;
     --duration-sheet: 400ms;
-    --quick-bar-height: 96px;
+    /* Lo que asoman las pestañas de la barra de entrada, con aire: la última ficha nunca queda debajo. */
+    --quick-bar-height: 56px;
   }
 
   html {
@@ -766,6 +788,101 @@ Ruta: `src/app/globals.css`.
     border-top: 2px solid var(--color-black);
   }
 }
+
+/* Barra de entrada (§5.6, FOLIO 1.4): cuatro pestañas de papel, solo con el icono, enterradas en el borde
+   inferior, con la misma silueta troquelada que las pestañas de carpeta (contorno negro y relleno desplazado 2 px).
+   Aquí el recorte es fijo: la altura la da Motion con translate, porque lo que sube es la pestaña entera. El
+   naranja (encendida: señalada o abierta) cambia sin transición, como todo color. */
+@layer components {
+  .quick-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    padding-inline: 12px;
+    pointer-events: none;
+  }
+  .quick-tab {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    flex: none;
+    width: 64px;
+    height: 48px;
+    padding-top: 12px;
+    color: var(--color-black);
+    pointer-events: auto;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .quick-tab::before,
+  .quick-tab::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 100%, 0 100%);
+  }
+  .quick-tab::before {
+    inset: 0;
+    background: var(--color-black);
+  }
+  .quick-tab::after {
+    inset: 2px 2px 0;
+    background: var(--color-white);
+  }
+  .quick-tab[data-lit]::after {
+    background: var(--color-brand-orange);
+  }
+  /* El nombre: una etiqueta de papel encima del botón, en la tipografía de las etiquetas del sistema. */
+  .quick-tab__name {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    translate: -50% 0;
+    padding: 4px 8px;
+    border: 2px solid var(--color-black);
+    background: var(--color-white);
+    color: var(--color-black);
+    font-family: var(--font-mono-face), ui-monospace, monospace;
+    font-size: var(--text-micro);
+    line-height: 1.2;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  /* Campo de la ficha: una línea de escritura sobre el papel. Al enfocarse pasa de acero a negro; el anillo
+     alrededor de toda la barra chocaba con su sombra dura y quedaba descuadrado. */
+  .quick-field {
+    border-bottom: 2px solid var(--color-steel);
+    outline: none;
+  }
+  .quick-field:focus,
+  .quick-field:focus-visible {
+    border-bottom-color: var(--color-black);
+    outline: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .quick-tab {
+    border: 2px solid ButtonText;
+    border-bottom: 0;
+  }
+  .quick-tab::before,
+  .quick-tab::after {
+    display: none;
+  }
+  .quick-tab[data-lit] {
+    border-color: Highlight;
+    color: Highlight;
+  }
+  .quick-field:focus {
+    border-bottom-color: Highlight;
+  }
+}
 ```
 
 ---
@@ -842,7 +959,7 @@ export const displayFace = localFont({
 3. **Cifras proporcionales en la cifra protagonista, tabulares en columnas.** `tabular-nums` da a cada dígito el ancho de un `0`: alinea columnas, pero deja un `1` perdido en un hueco ancho a tamaño cartel.
 4. **Formato español con `Intl`:** `new Intl.NumberFormat('es-ES', …)`. Coma decimal, euro detrás con espacio fino (`812,40 €`). Ojo: **`es-ES` no agrupa las cifras de cuatro dígitos** (`1284`, pero `12.840`). Es la norma, no un fallo.
 5. **La fecha protagonista** (`27‘09`) usa `‘` como separador gráfico; se oculta a lectores de pantalla y se acompaña de la fecha legible («domingo, 27 de septiembre»).
-6. **Etiquetas de módulo en inglés** (`VAULT`, `BRAIN`) llevan `lang="en"` para que el lector de pantalla las pronuncie bien, y su nombre en español en texto accesible.
+6. **Etiquetas de módulo en español** (`FINANZAS`, `DIARIO`) desde la 1.4. Hasta la 1.3 iban en inglés con `lang="en"` y el nombre español como texto accesible. El autor las pasó al español porque toda la interfaz lo está.
 
 ---
 
@@ -857,7 +974,7 @@ export const displayFace = localFont({
 │ FOLIO           DOM 27·09  ● │ SystemBar · mono 11 px, negro
 │ ┌01 HOME┐┌02 GYM┐┌03 VAULT┐ →│ FolderTabs · todas con nombre; la tira desliza
 ├──────────────────────────────┤ folder
-│ ● 03 // VAULT   MES EN CURSO │ cabecera de lámina · mono 11 px, ash
+│ ● 03 // FINANZAS   MES EN CURSO │ cabecera de lámina · mono 11 px, ash
 │                              │
 │ 812,40 €                     │ DisplayNumeral
 │ GASTO · 64 % DEL PRESUPUESTO │ fila de etiquetas
@@ -875,9 +992,9 @@ export const displayFace = localFont({
 ```text
 ┌────────────────────────────────────────────────────────────────────┐ canvas
 │ FOLIO                           DOM 27·09·2026 07:42       ● EN LÍNEA│
-│ ┌01 // HOME┐┌02 // GYM┐┌03 // VAULT┐┌04 // BRAIN┐┌05 // NUTRITION┐ …│
+│ ┌01 // INICIO┐┌02 // GIMNASIO┐┌03 // FINANZAS┐┌04 // DIARIO┐┌05 // NUTRICIÓN┐ …│
 │ ┌────────────────────────────────────────────────────────────────┐ │
-│ │ ● 03 // VAULT                                    MES EN CURSO   │ │
+│ │ ● 03 // FINANZAS                                    MES EN CURSO   │ │
 │ │ 812,40 €                          ┌ficha · 4 col┐┌ficha · 4 col┐│ │
 │ │ GASTO DEL MES · 64 % PRESUPUESTO  │ categorías  ││ últimos     ││ │
 │ │                                   └─────────────┘└─────────────┘│ │
@@ -914,15 +1031,17 @@ Los puntos de corte son los de Tailwind por defecto (`md` 48rem, `lg` 64rem, `xl
 Ruta: `src/config/tabs.ts`. Única fuente de verdad del orden, los índices y las rutas.
 
 ```ts
+// `label` es el título visible (en mayúsculas por CSS) y el de la pestaña del navegador; `name` describe
+// el área para el modelo. Las rutas conservan el slug en inglés: cambiarlas rompería enlaces guardados.
 export const TABS = [
-  { index: 1, slug: 'home', label: 'HOME', name: 'Inicio', href: '/home' },
-  { index: 2, slug: 'gym', label: 'GYM', name: 'Entrenamiento', href: '/gym' },
-  { index: 3, slug: 'vault', label: 'VAULT', name: 'Finanzas', href: '/vault' },
-  { index: 4, slug: 'brain', label: 'BRAIN', name: 'Diario', href: '/brain' },
-  { index: 5, slug: 'nutrition', label: 'NUTRITION', name: 'Nutrición', href: '/nutrition' },
-  { index: 6, slug: 'media', label: 'MEDIA', name: 'Consumo cultural', href: '/media' },
-  { index: 7, slug: 'routine', label: 'ROUTINE', name: 'Hábitos y foco', href: '/routine' },
-  { index: 8, slug: 'settings', label: 'SETTINGS', name: 'Configuración', href: '/settings' },
+  { index: 1, slug: 'home', label: 'Inicio', name: 'Inicio', href: '/home' },
+  { index: 2, slug: 'gym', label: 'Gimnasio', name: 'Entrenamiento', href: '/gym' },
+  { index: 3, slug: 'vault', label: 'Finanzas', name: 'Finanzas', href: '/vault' },
+  { index: 4, slug: 'brain', label: 'Diario', name: 'Diario', href: '/brain' },
+  { index: 5, slug: 'nutrition', label: 'Nutrición', name: 'Nutrición', href: '/nutrition' },
+  { index: 6, slug: 'media', label: 'Cultura', name: 'Consumo cultural', href: '/media' },
+  { index: 7, slug: 'routine', label: 'Rutina', name: 'Hábitos y foco', href: '/routine' },
+  { index: 8, slug: 'settings', label: 'Ajustes', name: 'Configuración', href: '/settings' },
 ] as const;
 
 export type Tab = (typeof TABS)[number];
@@ -984,7 +1103,7 @@ export default async function OsLayout({ children }: { children: ReactNode }) {
 }
 ```
 
-`QuickInputDock` es el contenedor cliente que conecta la `QuickInputBar` (§5.6) con las subidas y las Server Actions de [`ARCHITECTURE.md`](./ARCHITECTURE.md) §3. `SystemBar` es un Server Component: `FOLIO` a la izquierda, fecha y hora en la zona horaria del perfil en el centro, punto de estado a la derecha, todo en `text-micro`.
+`QuickInputDock` es el contenedor cliente que conecta la `QuickInputBar` (§5.6) con las subidas y las Server Actions de [`ARCHITECTURE.md`](./ARCHITECTURE.md) §3. `SystemBar` es un Server Component: `FOLIO` a la izquierda, fecha y hora en la zona horaria del perfil en el centro, punto de estado a la derecha, todo en `text-micro`. Desde la 1.4 la hora lleva segundos y el estado distingue en línea, ausente (30 s sin actividad o la ventana sin foco) y sin conexión (`SystemStatus.tsx`).
 
 ### 5.2 `FolderTabs.tsx`
 
@@ -995,9 +1114,9 @@ Ruta: `src/components/os/FolderTabs.tsx` (+ CSS en `globals.css`, capa `componen
 ```text
             ← 10 px →                 ← 10 px →
            ┌───────────────────────────┐          ← activa: forma izada 8 px, relleno negro, texto blanco
-          /   03 // VAULT              \
+          /   03 // FINANZAS           \
    ┌─────/─────────┐┌──────────────────\──┐       ← inactivas: contorno negro de 2 px, relleno = canvas
-  /  02 // GYM     \/  04 // BRAIN        \
+  /  02 // GIMNASIO\/  04 // DIARIO       \
  ████████████████████████████████████████████    ← borde superior de la carpeta (negro)
 ```
 
@@ -1027,16 +1146,16 @@ Cada pestaña es un **trapecio troquelado** (lados a 10 px de inclinación) dibu
 #### Semántica y teclado
 
 - **Parecen pestañas, pero son navegación.** Cada una cambia la URL, así que se marcan como `<nav aria-label="Módulos">` con enlaces y `aria-current="page"`. `role="tablist"` sería incorrecto: ese patrón es para paneles dentro de una misma página.
-- Nombre accesible: «03 VAULT, Finanzas». Separador `//` oculto; nombre inglés con `lang="en"`; nombre español como texto solo para lectores de pantalla.
-- **Atajos `1`–`8`** (fuera de campos de texto) llevan a cada pestaña, **sin animación** (§6.1). Por ser atajos de una sola tecla, se pueden desactivar en `08 // SETTINGS` (WCAG 2.1.4).
+- Nombre accesible: «03 Finanzas». El separador `//` va oculto. En la 1.4 el nombre visible ya es español, así que desaparecen `lang="en"` y el duplicado para lectores de pantalla.
+- **Atajos `1`–`8`** (fuera de campos de texto) llevan a cada pestaña, **sin animación** (§6.1). Por ser atajos de una sola tecla, se pueden desactivar en `08 // AJUSTES` (WCAG 2.1.4).
 
 #### Responsive
 
 | Ancho | Contenido de la pestaña |
 |---|---|
-| ≥ 1280 px | `05 // NUTRITION` |
-| 1024–1279 px | `05 NUTRITION` |
-| < 1024 px | `05 NUTRITION` en todas (1.2: antes, las inactivas solo mostraban `05`). La tira desliza en horizontal con *snap* y la activa se desplaza a la vista moviendo solo la tira, sin animar el scroll |
+| ≥ 1280 px | `05 // NUTRICIÓN` |
+| 1024–1279 px | `05 NUTRICIÓN` |
+| < 1024 px | `05 NUTRICIÓN` en todas (1.2: antes, las inactivas solo mostraban `05`). La tira desliza en horizontal con *snap* y la activa se desplaza a la vista moviendo solo la tira, sin animar el scroll |
 
 #### Implementación
 
@@ -1088,10 +1207,7 @@ export function FolderTabs() {
                   <span className="folder-tab__sep" aria-hidden="true">
                     {'//'}
                   </span>
-                  <span className="folder-tab__name" lang="en">
-                    {tab.label}
-                  </span>
-                  <span className="sr-only">, {tab.name}</span>
+                  <span className="folder-tab__name">{tab.label}</span>
                 </span>
               </Link>
             </li>
@@ -1135,7 +1251,8 @@ export function TabShortcuts() {
 
       if (event.key === '/') {
         event.preventDefault();
-        document.getElementById('quick-input')?.focus();
+        // Abre REGISTRAR en la barra de entrada y pone el foco en el campo.
+        window.dispatchEvent(new CustomEvent('folio:quick', { detail: 'log' }));
         return;
       }
 
@@ -1169,7 +1286,9 @@ export function Sheet({ children }: { children: ReactNode }) {
       exit={{ 'nav-forward': 'sheet-out-to-left', 'nav-back': 'sheet-out-to-right', default: 'none' }}
       default="none"
     >
-      <div className="grid grid-cols-4 gap-4 px-4 pt-6 md:grid-cols-8 md:px-6 lg:grid-cols-12 lg:gap-6 lg:px-8">
+      {/* items-start: cada ficha con su altura. Estiradas hasta la más alta de su fila dejaban huecos negros de
+          cientos de píxeles junto a las listas largas. */}
+      <div className="grid grid-cols-4 items-start gap-4 px-4 pt-6 md:grid-cols-8 md:px-6 lg:grid-cols-12 lg:gap-6 lg:px-8">
         {children}
       </div>
     </ViewTransition>
@@ -1306,13 +1425,14 @@ export function BrutalistCard({
 **Decisiones:**
 
 - **Server Component.** La cifra llega pintada en el HTML: sin parpadeo, sin JavaScript y lista para ser el LCP.
-- **Sin conteo animado.** Un contador que sube desde 0 en cada visita es decoración en una acción frecuente. Lo que sí informa es *qué ha cambiado*: si el valor es distinto al de la última visita, aparece un chip con el delta (`▲ +12,40 €`) durante 4 s.
+- **Sin conteo animado.** Un contador que sube desde 0 en cada visita es decoración en una acción frecuente. Lo que sí informa es *qué ha cambiado*: si el valor es distinto al de la última visita, aparece un chip con el delta (`▲ +12,40 €`) durante 4 s. En la 1.4, `RollingNumber` hace rodar la cifra hasta su valor nuevo cuando cambia con la lámina abierta, por ejemplo al guardar un borrador. Al montar no se anima, así que el HTML sigue llegando pintado.
 - **Ajuste al ancho:** el tamaño se calcula con unidades de contenedor según el número de caracteres (`--chars`), así `812,40 €` y `12.840,00 €` ocupan siempre la línea sin desbordar. `--glyph-em` es el ancho medio del glifo de la cara display: 0,54 con Inter Tight y −0,03em de tracking, medido en el navegador sobre cifras reales. Se recalibra con la fuente final.
 
 ```tsx
 // src/components/ui/DisplayNumeral.tsx
 import type { CSSProperties } from 'react';
 import { DeltaChip } from './DeltaChip';
+import { RollingNumber } from './RollingNumber';
 
 type DisplayNumeralProps = {
   value: number;
@@ -1346,7 +1466,8 @@ export function DisplayNumeral({
   return (
     <figure className="@container col-span-full">
       <p className="numeral" style={{ '--chars': text.length } as CSSProperties}>
-        <span aria-hidden="true">{text}</span>
+        {/* La cifra visible rueda al cambiar; la de los lectores de pantalla ya es la final. */}
+        <span aria-hidden="true">{display ?? <RollingNumber value={value} format={format} />}</span>
         <span className="sr-only">{`${label}: ${srValue ?? text}`}</span>
       </p>
       {caption || lastSeenKey ? (
@@ -1430,49 +1551,77 @@ export function DeltaChip({ value, storageKey, format, upIsGood }: DeltaChipProp
 
 ### 5.6 `QuickInputBar.tsx`
 
-Ruta: `src/components/os/QuickInputBar.tsx`. Barra flotante inferior, siempre presente, sobre `paper`.
+Ruta: `src/components/os/QuickInputBar.tsx`. Desde la 1.4 son cuatro pestañas troqueladas de papel, solo con el icono, enterradas en el borde inferior, y cada una saca su ficha. `QuickInputDock` decide qué ficha está abierta.
 
 #### Anatomía
 
 ```text
- móvil     ┌───────────────────────────────────────────┐
-           │ [?] │ «12,40 Mercadona» o foto…│ FOTO │ VOZ │   VOZ se convierte en ENVIAR cuando hay texto
-           └───────────────────────────────────────────┘
-           GRABANDO 00:12                                   fila de estado (role="status")
+ plegada                     ╱ ✎ ╲ ╱ ▢ ╲ ╱ ◎ ╲ ╱ ♪ ╲             asoman 34 px (44 en táctil)
+ ═══════════════════════════ borde inferior de la pantalla ═══════════════════════════
 
- ≥ 768 px  ┌───────────────────────────────────────────────────────────┐
-           │ PREGUNTAR │ «12,40 Mercadona» o foto del ticket │ FOTO │ VOZ │
-           └───────────────────────────────────────────────────────────┘
+ señalada                         ┌───────────┐
+                                  │ PREGUNTAR │                   etiqueta de papel con el nombre
+                             ╱ ✎ ╲ ╱▓▢▓╲ ╱ ◎ ╲ ╱ ♪ ╲             sale entera y se enciende en naranja
+
+ abierta          ┌───────────┐
+                  │ REGISTRAR │                                   la abierta, encendida y con su nombre
+                 ╱▓✎▓╲ ╱ ▢ ╲ ╱ ◎ ╲ ╱ ♪ ╲                          las demás, enterradas tras la ficha
+ ┌──────────────────────────────────────────────────────────────┐
+ │ «12,40 Mercadona»_____________________________   ENVIAR   ✕  │   ficha de papel con sombra dura naranja
+ │ ✓ GASTO GUARDADO.   DESHACER                                  │   fila de estado, solo cuando hay mensaje
+ └──────────────────────────────────────────────────────────────┘
 ```
 
-#### Modos
+Cada pestaña mide 64 × 48 px. Usa la silueta troquelada de §5.2 (contorno negro y relleno desplazado 2 px) con el icono a 20 px y trazo de 2 px (`vector-effect: non-scaling-stroke`). Aquí el recorte es fijo: la altura la da Motion con `translate`, porque lo que sube es la pestaña entera. Nunca flota: su base es el borde del que sale. El naranja (encendida: señalada o abierta) cambia sin transición, como todo color. Solo se ve un nombre a la vez: el de la pestaña señalada o, si no hay ninguna, el de la ficha abierta. En móviles con barra de inicio, una franja negra de `env(safe-area-inset-bottom)` hace de borde bajo el que se entierran.
 
-- **`REGISTRAR` es el modo por defecto;** **`PREGUNTAR`** es un interruptor (`role="switch"`) con texto fijo. Un conmutador explícito no cuesta una llamada de IA ni se equivoca de intención (ver [`PROPOSAL.md`](./PROPOSAL.md) §2.2).
-- El texto de ayuda cambia con la pestaña activa: la pestaña es el contexto.
-- **`VOZ` ↔ `ENVIAR`:** con el campo vacío, el botón principal dicta; con texto, envía. Es el patrón de las apps de mensajería y ahorra un botón en móvil.
+#### Funciones
+
+- **Una pestaña por función, no un clasificador** ([`PROPOSAL.md`](./PROPOSAL.md) §2.2). Elegir la pestaña no cuesta una llamada de IA ni se equivoca de intención.
+- **REGISTRAR:** campo y ENVIAR. El ejemplo del campo cambia con la pestaña activa, porque la pestaña es el contexto.
+- **PREGUNTAR:** campo y ENVIAR. La conversación flota encima, en superficie oscura, y sobrevive a cerrar la ficha.
+- **FOTO:** abre el selector de fotos en el mismo gesto. La ficha ofrece ELEGIR FOTO y, desde 768 px, explica qué pasará.
+- **VOZ:** empieza a grabar al pulsarla. La ficha muestra el punto naranja, `GRABANDO 00:12`, CANCELAR y ENVIAR.
+- **Lo escrito** en REGISTRAR y en PREGUNTAR se guarda por separado y sobrevive a cerrar la ficha.
+- **Cerrar:** con ✕, con Escape, pulsando otra vez la pestaña o pulsando fuera si no hay texto ni aviso. Con algo en curso o un borrador pendiente, no se puede cerrar la ficha ni cambiar a otra.
+- **Atajo `/`:** abre REGISTRAR con el foco en el campo (evento `folio:quick`).
 
 #### Estados
 
-| Estado | Barra | Fila de estado | Punto |
+| Estado | Pestañas | Ficha | Fila de estado |
 |---|---|---|---|
-| `idle` | Normal | Vacía (reserva altura: sin saltos de layout) | — |
-| `focused` | Anillo naranja de 3 px alrededor de toda la barra (`focus-within`) | — | — |
-| `recording` | Campo desactivado; botón `PARAR` invertido | `GRABANDO 00:12` | Naranja, pulsando |
-| `uploading` | Botones desactivados | `SUBIENDO…` | — |
-| `processing` | Botones desactivados | `LEYENDO EL TICKET_` con cursor intermitente | Naranja fijo |
-| `draft` | El borrador (`DraftSheet`, §5.7) sube por encima de la barra | `REVISA Y CONFIRMA` | — |
-| `error` | Normal; **nunca se pierde lo escrito, fotografiado o grabado** | Mensaje concreto + `REINTENTAR` | — |
+| Plegada | Enterradas: asoman 34 px (44 en táctil); papel blanco | — | — |
+| *Hover* o foco visible | Sale entera (14 px), se enciende en naranja y muestra su nombre encima; al pulsar baja 3 | — | — |
+| Abierta | La elegida queda entera sobre el borde de la ficha, encendida y con su nombre; las demás se entierran tras el borde y asoman 36 px | Solo la función elegida | Oculta mientras no hay mensaje |
+| `focused` | — | La línea del campo pasa de acero a negro (sin anillo exterior) | — |
+| `recording` | — | Punto naranja pulsando, `GRABANDO 00:12`, CANCELAR y ENVIAR | Solo para lectores de pantalla: «Grabando» |
+| `uploading` · `processing` | No se puede cambiar de ficha | Botones desactivados | `SUBIENDO…` · `INTERPRETANDO_` con cursor |
+| `draft` | Igual | El borrador (`DraftSheet`, §5.7) sube por encima de las pestañas | Solo para lectores de pantalla |
+| `saved` | — | — | ✓ trazado, mensaje y `DESHACER` |
+| `error` | — | **Nunca se pierde lo escrito, fotografiado o grabado** | `!` y el mensaje en seminegrita, con `REINTENTAR` |
 
 ```tsx
 'use client';
 
 import { AnimatePresence } from 'motion/react';
 import * as m from 'motion/react-m';
-import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import {
+  useEffect,
+  useEffectEvent,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
+import { flushSync } from 'react-dom';
 import type { TabSlug } from '@/config/tabs';
-import { exitFast, springSheet } from '@/lib/motion/tokens';
+import { Button } from '@/components/ui/Button';
+import { Icon, type IconName } from '@/components/ui/Icon';
+import { easeOutStrong, exitFast, springSheet, springSnap, springTab } from '@/lib/motion/tokens';
 
 export type QuickMode = 'log' | 'ask';
+export type QuickTool = QuickMode | 'photo' | 'voice';
 
 export type QuickStatus =
   | { kind: 'idle' }
@@ -1490,22 +1639,33 @@ export type QuickStatus =
 type QuickInputBarProps = {
   context: TabSlug;
   status: QuickStatus;
-  /** Borrador de IA pendiente de confirmar, si lo hay. */
-  draft?: ReactNode;
-  /** Devuelve false si el texto no se ha podido usar: entonces se conserva en la barra. */
+  /** La ficha abierta, o null con las cuatro pestañas enterradas. */
+  tool: QuickTool | null;
+  onOpen: (tool: QuickTool) => void;
+  onClose: () => void;
+  /** Sin nada en curso ni borrador pendiente: la ficha se puede cerrar o cambiar por otra. */
+  canClose: boolean;
+  /** Lo que flota encima de las pestañas: el borrador pendiente o la conversación de PREGUNTAR. */
+  above?: ReactNode;
+  /** Devuelve false si el texto no se ha podido usar: entonces se conserva en la ficha. */
   onText: (mode: QuickMode, text: string) => boolean | Promise<boolean>;
   onImage: (file: File) => void;
   onToggleRecording: () => void;
+  onCancelRecording: () => void;
   onRetry?: () => void;
   onUndo?: () => void;
   /** Acciones de la fila de estado que decide el contenedor (elegir ticket o plato, registrar lo mencionado). */
   statusActions?: { label: string; onClick: () => void }[];
-  /**
-   * Qué entradas hay disponibles. Fase 2: solo texto (PROPOSAL §5), así que el contenedor apaga preguntar,
-   * foto y voz; sin voz, el botón principal es siempre ENVIAR. Fase 3: todo activo, como en §5.6.
-   */
+  /** Qué entradas hay. Sin IA (Fase 2) solo queda REGISTRAR; en la Fase 3, las cuatro. */
   capabilities?: { ask?: boolean; photo?: boolean; voice?: boolean };
 };
+
+const TOOLS: { id: QuickTool; label: string; icon: IconName }[] = [
+  { id: 'log', label: 'Registrar', icon: 'pencil' },
+  { id: 'ask', label: 'Preguntar', icon: 'ask' },
+  { id: 'photo', label: 'Foto', icon: 'camera' },
+  { id: 'voice', label: 'Voz', icon: 'mic' },
+];
 
 const HINTS: Record<TabSlug, string> = {
   home: '«12,40 Mercadona», «sentadilla 5×5 a 100»…',
@@ -1518,208 +1678,455 @@ const HINTS: Record<TabSlug, string> = {
   settings: 'Registra desde cualquier pestaña',
 };
 
+const PHOTO_HINT: Partial<Record<TabSlug, string>> = {
+  vault: 'Haz o elige la foto del ticket. Revisarás el gasto antes de guardarlo.',
+  nutrition: 'Haz o elige la foto del plato. Revisarás la comida antes de guardarla.',
+};
+
 const clock = (seconds: number) =>
   `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 
-const BUTTON =
-  'flex h-11 min-w-11 items-center justify-center gap-2 border-2 border-black px-3 font-mono text-label uppercase';
+// Posición vertical de cada pestaña (px hacia abajo; la caja mide 48). Con puntero fino asoman 34 px y al pasar
+// por encima salen enteras; en táctil no hay hover, así que asoman 44. Nunca flotan: su base es el borde del que
+// salen (la pantalla o, con la ficha abierta, el borde superior de la ficha, tras el que se entierran las demás).
+const FINE_POINTER = '(hover: hover) and (pointer: fine)';
+const TAB_HIDDEN = 56;
 
+function tabY({ open, active, lifted, fine }: { open: boolean; active: boolean; lifted: boolean; fine: boolean }) {
+  if (lifted || (open && active)) return 0;
+  if (open) return 12;
+  return fine ? 14 : 4;
+}
+
+function subscribeFinePointer(onChange: () => void) {
+  const query = window.matchMedia(FINE_POINTER);
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
+}
+
+const STATUS_ACTION = 'min-h-6 px-1 font-mono text-micro text-black uppercase underline underline-offset-4';
+
+/**
+ * La barra de entrada (§5.6): cuatro pestañas troqueladas de papel, solo con el icono, enterradas en el borde
+ * inferior. Al pasar por encima, la pestaña sube, se enciende en naranja y dice su nombre; al pulsarla, sale su
+ * ficha con solo esa función y las pestañas viajan encima. Nada se guarda sin un borrador confirmado.
+ */
 export function QuickInputBar({
   context,
   status,
-  draft,
+  tool,
+  onOpen,
+  onClose,
+  canClose,
+  above,
   onText,
   onImage,
   onToggleRecording,
+  onCancelRecording,
   onRetry,
   onUndo,
   statusActions = [],
   capabilities = {},
 }: QuickInputBarProps) {
   const { ask: canAsk = true, photo: canPhoto = true, voice: canVoice = true } = capabilities;
-  const [asking, setAsking] = useState(false);
-  const [text, setText] = useState('');
+  const tools = TOOLS.filter(
+    ({ id }) => (id !== 'ask' || canAsk) && (id !== 'photo' || canPhoto) && (id !== 'voice' || canVoice),
+  );
+  // Lo escrito en cada ficha se conserva al cerrarla y al cambiar de pestaña.
+  const [texts, setTexts] = useState<Record<QuickMode, string>>({ log: '', ask: '' });
+  const [lifted, setLifted] = useState<QuickTool | null>(null);
+  const [entered, setEntered] = useState(false);
+  const fine = useSyncExternalStore(
+    subscribeFinePointer,
+    () => window.matchMedia(FINE_POINTER).matches,
+    () => false,
+  );
+  const root = useRef<HTMLDivElement>(null);
+  const input = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const tabs = useRef<Partial<Record<QuickTool, HTMLButtonElement | null>>>({});
+  const cardId = useId();
   const statusId = useId();
 
   const recording = status.kind === 'recording';
   const busy = status.kind === 'uploading' || status.kind === 'processing';
+  const mode: QuickMode | null = tool === 'log' || tool === 'ask' ? tool : null;
+  const text = mode ? texts[mode] : '';
   const hasText = text.trim().length > 0;
 
-  // Los ejemplos de los estados vacíos y las acciones del briefing escriben aquí: `folio:prefill` con el
-  // texto en `detail`, o { text, ask: true } para dejar la barra en PREGUNTAR.
+  // Las pestañas salen del borde una tras otra al cargar; después, cada cambio va sin retardo.
   useEffect(() => {
-    function onPrefill(event: Event) {
-      const detail = (event as CustomEvent<string | { text?: unknown; ask?: unknown }>).detail;
-      const value = typeof detail === 'string' ? detail : detail?.text;
-      if (typeof value !== 'string') return;
-      setAsking(canAsk && typeof detail === 'object' && detail?.ask === true);
-      setText(value);
-      document.getElementById('quick-input')?.focus();
-    }
+    const done = setTimeout(() => setEntered(true), 800);
+    return () => clearTimeout(done);
+  }, []);
+
+  /** Abre una ficha dentro del gesto: el foco del campo y el selector de fotos lo exigen (iOS). */
+  function open(next: QuickTool) {
+    if (tool !== null && tool !== next && !canClose) return;
+    if (tool !== next) flushSync(() => onOpen(next));
+    if (next === 'log' || next === 'ask') input.current?.focus();
+    if (next === 'photo') fileInput.current?.click();
+  }
+
+  function close() {
+    if (!canClose && !recording) return;
+    const current = tool;
+    if (recording) onCancelRecording();
+    onClose();
+    if (current) tabs.current[current]?.focus({ preventScroll: true });
+  }
+
+  // Los ejemplos de los estados vacíos y las acciones del briefing escriben aquí: `folio:prefill` con el
+  // texto en `detail`, o { text, ask: true } para PREGUNTAR. `folio:quick` abre una ficha (atajo «/»).
+  const onPrefill = useEffectEvent((event: Event) => {
+    const detail = (event as CustomEvent<string | { text?: unknown; ask?: unknown }>).detail;
+    const value = typeof detail === 'string' ? detail : detail?.text;
+    if (typeof value !== 'string') return;
+    const target: QuickMode = canAsk && typeof detail === 'object' && detail?.ask === true ? 'ask' : 'log';
+    setTexts((current) => ({ ...current, [target]: value }));
+    open(target);
+  });
+  const onQuick = useEffectEvent((event: Event) => {
+    const next = (event as CustomEvent<unknown>).detail;
+    if (tools.some(({ id }) => id === next)) open(next as QuickTool);
+  });
+  useEffect(() => {
     window.addEventListener('folio:prefill', onPrefill);
-    return () => window.removeEventListener('folio:prefill', onPrefill);
-  }, [canAsk]);
+    window.addEventListener('folio:quick', onQuick);
+    return () => {
+      window.removeEventListener('folio:prefill', onPrefill);
+      window.removeEventListener('folio:quick', onQuick);
+    };
+  }, []);
+
+  // Pulsar fuera cierra la ficha solo si no hay nada que perder: ni texto, ni avisos, ni nada en curso.
+  const onOutside = useEffectEvent((event: PointerEvent) => {
+    const target = event.target as Element | null;
+    if (!target || root.current?.contains(target) || target.closest('[data-quick-keep]')) return;
+    if (canClose && status.kind === 'idle' && !hasText) onClose();
+  });
+  useEffect(() => {
+    if (!tool) return;
+    document.addEventListener('pointerdown', onOutside);
+    return () => document.removeEventListener('pointerdown', onOutside);
+  }, [tool]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!hasText || busy) return;
+    if (!mode || !hasText || busy) return;
     // Nunca se pierde lo escrito (§5.6, estado `error`): solo se vacía si el texto se ha podido usar.
-    if (await onText(asking ? 'ask' : 'log', text.trim())) setText('');
+    if (await onText(mode, text.trim())) setTexts((current) => ({ ...current, [mode]: '' }));
   }
 
+  const closeButton =
+    canClose && !recording ? (
+      <button
+        type="button"
+        onClick={close}
+        className="grid size-11 shrink-0 place-items-center text-steel hover:text-black"
+      >
+        <Icon name="close" className="size-4" />
+        <span className="sr-only">Cerrar</span>
+      </button>
+    ) : null;
+
+  let body: ReactNode = null;
+  if (mode) {
+    body = (
+      <form onSubmit={submit} aria-describedby={statusId} className="flex items-center gap-2">
+        <label htmlFor="quick-input" className="sr-only">
+          {mode === 'ask' ? 'Pregunta a tu archivador' : 'Registro rápido'}
+        </label>
+        <input
+          ref={input}
+          id="quick-input"
+          value={text}
+          onChange={(event) => setTexts((current) => ({ ...current, [mode]: event.target.value }))}
+          placeholder={mode === 'ask' ? 'Pregunta a tu archivador…' : HINTS[context]}
+          enterKeyHint={mode === 'ask' ? 'search' : 'send'}
+          autoComplete="off"
+          className="quick-field h-11 min-w-0 flex-1 bg-transparent px-2 text-body"
+        />
+        <Button type="submit" tone="primary" surface="paper" disabled={busy || !hasText}>
+          Enviar
+        </Button>
+        {closeButton}
+      </form>
+    );
+  } else if (tool === 'photo') {
+    body = (
+      <div className="flex items-center gap-2">
+        {/* En móvil el botón ya lo dice y la explicación partía la ficha en cuatro líneas. */}
+        <p className="hidden min-w-0 flex-1 px-2 text-small text-steel md:block">
+          {PHOTO_HINT[context] ?? 'Haz o elige la foto de un ticket o de un plato.'}
+        </p>
+        <Button
+          tone="primary"
+          surface="paper"
+          onClick={() => fileInput.current?.click()}
+          disabled={busy}
+          className="max-md:flex-1"
+        >
+          <Icon name="camera" className="size-4" />
+          Elegir foto
+        </Button>
+        {closeButton}
+      </div>
+    );
+  } else if (tool === 'voice') {
+    body = recording ? (
+      <div className="flex items-center gap-2">
+        <p className="flex min-w-0 flex-1 items-center gap-2 px-2 font-mono text-label uppercase">
+          <span
+            aria-hidden="true"
+            className="size-2.5 shrink-0 rounded-full bg-brand-orange motion-safe:animate-rec-pulse"
+          />
+          Grabando <span className="tabular-nums">{clock(status.seconds)}</span>
+        </p>
+        <Button tone="secondary" surface="paper" onClick={onCancelRecording}>
+          Cancelar
+        </Button>
+        <Button tone="primary" surface="paper" onClick={onToggleRecording}>
+          Enviar
+        </Button>
+      </div>
+    ) : (
+      <div className="flex items-center gap-2">
+        <p className="hidden min-w-0 flex-1 px-2 text-small text-steel md:block">
+          Di un gasto, una comida o una nota. Revisarás el borrador antes de guardarlo.
+        </p>
+        <Button tone="primary" surface="paper" onClick={onToggleRecording} disabled={busy} className="max-md:flex-1">
+          <Icon name="mic" className="size-4" />
+          Grabar
+        </Button>
+        {closeButton}
+      </div>
+    );
+  }
+
+  const showStatus =
+    (status.kind !== 'idle' && status.kind !== 'draft' && status.kind !== 'recording') || statusActions.length > 0;
+  const statusKey =
+    status.kind === 'processing'
+      ? status.label
+      : 'message' in status
+        ? `${status.kind}:${status.message}`
+        : status.kind;
+
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-3xl px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:bottom-6 md:px-0">
+    <div
+      ref={root}
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-3xl flex-col px-2 md:px-0"
+    >
       <AnimatePresence initial={false}>
-        {draft ? (
+        {above ? (
           <m.div
-            key="draft"
-            className="mb-3"
+            key="above"
+            // Hueco para el nombre que aparece sobre una pestaña: nunca tapa GUARDAR ni DESCARTAR.
+            className="pointer-events-auto mb-9"
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12, transition: exitFast }}
             transition={springSheet}
           >
-            {draft}
+            {above}
           </m.div>
         ) : null}
       </AnimatePresence>
 
-      <form
-        data-surface="paper"
-        onSubmit={submit}
-        aria-describedby={statusId}
-        className="flex items-center gap-2 border-2 border-black p-1.5 shadow-hard focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-brand-orange"
-      >
-        {canAsk ? (
-          <button
-            type="button"
-            role="switch"
-            aria-checked={asking}
-            onClick={() => setAsking((value) => !value)}
-            className={`${BUTTON} aria-checked:bg-black aria-checked:text-white`}
-          >
-            Preguntar
-          </button>
-        ) : null}
-
-        <label htmlFor="quick-input" className="sr-only">
-          {asking ? 'Pregunta a tu archivador' : 'Registro rápido'}
-        </label>
-        <input
-          id="quick-input"
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          disabled={recording}
-          placeholder={asking ? 'Pregunta a tu archivador…' : HINTS[context]}
-          enterKeyHint={asking ? 'search' : 'send'}
-          autoComplete="off"
-          className="h-11 min-w-0 flex-1 bg-transparent px-2 text-body outline-none placeholder:text-steel"
-        />
-
-        {canPhoto ? (
-          <>
-            <button
-              type="button"
-              onClick={() => fileInput.current?.click()}
-              disabled={busy || recording}
-              className={`${BUTTON} disabled:border-steel disabled:text-steel`}
-            >
-              Foto
-            </button>
-            <input
-              ref={fileInput}
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                event.target.value = '';
-                if (file) onImage(file);
+      <div role="group" aria-label="Entrada rápida" className="quick-tabs">
+        {tools.map((entry, index) => {
+          const active = tool === entry.id;
+          const isLifted = lifted === entry.id;
+          const y = tabY({ open: tool !== null, active, lifted: isLifted, fine });
+          // Un solo nombre a la vista: el de la pestaña señalada o, si no hay ninguna, el de la ficha abierta.
+          const named = isLifted || (active && lifted === null);
+          return (
+            <m.button
+              key={entry.id}
+              ref={(element) => {
+                tabs.current[entry.id] = element;
               }}
-            />
-          </>
-        ) : null}
-
-        {(hasText || !canVoice) && !recording ? (
-          <button
-            type="submit"
-            disabled={busy || !hasText}
-            className={`${BUTTON} bg-black text-white disabled:border-steel disabled:bg-transparent disabled:text-steel`}
-          >
-            Enviar
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={onToggleRecording}
-            disabled={busy}
-            aria-pressed={recording}
-            className={`${BUTTON} aria-pressed:bg-black aria-pressed:text-white`}
-          >
-            {recording ? (
-              <span
-                aria-hidden="true"
-                className="size-2.5 rounded-full bg-brand-orange motion-safe:animate-rec-pulse"
-              />
-            ) : null}
-            {recording ? 'Parar' : 'Voz'}
-          </button>
-        )}
-      </form>
-
-      <div className="mt-1 flex min-h-6 flex-wrap items-center gap-x-3 px-1">
-        {/* Fondo propio: la fila flota sobre el contenido que pasa por detrás y debe leerse siempre. */}
-        <p
-          id={statusId}
-          role="status"
-          className={`px-1 font-mono text-micro text-ash uppercase ${status.kind === 'idle' || status.kind === 'draft' ? '' : 'bg-black'}`}
-        >
-          {status.kind === 'recording' && `Grabando ${clock(status.seconds)}`}
-          {status.kind === 'uploading' && 'Subiendo…'}
-          {status.kind === 'processing' && (
-            <>
-              {status.label}
-              <span aria-hidden="true" className="motion-safe:animate-caret-blink">
-                _
-              </span>
-            </>
-          )}
-          {(status.kind === 'error' || status.kind === 'notice') && status.message}
-          {/* El borrador ya lo dice a la vista; aquí solo se anuncia a los lectores de pantalla. */}
-          {status.kind === 'draft' && <span className="sr-only">Borrador abierto: revisa y confirma</span>}
-          {status.kind === 'saved' && <span className="text-white">{status.message}</span>}
-        </p>
-        {status.kind === 'saved' && status.undoable && onUndo ? (
-          <button
-            type="button"
-            onClick={onUndo}
-            className="min-h-6 bg-black px-1 font-mono text-micro text-white uppercase underline underline-offset-4"
-          >
-            Deshacer
-          </button>
-        ) : null}
-        {statusActions.map((action) => (
-          <button
-            key={action.label}
-            type="button"
-            onClick={action.onClick}
-            className="min-h-6 bg-black px-1 font-mono text-micro text-white uppercase underline underline-offset-4"
-          >
-            {action.label}
-          </button>
-        ))}
-        {status.kind === 'error' && onRetry ? (
-          <button
-            type="button"
-            onClick={onRetry}
-            className="min-h-6 bg-black px-1 font-mono text-micro text-white uppercase underline underline-offset-4"
-          >
-            Reintentar
-          </button>
-        ) : null}
+              type="button"
+              aria-label={entry.label}
+              aria-expanded={active}
+              aria-controls={active ? cardId : undefined}
+              data-lit={active || isLifted || undefined}
+              className="quick-tab"
+              style={{ zIndex: named ? 30 : undefined }}
+              initial={{ y: TAB_HIDDEN }}
+              animate={{ y }}
+              whileTap={{ y: y + 3 }}
+              transition={{ ...springTab, delay: entered ? 0 : 0.2 + index * 0.06 }}
+              onHoverStart={() => setLifted(entry.id)}
+              onHoverEnd={() => setLifted((current) => (current === entry.id ? null : current))}
+              onFocus={(event) => {
+                if (event.currentTarget.matches(':focus-visible')) setLifted(entry.id);
+              }}
+              onBlur={() => setLifted((current) => (current === entry.id ? null : current))}
+              onClick={() => (active ? close() : open(entry.id))}
+            >
+              <Icon name={entry.icon} className="size-5 *:[vector-effect:non-scaling-stroke]" />
+              <AnimatePresence>
+                {named ? (
+                  <m.span
+                    key="name"
+                    aria-hidden="true"
+                    className="quick-tab__name"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 3, transition: exitFast }}
+                    transition={springSnap}
+                  >
+                    {entry.label}
+                  </m.span>
+                ) : null}
+              </AnimatePresence>
+            </m.button>
+          );
+        })}
       </div>
+
+      <AnimatePresence initial={false}>
+        {tool ? (
+          <m.div
+            key="card"
+            className="pointer-events-auto relative z-10 overflow-hidden shadow-hard"
+            initial={{ height: 0 }}
+            animate={{ height: 'auto' }}
+            exit={{ height: 0, transition: { duration: 0.2, ease: easeOutStrong } }}
+            transition={springSheet}
+          >
+            <div
+              id={cardId}
+              data-surface="paper"
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') close();
+              }}
+              className="border-2 border-black bg-white p-2"
+            >
+              <AnimatePresence mode="popLayout" initial={false}>
+                <m.div
+                  key={tool}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, transition: { duration: 0.16, ease: easeOutStrong } }}
+                  exit={{ opacity: 0, transition: { duration: 0.08 } }}
+                >
+                  {body}
+                </m.div>
+              </AnimatePresence>
+
+              <m.div
+                initial={false}
+                animate={{ height: showStatus ? 'auto' : 0, opacity: showStatus ? 1 : 0 }}
+                transition={springSnap}
+                className="overflow-hidden"
+              >
+                <div className="mt-2 flex min-h-8 flex-wrap items-center gap-x-3 gap-y-1 border-t-2 border-black px-2 pt-2">
+                  <p
+                    id={statusId}
+                    role="status"
+                    className={`font-mono text-micro uppercase ${status.kind === 'error' ? 'font-semibold text-black' : status.kind === 'saved' ? 'text-black' : 'text-steel'}`}
+                  >
+                    <AnimatePresence mode="popLayout" initial={false}>
+                      <m.span
+                        key={statusKey}
+                        className="inline-flex items-center gap-1.5"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4, transition: exitFast }}
+                        transition={springSnap}
+                      >
+                        {status.kind === 'recording' && <span className="sr-only">Grabando</span>}
+                        {status.kind === 'uploading' && 'Subiendo…'}
+                        {status.kind === 'processing' && (
+                          <>
+                            {status.label}
+                            <span aria-hidden="true" className="-ml-1.5 motion-safe:animate-caret-blink">
+                              _
+                            </span>
+                          </>
+                        )}
+                        {status.kind === 'error' && (
+                          <>
+                            <span aria-hidden="true">!</span>
+                            {status.message}
+                          </>
+                        )}
+                        {status.kind === 'notice' && status.message}
+                        {/* El borrador ya lo dice a la vista; aquí solo se anuncia a los lectores de pantalla. */}
+                        {status.kind === 'draft' && (
+                          <span className="sr-only">Borrador abierto: revisa y confirma</span>
+                        )}
+                        {status.kind === 'saved' && (
+                          <>
+                            <SavedCheck />
+                            {status.message}
+                          </>
+                        )}
+                      </m.span>
+                    </AnimatePresence>
+                  </p>
+                  {status.kind === 'saved' && status.undoable && onUndo ? (
+                    <button type="button" onClick={onUndo} className={STATUS_ACTION}>
+                      Deshacer
+                    </button>
+                  ) : null}
+                  {statusActions.map((action) => (
+                    <button key={action.label} type="button" onClick={action.onClick} className={STATUS_ACTION}>
+                      {action.label}
+                    </button>
+                  ))}
+                  {status.kind === 'error' && onRetry ? (
+                    <button type="button" onClick={onRetry} className={STATUS_ACTION}>
+                      Reintentar
+                    </button>
+                  ) : null}
+                </div>
+              </m.div>
+            </div>
+          </m.div>
+        ) : null}
+      </AnimatePresence>
+
+      {/* En móviles con barra de inicio, las pestañas se entierran bajo esta franja y no bajo el gesto del sistema. */}
+      <div aria-hidden="true" className="relative z-20 h-[env(safe-area-inset-bottom)] bg-black" />
+
+      <input
+        ref={fileInput}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = '';
+          if (file) onImage(file);
+        }}
+      />
     </div>
+  );
+}
+
+/** Confirmación de guardado: la marca se traza en vez de aparecer de golpe. */
+function SavedCheck() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 16 16"
+      className="size-3.5 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="square"
+      strokeLinejoin="miter"
+    >
+      <m.path
+        d="M2.5 8.5 6.5 12.5 13.5 4.5"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.32, ease: easeOutStrong, delay: 0.06 }}
+      />
+    </svg>
   );
 }
 ```
@@ -1829,6 +2236,9 @@ export const springSheet = { type: 'spring', stiffness: 300, damping: 30, mass: 
 /** Retroalimentación pequeña. ζ ≈ 0,94, asentamiento 0,16 s. */
 export const springSnap = { type: 'spring', stiffness: 700, damping: 50, mass: 1 } as const satisfies Transition;
 
+/** Pestañas de la barra de entrada: suben al pasar por encima. ζ ≈ 0,85, sobreoscilación ≈ 0,6 %, 0,22 s. */
+export const springTab = { type: 'spring', stiffness: 500, damping: 38, mass: 1 } as const satisfies Transition;
+
 export const easeOutStrong = [0.23, 1, 0.32, 1] as const;
 
 /** Las salidas siempre más rápidas que las entradas. */
@@ -1874,6 +2284,15 @@ La física no cambia: el mismo spring 300 / 30 vive en `springSheet` (Motion) y 
 | `DraftSheet` | Aparece / se va | Sube 24 px + opacidad / baja 12 px + opacidad | `springSheet` / 120 ms | Motion | Solo opacidad |
 | `DraftSheet` (móvil) | Arrastrar hacia abajo | Sigue al dedo; descarta si la velocidad lo indica | `springSheet` al soltar | Motion (`drag="y"`) | Botón `DESCARTAR` |
 | `DeltaChip` | Cambio de cifra | Sube 4 px + opacidad | `springSnap` | Motion | Solo opacidad |
+| Pestañas de la barra (1.4) | Carga | Salen de debajo del borde en cascada de 60 ms | `springTab` (500/38) | Motion | Aparecen sin desplazamiento |
+| Pestaña de la barra (1.4) | *Hover* o foco visible · *press* | Sale entera (14 px) y se enciende (color instantáneo) · baja 3 px | `springTab` | Motion | Sin desplazamiento; el color sí cambia |
+| Nombre de la pestaña (1.4) | *Hover*, foco visible o ficha abierta | La etiqueta sube 6 px + opacidad | `springSnap` · salida 120 ms | Motion | Solo opacidad |
+| Ficha de la barra (1.4) | Abre · cierra | Crece desde el borde con las pestañas encima · se recoge | `springSheet` · 200 ms `ease-out-strong` | Motion (`height`) | Igual: la altura no es un desplazamiento |
+| Punto de presencia (1.4) | En línea ↔ ausente ↔ sin conexión | El relleno crece o se vacía; el tachado se traza; el texto cambia con un fundido de 4 px | `springSnap` · 240 ms | Motion | Solo opacidad |
+| Aviso de guardado (1.4) | Guardar | La marca ✓ se traza | 320 ms `ease-out-strong` | Motion (`pathLength`) | Igual |
+| Cifra protagonista (1.4) | Cambia con la lámina abierta | Rueda hasta el valor nuevo | 700 ms, salida exponencial | `requestAnimationFrame` | Salta al valor final |
+| Barra de confianza (1.4) | Aparece el borrador | Se llena de 0 a su valor | `springSheet` con 150 ms de retardo | Motion | Aparece llena |
+| Mensaje del chat (1.4) | Llega | Sube 8 px + opacidad; los que ya estaban no se repiten | `springSheet` | Motion | Solo opacidad |
 
 Reglas de implementación:
 
@@ -1897,7 +2316,7 @@ Dos excepciones, ambas con propósito:
 }
 ```
 
-2. **El briefing de la mañana** en `01 // HOME`: la primera vez que se ve cada día, sus hallazgos entran en cascada. Es un momento diario, no frecuente, y la cascada guía la lectura del más al menos importante.
+2. **El briefing de la mañana** en `01 // INICIO`: la primera vez que se ve cada día, sus hallazgos entran en cascada. Es un momento diario, no frecuente, y la cascada guía la lectura del más al menos importante.
 
 ```tsx
 'use client';
@@ -1987,12 +2406,12 @@ Objetivo: **WCAG 2.2 AA**.
 | 1.4.1 Uso del color | Señales con signo y glifo; estados de pestaña con forma (contorno frente a relleno) además de color |
 | 1.4.4 / 1.4.10 Redimensión y reflujo | Tamaños en `rem`; sin scroll horizontal a 320 px salvo la tira de pestañas, que es un carrusel deliberado |
 | 2.1.1 Teclado | Todo es operable con teclado; foco visible siempre |
-| 2.1.4 Atajos de una tecla | `1`–`8` y `/` se desactivan desde `08 // SETTINGS` |
+| 2.1.4 Atajos de una tecla | `1`–`8` y `/` se desactivan desde `08 // AJUSTES` |
 | 2.4.1 Saltar bloques | Enlace «Saltar al contenido» |
 | 2.4.7 / 2.4.11 Foco visible y no tapado | Anillo de 3 px en el color de foco de la superficie; `scroll-padding-bottom` evita que la barra fija lo tape |
 | 2.5.3 Etiqueta en el nombre | El nombre accesible contiene el texto visible (`03 VAULT, Finanzas`) |
 | 2.5.8 Tamaño del objetivo | 44 × 44 px mínimo (el criterio pide 24) |
-| 3.1.1 / 3.1.2 Idioma | `lang="es"` en `html`; `lang="en"` en las etiquetas de módulo |
+| 3.1.1 / 3.1.2 Idioma | `lang="es"` en `html`. Desde la 1.4 las etiquetas de módulo también están en español |
 | 4.1.3 Mensajes de estado | Fila de estado de la barra con `role="status"`; avisos anunciados |
 | Colores forzados | Todas las fichas tienen borde; el foco usa `outline`, que el modo respeta |
 | Movimiento | `prefers-reduced-motion` en CSS, Motion y View Transitions |

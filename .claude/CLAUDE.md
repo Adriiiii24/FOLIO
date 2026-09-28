@@ -15,12 +15,12 @@ Proyecto doc-first: el diseño completo está en `docs/`. «DOSSIER_OS» fue el 
 - Si cambias una versión o un bloque de código de los documentos, vuelve a verificarlo: el SQL, ejecutándolo con la suite pgTAP; el TypeScript, con `tsc --strict`.
 - Las decisiones abiertas de PROPOSAL §8 son del usuario; no las tomes por tu cuenta: el orden de modelos de cada cadena tras el eval y el tope diario de IA por cuenta.
 - La IA propone y el usuario confirma: ninguna salida de un modelo escribe en tablas de dominio sin un borrador confirmado. Esto incluye la voz, que en el diseño previo guardaba la nota sin confirmar.
-- Textos y documentación en español; las etiquetas de módulo van en inglés (`03 // VAULT`).
+- Textos y documentación en español, también las etiquetas de módulo (`03 // FINANZAS`; decisión del usuario del 2026-09-28). Las rutas conservan el slug en inglés (`/vault`).
 - Al editar archivos con scripts de Python, usa cadenas crudas (`r'...'`) para las expresiones regulares: `\b` se convierte en un retroceso y rompe la regex sin error visible.
 
 ## Estado y siguiente paso
 
-Fase 1 (Setup & Auth) terminada a 2026-09-27, salvo la *preview*, que el usuario aplazó (ver abajo). Fase 2 (UI y CRUD de las 8 pestañas) terminada a 2026-09-28 con sus criterios cumplidos. Fase 3 (IA) construida a 2026-09-28 (PROPOSAL §5, ARCHITECTURE §3.0); los docs están en la versión 1.3.
+Fase 1 (Setup & Auth) terminada a 2026-09-27, salvo la *preview*, que el usuario aplazó (ver abajo). Fase 2 (UI y CRUD de las 8 pestañas) terminada a 2026-09-28 con sus criterios cumplidos. Fase 3 (IA) construida a 2026-09-28 (PROPOSAL §5, ARCHITECTURE §3.0). Refinado de la interfaz a 2026-09-28 (DESIGN_SYSTEM 1.4): etiquetas en español, hora con segundos, estado «Ausente» y barra de entrada en cuatro pestañas troqueladas enterradas, solo con el icono, que al señalarlas suben, se encienden y dicen su nombre (REGISTRAR, PREGUNTAR, FOTO, VOZ). El usuario probó botones circulares y los descartó: nada de curvas salvo el punto de estado. Después, repaso de Impeccable: fichas a su altura natural (con la corta fija junto a las listas largas), INICIO más compacto (fecha e índice en la primera pantalla), botones que parten su texto en vez de salirse y `devIndicators: false`.
 
 Repo y entorno:
 
@@ -55,7 +55,7 @@ Siguiente:
 
 1. **Línea base del eval** (criterio de salida de la Fase 3), con la cuota recién reiniciada: `EVAL_MODELS=gemini-3.8-flash,gemini-3.5-flash-lite npm run eval`. Guarda `evals/results/<fecha>.json`; versiónalo y resúmelo en PROPOSAL §5.
 2. **Decisiones del usuario** (PROPOSAL §8), con el eval y los límites reales delante: el tope diario por cuenta y el orden de modelos.
-3. **Revisión de Impeccable** de las superficies nuevas (chat, briefing, borrador con confianza, barra con iconos en móvil) y documentador (`DESIGN.md`).
+3. **Revisión de Impeccable** de las superficies nuevas (chat, briefing, borrador con confianza, barra de entrada en pestañas) y documentador (`DESIGN.md`, ya puesto al día a mano con la 1.4).
 4. **Pendientes técnicos:**
    - Sustituir los bloques del §3 de ARCHITECTURE por el código real (`check-blocks` da 23 distintos, todos del diseño previo).
    - Opcional: botón «Generar el briefing de hoy» en HOME. Hoy solo lo genera el cron, y los visitantes no lo verían hasta el día siguiente. Necesitaría el cliente administrativo, porque `daily_briefings` no admite INSERT con sesión.

@@ -19,14 +19,14 @@ Se considera un éxito si registrar cuesta un gesto (≤ 10 s de la foto del tic
 
 ## Positioning
 
-Una sola entrada para ocho dominios, con un solo modelo de datos. La pestaña activa da el contexto y un conmutador explícito separa registrar de preguntar. La IA propone y la persona confirma: ninguna salida de un modelo se guarda sin un borrador visible y editable. Y las cifras del briefing salen de SQL, nunca del modelo.
+Una sola entrada para ocho dominios, con un solo modelo de datos. La pestaña activa da el contexto y una pestaña por función (registrar, preguntar, foto y voz) separa registrar de preguntar. La IA propone y la persona confirma: ninguna salida de un modelo se guarda sin un borrador visible y editable. Y las cifras del briefing salen de SQL, nunca del modelo.
 
 ## Operating Context
 
 - **Uso frecuente y corto:** registrar entre series, en la caja o antes de dormir. Pesa más la velocidad que la exploración.
 - **Uso diario y largo:** el briefing de la mañana y las preguntas cruzadas en el chat.
 - **Los visitantes** exploran desde el enlace del portfolio con la cuenta vacía.
-- **Módulos (pestañas):** `01 // HOME` · `02 // GYM` · `03 // VAULT` · `04 // BRAIN` · `05 // NUTRITION` · `06 // MEDIA` · `07 // ROUTINE` · `08 // SETTINGS`.
+- **Módulos (pestañas):** `01 // INICIO` · `02 // GIMNASIO` · `03 // FINANZAS` · `04 // DIARIO` · `05 // NUTRICIÓN` · `06 // CULTURA` · `07 // RUTINA` · `08 // AJUSTES`. Las rutas conservan el slug en inglés (`/vault`).
 - **El día es siempre el día local de cada usuario** (`profiles.timezone`), nunca el del servidor.
 
 ## Capabilities and Constraints
@@ -34,7 +34,7 @@ Una sola entrada para ocho dominios, con un solo modelo de datos. La pestaña ac
 - **Stack:** Next.js 16 (App Router), React 19.3, Tailwind CSS v4, Motion, Supabase (Postgres con RLS, Auth, Storage, pgvector) y Vercel AI SDK. Las versiones exactas están en `docs/ARCHITECTURE.md` §0.
 - **Roadmap por fases** (`docs/PROPOSAL.md` §5). La Fase 1 está terminada. La Fase 2 cubre la interfaz y la creación, edición y borrado de datos a mano en los 8 módulos, con la barra de entrada solo para texto. La Fase 3 añade la IA: ingesta multimodal, chat con herramientas y briefing.
 - **Multiusuario de verdad:** cada visitante tiene sus datos aislados por RLS (probado con tests) y puede exportarlos y borrar su cuenta.
-- **Idioma:** textos en español con tuteo. Las etiquetas de módulo van en inglés (`03 // VAULT`).
+- **Idioma:** textos en español con tuteo, también las etiquetas de módulo (`03 // FINANZAS`).
 - **Despliegue:** Vercel, que el autor conectará al final del proyecto.
 - **Decisiones abiertas:**
   - Proveedor de visión y modelo por ruta: se deciden tras el eval, con Claude Opus 5 por defecto.

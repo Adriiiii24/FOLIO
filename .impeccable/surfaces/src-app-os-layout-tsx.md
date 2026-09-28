@@ -21,7 +21,7 @@ OWN-WORLD: The orange canvas #FF3B00 carries the system bar and the die-cut trap
 
 STORY: Visitors understand in one viewport that each tab is a folder of their life, see the headline number, log something from the bar, and trust it because every write is a confirmable draft.
 
-FIRST VIEWPORT: The orange band holds the system bar (FOLIO, local date and time, status dot) and the eight-tab strip, with the active tab raised and fused into the black folder. Inside the folder come the sheet header (● 03 // VAULT · MES EN CURSO), the display numeral spanning the width with its caption, and cards on a 4/8/12-column grid. The paper quick bar is fixed at the bottom.
+FIRST VIEWPORT: The orange band holds the system bar (FOLIO, local date and time, status dot) and the eight-tab strip, with the active tab raised and fused into the black folder. Inside the folder come the sheet header (● 03 // FINANZAS · MES EN CURSO), the display numeral spanning the width with its caption, and cards on a 4/8/12-column grid. Four icon-only, die-cut paper tabs (REGISTRAR, PREGUNTAR, FOTO, VOZ) sit buried in the bottom edge; hovering lifts one, lights it orange and shows its name, and pressing it pulls out its single-function card (DESIGN_SYSTEM 1.4).
 
 FORM: Pinned by the brief (DESIGN_SYSTEM.md), with no roll. Signature interaction: the sheet slides in from the side its folder sits on, with a 300/30 spring in a View Transition; keyboard switches stay instant. Seed key: none (pinned).
 

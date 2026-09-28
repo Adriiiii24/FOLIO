@@ -48,7 +48,7 @@ La vida cuantificada está fragmentada: una app por dominio, cada una con su sil
 
 ### 1.4 Visión
 
-Un archivador que se ordena solo. La metáfora es literal: cada pestaña es una carpeta de oficina con su índice numérico (`01 // HOME` … `08 // SETTINGS`), cada pantalla es una lámina dentro de esa carpeta y cada lámina tiene una **cifra protagonista** a tamaño de cartel. El lenguaje visual, diseño suizo con actitud brutalista, no es decoración: la jerarquía tipográfica agresiva existe para que la cifra que importa se lea en medio segundo (ver [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md)).
+Un archivador que se ordena solo. La metáfora es literal: cada pestaña es una carpeta de oficina con su índice numérico (`01 // INICIO` … `08 // AJUSTES`), cada pantalla es una lámina dentro de esa carpeta y cada lámina tiene una **cifra protagonista** a tamaño de cartel. El lenguaje visual, diseño suizo con actitud brutalista, no es decoración: la jerarquía tipográfica agresiva existe para que la cifra que importa se lea en medio segundo (ver [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md)).
 
 > [!IMPORTANT]
 > **«Autonomous» significa aquí autonomía acotada.** El sistema es autónomo para *leer, analizar, programar y proponer*, nunca para escribir datos del usuario sin confirmación. Toda escritura originada por IA pasa por un borrador visible y editable. Es una decisión de producto, no una limitación técnica: en datos de dinero y salud, un error silencioso cuesta más que un toque de confirmación.
@@ -113,12 +113,12 @@ flowchart TB
     MODE -->|"PREGUNTAR"| CHAT["Chat con herramientas"]
     DRAFT -->|"confirmar"| MODS
     subgraph MODS ["Módulos de registro"]
-        GYM["02 // GYM"]
-        VAULT["03 // VAULT"]
-        BRAIN["04 // BRAIN"]
-        NUT["05 // NUTRITION"]
-        MEDIA["06 // MEDIA"]
-        ROUT["07 // ROUTINE"]
+        GYM["02 // GIMNASIO"]
+        VAULT["03 // FINANZAS"]
+        BRAIN["04 // DIARIO"]
+        NUT["05 // NUTRICIÓN"]
+        MEDIA["06 // CULTURA"]
+        ROUT["07 // RUTINA"]
     end
     MODS --> AGG["Agregados SQL<br/>funciones RPC con RLS"]
     BRAIN --> VEC["Embeddings + texto completo"]
@@ -126,9 +126,9 @@ flowchart TB
     VEC --> CHAT
     AGG --> BRIEF["Briefing diario"]
     VEC --> BRIEF
-    BRIEF --> HOME["01 // HOME"]
+    BRIEF --> HOME["01 // INICIO"]
     CHAT --> HOME
-    SET["08 // SETTINGS<br/>objetivos · zona horaria · presupuesto de IA"] -.-> AGG
+    SET["08 // AJUSTES<br/>objetivos · zona horaria · presupuesto de IA"] -.-> AGG
     SET -.-> BRIEF
 ```
 
@@ -136,8 +136,8 @@ flowchart TB
 
 Es el mecanismo que diferencia a FOLIO de ocho apps pegadas: una barra flotante, siempre presente, que acepta texto, foto o voz. Dos reglas la hacen predecible:
 
-1. **La pestaña activa es el contexto.** Una foto en `03 // VAULT` es un ticket; en `05 // NUTRITION`, un plato. Fuera de esas pestañas, la barra pregunta «¿Ticket o plato?» con dos botones en vez de adivinar.
-2. **Dos modos explícitos, `REGISTRAR` y `PREGUNTAR`, no un clasificador.** Un clasificador de intención añade una llamada de IA, latencia y errores a la acción más frecuente del producto. Un conmutador visible cuesta cero y nunca se equivoca.
+1. **La pestaña activa es el contexto.** Una foto en `03 // FINANZAS` es un ticket; en `05 // NUTRICIÓN`, un plato. Fuera de esas pestañas, la barra pregunta «¿Ticket o plato?» con dos botones en vez de adivinar.
+2. **Dos modos explícitos, `REGISTRAR` y `PREGUNTAR`, no un clasificador.** Un clasificador de intención añade una llamada de IA, latencia y errores a la acción más frecuente del producto. Un conmutador visible cuesta cero y nunca se equivoca. Desde DESIGN_SYSTEM 1.4 el conmutador es una pestaña por función en la barra: REGISTRAR, PREGUNTAR, FOTO y VOZ.
 
 | Entrada | Pestaña | Interpretación por defecto |
 |---|---|---|
@@ -149,7 +149,7 @@ Es el mecanismo que diferencia a FOLIO de ocho apps pegadas: una barra flotante,
 
 ### 2.3 Detalle por módulo
 
-#### `01 // HOME` — Centro de mando
+#### `01 // INICIO` — Centro de mando
 
 **Utilidad:** responder «¿cómo voy hoy?» en un vistazo y ser la puerta de entrada de la IA.
 
@@ -160,7 +160,7 @@ Es el mecanismo que diferencia a FOLIO de ocho apps pegadas: una barra flotante,
 
 **Flujo de datos:** `daily_briefings` (una fila por usuario y día) + agregados por módulo (RPC) → Server Components → tarjetas. La interacción con el briefing (leído, útil / no útil) se guarda en `daily_briefings`.
 
-#### `02 // GYM` — Entrenamiento
+#### `02 // GIMNASIO` — Entrenamiento
 
 **Utilidad:** registrar sin fricción entre serie y serie, y ver la progresión real.
 
@@ -172,7 +172,7 @@ Es el mecanismo que diferencia a FOLIO de ocho apps pegadas: una barra flotante,
 **Flujo:** voz o formulario → borrador → `workouts` (sesión) + `workout_logs` (series) → RPC `exercise_progress`.
 **Fuera de v1:** plantillas de rutina, grupos musculares, *wearables*.
 
-#### `03 // VAULT` — Finanzas
+#### `03 // FINANZAS` — Finanzas
 
 **Utilidad:** saber a dónde va el dinero con el mínimo esfuerzo de registro.
 
@@ -184,7 +184,7 @@ Es el mecanismo que diferencia a FOLIO de ocho apps pegadas: una barra flotante,
 **Flujo:** foto → Storage `receipts/` → extracción → validación (`Σ bases + Σ cuotas = total ± 0,02 €`) → confirmación → `financial_transactions` (con `receipt_path` y `raw_extraction` para auditoría).
 **Fuera de v1:** sincronización bancaria, conversión de divisas, presupuestos por categoría.
 
-#### `04 // BRAIN` — Diario y segundo cerebro
+#### `04 // DIARIO` — Diario y segundo cerebro
 
 **Utilidad:** un diario consultable por significado, no solo por palabra exacta.
 
@@ -196,7 +196,7 @@ Es el mecanismo que diferencia a FOLIO de ocho apps pegadas: una barra flotante,
 
 **Flujo:** texto o voz → `notes` → *después de responder al usuario*, se calcula el embedding; la columna de texto completo es generada por Postgres.
 
-#### `05 // NUTRITION` — Macros
+#### `05 // NUTRICIÓN` — Macros
 
 **Utilidad:** llevar kcal y macros sin pesar ni buscar cada alimento.
 
@@ -208,7 +208,7 @@ Es el mecanismo que diferencia a FOLIO de ocho apps pegadas: una barra flotante,
 > [!WARNING]
 > **Límite honesto:** una foto no muestra el aceite, las salsas ni el peso real. La estimación se presenta con su confianza visible y se confirma siempre. El benchmark (§7) mide el error real en lugar de prometer una cifra.
 
-#### `06 // MEDIA` — Consumo cultural
+#### `06 // CULTURA` — Consumo cultural
 
 **Utilidad:** un registro único de lo que se lee, ve, escucha y juega.
 
@@ -218,7 +218,7 @@ Es el mecanismo que diferencia a FOLIO de ocho apps pegadas: una barra flotante,
 
 **Fuera de v1:** metadatos automáticos (TMDB, Open Library) y recomendaciones.
 
-#### `07 // ROUTINE` — Hábitos y foco
+#### `07 // RUTINA` — Hábitos y foco
 
 **Utilidad:** sostener hábitos y medir el tiempo de trabajo profundo.
 
@@ -231,7 +231,7 @@ Es el mecanismo que diferencia a FOLIO de ocho apps pegadas: una barra flotante,
 > [!NOTE]
 > El «día» es siempre el **día local del usuario** (`profiles.timezone`), nunca el `current_date` del servidor, que corre en UTC. Un check-in a las 00:30 en Madrid pertenece a ese día, no al anterior.
 
-#### `08 // SETTINGS` — Configuración
+#### `08 // AJUSTES` — Configuración
 
 - **Perfil:** nombre, zona horaria, moneda.
 - **Objetivos:** macros diarios y presupuesto mensual.
@@ -369,7 +369,7 @@ flowchart TD
     S3 --> S4{"4 · Validar<br/>¿marcadores y evidencias existen?"}
     S4 -->|"no, un reintento"| S3
     S4 -->|"sí"| S5["5 · Persistir<br/>daily_briefings + ai_runs"]
-    S5 --> S6["6 · Mostrar en 01 // HOME"]
+    S5 --> S6["6 · Mostrar en 01 // INICIO"]
 ```
 
 | Propiedad | Diseño |
@@ -501,13 +501,13 @@ Supuesto de planificación: **dedicación parcial, unas 15 h/semana**. Las fecha
 > [!NOTE]
 > **Estado a 2026-09-28: cumplido.** Medido sobre el build de producción en Chromium, con un móvil emulado (390 px y CPU ×4) y datos sintéticos:
 >
-> - **Teclado:** el primer Tab lleva al enlace de salto y el segundo a `01 // HOME`. Los atajos `1`–`8` y `/` funcionan y el foco siempre se ve.
+> - **Teclado:** el primer Tab lleva al enlace de salto y el segundo a `01 // INICIO`. Los atajos `1`–`8` y `/` funcionan y el foco siempre se ve.
 > - **axe:** 0 infracciones en 26 pantallas (las 8 pestañas, sus formularios de edición, el borrador y el login, con datos y sin ellos).
 > - **Rendimiento:** CLS 0 en las 8 pestañas e INP máximo de 64 ms.
 >
 > Desviaciones respecto al plan:
 >
-> - La barra de entrada es solo de texto, con un analizador determinista y sin IA. La pestaña activa decide qué se registra (en `03 // VAULT`, «12,40 Mercadona» es un gasto) y todo pasa por el borrador antes de guardarse. Si en `02 // GYM` o `03 // VAULT` no entiende el texto, lo deja en la barra y enseña un ejemplo del formato. En el resto de pestañas abre el borrador con el texto ya puesto.
+> - La barra de entrada es solo de texto, con un analizador determinista y sin IA. La pestaña activa decide qué se registra (en `03 // FINANZAS`, «12,40 Mercadona» es un gasto) y todo pasa por el borrador antes de guardarse. Si en `02 // GIMNASIO` o `03 // FINANZAS` no entiende el texto, lo deja en la barra y enseña un ejemplo del formato. En el resto de pestañas abre el borrador con el texto ya puesto.
 > - La transición de láminas y el resto de la identidad visual están en [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md), cuya nota de la versión 1.2 recoge lo que cambió al construir.
 
 ### Fase 3 — Integración de IA & Vector DB

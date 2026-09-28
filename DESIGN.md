@@ -151,18 +151,34 @@ components:
     typography: "{typography.label}"
     rounded: "{rounded.none}"
     padding: "2px 6px"
-  quick-bar:
+  quick-tab:
+    backgroundColor: "{colors.white}"
+    textColor: "{colors.black}"
+    rounded: "{rounded.none}"
+    padding: "12px 0 0"
+    width: "64px"
+    height: "48px"
+  quick-tab-lit:
+    backgroundColor: "{colors.brand-orange}"
+    textColor: "{colors.black}"
+  quick-tab-name:
+    backgroundColor: "{colors.white}"
+    textColor: "{colors.black}"
+    typography: "{typography.micro}"
+    rounded: "{rounded.none}"
+    padding: "4px 8px"
+  quick-card:
     backgroundColor: "{colors.white}"
     textColor: "{colors.black}"
     typography: "{typography.body}"
     rounded: "{rounded.none}"
-    padding: "6px"
+    padding: "8px"
     width: "min(100%, 768px)"
 ---
 
 # Design System: FOLIO
 
-Registro del mundo **tal como se construyó** al cerrar la Fase 2. La especificación normativa del autor sigue siendo `docs/DESIGN_SYSTEM.md` (tokens, código de componentes, motion, accesibilidad); este archivo no la sustituye ni copia su código: recoge los valores que el build fija y las desviaciones deliberadas respecto a ella. Si ambos discrepan en un valor, manda el build hasta que el autor actualice la especificación.
+Registro del mundo **tal como se construyó** al cerrar la Fase 2, con el refinado de la interfaz de `DESIGN_SYSTEM.md` 1.4 (etiquetas en español, barra de entrada en pestañas solo con icono, estado de presencia). La especificación normativa del autor sigue siendo `docs/DESIGN_SYSTEM.md` (tokens, código de componentes, motion, accesibilidad); este archivo no la sustituye ni copia su código: recoge los valores que el build fija y las desviaciones deliberadas respecto a ella. Si ambos discrepan en un valor, manda el build hasta que el autor actualice la especificación.
 
 ## Overview
 
@@ -203,7 +219,7 @@ Naranja de señal sobre negro absoluto, grises opacos para la estructura y tres 
 - **Amarillo Aviso** (signal-warn): umbral cercano o confianza baja.
 
 ### Named Rules
-**The Paper Means You Rule.** El blanco como superficie significa «te toca a ti». Solo lo llevan la barra de entrada, los borradores pendientes de confirmar y el formulario de acceso. Una ficha de datos nunca es blanca.
+**The Paper Means You Rule.** El blanco como superficie significa «te toca a ti». Solo lo llevan las pestañas y la ficha de la barra de entrada, los borradores pendientes de confirmar y el formulario de acceso. Una ficha de datos nunca es blanca.
 
 **The Orange Is State Rule.** Dentro de la carpeta el naranja solo dice *activo, foco o en vivo*, más la sombra de lo pulsable. Nunca rellena ni decora, y nunca significa «negativo».
 
@@ -233,17 +249,17 @@ Naranja de señal sobre negro absoluto, grises opacos para la estructura y tres 
 
 **The Tracking Polarity Rule.** El display se aprieta y las mayúsculas mono se abren. Nunca al revés.
 
-**The Label Case Rule.** Mayúsculas solo en etiquetas de tres palabras como máximo. Los párrafos y los títulos de ficha van en caja normal. Las etiquetas de módulo van en inglés con `lang="en"` (`03 // VAULT`) y el resto del texto, en español con tuteo.
+**The Label Case Rule.** Mayúsculas solo en etiquetas de tres palabras como máximo. Los párrafos y los títulos de ficha van en caja normal. Todo el texto va en español con tuteo, también las etiquetas de módulo (`03 // FINANZAS`). El código guarda el nombre en caja normal («Finanzas») y lo pone en mayúsculas el CSS, para que el lector de pantalla lo lea como palabra. Las rutas conservan el slug en inglés (`/vault`).
 
 **The Tabular Columns Rule.** Las tablas usan cifras tabulares y la cifra protagonista, proporcionales. Los números se formatean con `Intl` `es-ES`.
 
 ## Layout
 
-La pantalla es un archivador en tres bandas. Arriba, sobre el naranja, la barra de sistema (FOLIO / nombre, fecha y hora locales, punto de estado) en micro negra. Debajo, la tira de ocho pestañas, con la activa izada 8 px y fundida con la carpeta. El resto es la carpeta negra, que en escritorio se enmarca con 24 px de naranja a los lados y abajo y en móvil va a sangre.
+La pantalla es un archivador en tres bandas. Arriba, sobre el naranja, la barra de sistema (FOLIO / nombre, fecha y hora locales con segundos, estado de presencia) en micro negra. Debajo, la tira de ocho pestañas, con la activa izada 8 px y fundida con la carpeta. El resto es la carpeta negra, que en escritorio se enmarca con 24 px de naranja a los lados y abajo y en móvil va a sangre.
 
-Dentro de la carpeta, cada lámina es una rejilla de 4 columnas por debajo de 768 px, 8 entre 768 y 1023 px y 12 desde 1024 px. El medianil es de 16 px (24 px en escritorio) y el margen de lámina, de 16, 24 y 32 px. El orden es fijo: cabecera de lámina a ancho completo, cifra protagonista a ancho completo con su pie, y después fichas repartidas por columnas. La base es de 4 px y el ritmo vertical, de 8 px. Cada ficha es un contenedor de consulta: su maquetación interna responde a su propio ancho, no a la ventana.
+Dentro de la carpeta, cada lámina es una rejilla de 4 columnas por debajo de 768 px, 8 entre 768 y 1023 px y 12 desde 1024 px. La rejilla alinea arriba: cada ficha tiene su altura natural y ninguna se estira hasta la más alta de su fila. Desde 1024 px, la ficha corta que acompaña a una lista larga se queda fija al desplazarse (24 px bajo el borde superior). El medianil es de 16 px (24 px en escritorio) y el margen de lámina, de 16, 24 y 32 px. El orden es fijo: cabecera de lámina a ancho completo, cifra protagonista a ancho completo con su pie, y después fichas repartidas por columnas. INICIO es la excepción en escritorio: la fecha ocupa media lámina y la otra mitad lleva el índice de las seis carpetas en 3 × 2 (dos por fila en móvil), con la cifra de cada ficha ajustada a su ancho y con tope de 36 px. La base es de 4 px y el ritmo vertical, de 8 px. Cada ficha es un contenedor de consulta: su maquetación interna responde a su propio ancho, no a la ventana.
 
-La barra de entrada es fija abajo, centrada y con 768 px de ancho máximo; en escritorio flota a 24 px del borde. La carpeta reserva debajo su altura (96 px) más la zona segura, y `scroll-padding-bottom` impide que el foco quede tapado. La altura usa `min-h-dvh` y la rejilla raíz, `minmax(0, 1fr)`, para que en móvil nada desborde en horizontal.
+La barra de entrada son cuatro pestañas de papel, solo con el icono, centradas y enterradas en el borde inferior de la pantalla; su ficha, al abrirse, mide como mucho 768 px y llega hasta el borde. La carpeta reserva debajo lo que asoman las pestañas (56 px) más la zona segura, y `scroll-padding-bottom` impide que el foco quede tapado. La altura usa `min-h-dvh` y la rejilla raíz, `minmax(0, 1fr)`, para que en móvil nada desborde en horizontal.
 
 **Pestañas en móvil.** Por debajo de 1024 px la tira se desplaza en horizontal con snap y **todas las pestañas muestran su nombre**, no solo el índice. Es una desviación deliberada de la especificación, pensada para visitantes que llegan sin contexto. El separador `//` solo aparece desde 1280 px.
 
@@ -255,7 +271,7 @@ La profundidad es física, no atmosférica. Las superficies son opacas y planas:
 
 ### Shadow Vocabulary
 - **Hard SM** (`box-shadow: 2px 2px 0 0 var(--shadow-ink)`): definida en el token pero sin uso en el build de la Fase 2; queda para piezas pequeñas pulsables.
-- **Hard** (`box-shadow: 4px 4px 0 0 var(--shadow-ink)`): botón principal sobre la carpeta, ficha pulsable, barra de entrada, borrador y formulario de acceso.
+- **Hard** (`box-shadow: 4px 4px 0 0 var(--shadow-ink)`): botón principal sobre la carpeta, ficha pulsable, ficha de la barra de entrada, borrador y formulario de acceso.
 - **Hard LG** (`box-shadow: 6px 6px 0 0 var(--shadow-ink)`): *hover* de una ficha pulsable, que se levanta 2 px en diagonal.
 - **None** (`box-shadow: 0 0 #0000`): estado pulsado. El elemento se desplaza 4 px y la sombra desaparece.
 
@@ -268,15 +284,15 @@ La profundidad es física, no atmosférica. Las superficies son opacas y planas:
 
 ## Shapes
 
-Todo es rectangular y de esquina viva (radio 0). La única curva del sistema es el punto de estado (círculo de 8 a 10 px), que marca la lámina activa, el estado en línea y la grabación. Los bordes miden 0 o 2 px, sin ningún otro grosor. Todas las fichas llevan borde de 2 px aunque coincida con el fondo, porque en modo de colores forzados es lo único que las dibuja. Los iconos propios siguen la misma geometría: trazo de 2 px, terminaciones cuadradas, uniones en inglete y `currentColor`.
+Todo es rectangular y de esquina viva (radio 0). La única curva del sistema es el punto de estado (círculo de 8 a 10 px), que marca la lámina activa, la presencia (lleno en línea, hueco ausente, tachado sin conexión) y la grabación. El autor probó botones circulares en la barra de entrada y volvió a las líneas rectas. Los bordes miden 0 o 2 px, sin ningún otro grosor. Todas las fichas llevan borde de 2 px aunque coincida con el fondo, porque en modo de colores forzados es lo único que las dibuja. Los iconos propios siguen la misma geometría: trazo de 2 px, terminaciones cuadradas, uniones en inglete y `currentColor`.
 
-La silueta característica es la **pestaña troquelada**: un trapecio recortado con dos capas, un contorno negro y un relleno desplazado 2 px hacia dentro, cuya arista superior sube al izarse. La activa pierde 2 px por abajo para fundirse con la carpeta, sin costura.
+La silueta característica es la **pestaña troquelada**: un trapecio recortado con dos capas, un contorno negro y un relleno desplazado 2 px hacia dentro, cuya arista superior sube al izarse. La activa pierde 2 px por abajo para fundirse con la carpeta, sin costura. La misma silueta, en papel y solo con el icono, forma las pestañas de la barra de entrada, enterradas en el borde inferior.
 
 ## Components
 
 ### Buttons
 Bloques mono en mayúsculas que se hunden al pulsar.
-- **Shape:** esquina viva (0), borde de 2 px, 44 px de alto y 44 px de ancho mínimo, 16 px de relleno lateral, texto label.
+- **Shape:** esquina viva (0), borde de 2 px, 44 px de alto y 44 px de ancho mínimo, 16 px de relleno lateral, texto label. Nunca pasan del ancho de su contenedor: si la etiqueta no cabe, se parte en dos líneas centradas.
 - **Principal sobre carpeta:** blanco con texto negro y sombra dura naranja; al pulsar se hunde 4 px. Deshabilitado: acero y sin sombra.
 - **Principal sobre papel:** negro con texto blanco y **sin sombra** (The No Misprint Rule). *Hover*: acero; al pulsar baja 1 px.
 - **Secundario:** transparente con borde acero sobre la carpeta (blanco en *hover*) o negro sobre papel.
@@ -304,17 +320,23 @@ Bloques mono en mayúsculas que se hunden al pulsar.
 - **Nativo:** `color-scheme`, `caret-color` y `accent-color` siguen la superficie (naranja en la carpeta, negro en el papel). Los *placeholders* son ceniza sobre oscuro y acero sobre papel.
 
 ### Navigation
-- **Pestañas de carpeta:** ocho pestañas troqueladas de 48 px de alto con etiqueta label (`01 // HOME`). Las inactivas son naranjas con contorno negro; en *hover* (solo con puntero fino) se izan 4 px y al pulsar, 2 px. La activa es negra, se iza 8 px y se funde con la carpeta. La transición es de 160 ms en `clip-path` y `translate`, sin animar el color.
+- **Pestañas de carpeta:** ocho pestañas troqueladas de 48 px de alto con etiqueta label (`01 // INICIO`). Las inactivas son naranjas con contorno negro; en *hover* (solo con puntero fino) se izan 4 px y al pulsar, 2 px. La activa es negra, se iza 8 px y se funde con la carpeta. La transición es de 160 ms en `clip-path` y `translate`, sin animar el color.
 - **Móvil:** la tira se desplaza con snap y conserva los nombres. Cada pestaña mide 48 px de ancho mínimo.
 - **Teclado:** atajos de una tecla (que se pueden desactivar) y cambio de pestaña instantáneo, sin transición.
 - **Colores forzados:** los pseudo-elementos se sustituyen por un borde real de 2 px y la activa usa `Highlight`.
-- **Barra de sistema y cabecera de lámina:** microtipografía de esquina. La cabecera es el `h1`: punto naranja, índice, `//` y módulo en inglés, con el contexto alineado a la derecha.
+- **Barra de sistema y cabecera de lámina:** microtipografía de esquina. La cabecera es el `h1`: punto naranja, índice, `//` y módulo, con el contexto alineado a la derecha. La barra de sistema lleva la hora con segundos (mono, así que no baila) y, en la esquina, el estado: «En línea», «Ausente» (30 s sin actividad o la ventana sin foco) o «Sin conexión», con el punto detrás del texto para que no se mueva.
 
 ### Cifra protagonista (DisplayNumeral)
 Una sola por lámina, blanca y a ancho completo. La cifra se ajusta a la línea (The Fit-the-Line Rule), lleva debajo un pie en label ceniza y, opcionalmente, el delta. Los lectores de pantalla reciben la versión legible («Gasto del mes: 812,40 €»). La fecha usa `‘` como separador gráfico (`28‘09`), oculto a lectores de pantalla.
 
 ### Barra de entrada (QuickInputBar)
-Papel blanco con borde negro de 2 px, 6 px de relleno interno y sombra dura naranja, fija abajo. Al enfocarse, un contorno naranja de 3 px rodea toda la barra. En la Fase 2 **solo admite texto**: la barra recibe `capabilities`, que apaga preguntar, foto y voz, y el botón principal es siempre ENVIAR. En la Fase 3 se activan los tres sin cambiar la anatomía. Los *placeholders* son ejemplos concretos del módulo («12,40 Mercadona»). Debajo, una línea de estado en micro, con fondo negro propio cuando hay mensaje, ofrece DESHACER o REINTENTAR como enlaces subrayados. Lo escrito nunca se borra si no se ha podido usar.
+Cuatro pestañas troqueladas de papel en el borde inferior, solo con el icono: REGISTRAR, PREGUNTAR, FOTO y VOZ. Miden 64 × 48 px y asoman 34 px enterradas en el borde (44 en táctil). Al pasar por encima, la pestaña sale entera, se enciende en naranja y muestra su nombre en una etiqueta de papel (micro mono, borde de 2 px, esquina viva). Nunca flota: su base es el borde del que sale. Al pulsarla sale su ficha: papel blanco con borde negro de 2 px, 8 px de relleno y sombra dura naranja. Las pestañas viajan encima. La abierta queda entera sobre el borde de la ficha, encendida y con su nombre, y las demás se entierran tras ese borde.
+
+- **Una función por ficha.** REGISTRAR y PREGUNTAR llevan un campo y ENVIAR. FOTO abre el selector en el mismo gesto y ofrece ELEGIR FOTO. VOZ graba al pulsarla, con el punto naranja, el tiempo, CANCELAR y ENVIAR. La conversación de PREGUNTAR flota encima, en superficie oscura.
+- **Campo:** una línea de escritura de 2 px que pasa de acero a negro al enfocarse. No hay anillo alrededor de la barra: con la sombra dura quedaba descuadrado.
+- **Fila de estado:** dentro de la ficha, bajo una raya negra, y solo cuando hay mensaje. Micro en acero; los errores en negro seminegrita con `!` y los guardados con una ✓ que se traza. DESHACER, REINTENTAR y las acciones del contenedor van como enlaces subrayados.
+- **Cerrar:** ✕, Escape, la misma pestaña o pulsar fuera si no hay texto ni aviso. Con algo en curso o un borrador pendiente no se cierra ni se cambia. Lo escrito nunca se borra si no se ha podido usar, y cada campo conserva su texto al cerrar.
+- **Atajo `/`:** abre REGISTRAR con el foco en el campo.
 
 ### Borrador (DraftSheet)
 Papel blanco con borde negro y sombra dura, que sube sobre la barra de entrada con el muelle 300/30. Su cabecera es micro («Borrador · revisa antes de guardar» y el tipo). Todos los campos se editan en el sitio y nada se guarda hasta pulsar GUARDAR. El foco inicial va al primer campo y Escape descarta. Tiene una altura máxima de `min(68dvh, 42rem)` y se desplaza por dentro: **la fila GUARDAR · DESCARTAR es fija al pie**, sobre papel y con un borde superior negro de 2 px, para que las dos acciones estén siempre a la vista, también con el teclado abierto.
@@ -324,6 +346,16 @@ El estado vacío enseña a registrar sin disculparse: una raya hollín superior 
 
 ### Motion
 Muelle de lámina 300/30 (asienta en 0,31 s), muestreado a `linear()` para las View Transitions de 400 ms: la lámina entra 32 px (24 px en móvil) desde el lado de su pestaña. Las salidas duran 200 ms con `cubic-bezier(0.23, 1, 0.32, 1)`: siempre son más rápidas que las entradas. El muelle rápido es 700/50. El color nunca se anima. Con movimiento reducido queda un fundido de 120/80 ms sin desplazamiento, y el pulso de grabación y el cursor parpadeante solo corren con `motion-safe`.
+
+Desde la 1.4, el movimiento también explica estados:
+- Las pestañas de la barra salen del borde en cascada de 60 ms al cargar y suben al pasar por encima (muelle 500/38).
+- Su nombre aparece encima con un muelle rápido.
+- La ficha crece desde el borde con `springSheet` y se recoge en 200 ms. El naranja de encendido cambia sin transición.
+- El punto de presencia se llena o se vacía, y el tachado de «Sin conexión» se traza.
+- La ✓ de guardado se dibuja.
+- La barra de confianza del borrador se llena.
+- Los mensajes nuevos del chat suben 8 px.
+- La cifra protagonista rueda 700 ms hasta su valor nuevo solo cuando cambia con la lámina abierta (al guardar); al entrar en una pestaña no se anima.
 
 ## Do's and Don'ts
 
@@ -335,6 +367,7 @@ Muelle de lámina 300/30 (asienta en 0,31 s), muestreado a `linear()` para las V
 - **Do** medir cada control al menos 44 × 44 px y mantener los inputs a 16 px.
 - **Do** mantener GUARDAR y DESCARTAR siempre visibles en los borradores (fila fija al pie).
 - **Do** mostrar el nombre de todas las pestañas también en móvil.
+- **Do** dar a cada función de la barra de entrada su propia pestaña y su propia ficha, sin interruptores de modo.
 - **Do** recalibrar `--numeral-tracking` y `--glyph-em` midiendo en el navegador al cambiar la cara display.
 
 ### Don't:

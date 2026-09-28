@@ -261,7 +261,7 @@ $$;
 --     de un padre ajeno, porque las comprobaciones de FK no pasan por RLS.
 -- -----------------------------------------------------------------------------
 
--- 08 // SETTINGS -------------------------------------------------------------
+-- 08 // AJUSTES -------------------------------------------------------------
 create table public.profiles (
   id                      uuid primary key references auth.users (id) on delete cascade,
   display_name            text check (char_length(display_name) <= 80),
@@ -278,7 +278,7 @@ create table public.profiles (
   updated_at              timestamptz not null default now()
 );
 
--- 02 // GYM ------------------------------------------------------------------
+-- 02 // GIMNASIO ------------------------------------------------------------------
 create table public.workouts (
   id                uuid primary key default gen_random_uuid(),
   user_id           uuid not null default auth.uid() references auth.users (id) on delete cascade,
@@ -309,7 +309,7 @@ create table public.workout_logs (
   unique (workout_id, exercise, set_index)
 );
 
--- 03 // VAULT ----------------------------------------------------------------
+-- 03 // FINANZAS ----------------------------------------------------------------
 create table public.financial_transactions (
   id              uuid primary key default gen_random_uuid(),
   user_id         uuid not null default auth.uid() references auth.users (id) on delete cascade,
@@ -332,7 +332,7 @@ create table public.financial_transactions (
   updated_at      timestamptz not null default now()
 );
 
--- 04 // BRAIN ----------------------------------------------------------------
+-- 04 // DIARIO ----------------------------------------------------------------
 create table public.notes (
   id                uuid primary key default gen_random_uuid(),
   user_id           uuid not null default auth.uid() references auth.users (id) on delete cascade,
@@ -356,7 +356,7 @@ create table public.notes (
   updated_at        timestamptz not null default now()
 );
 
--- 05 // NUTRITION ------------------------------------------------------------
+-- 05 // NUTRICIÓN ------------------------------------------------------------
 create table public.macros (
   id              uuid primary key default gen_random_uuid(),
   user_id         uuid not null default auth.uid() references auth.users (id) on delete cascade,
@@ -377,7 +377,7 @@ create table public.macros (
   updated_at      timestamptz not null default now()
 );
 
--- 06 // MEDIA ----------------------------------------------------------------
+-- 06 // CULTURA ----------------------------------------------------------------
 create table public.media_items (
   id            uuid primary key default gen_random_uuid(),
   user_id       uuid not null default auth.uid() references auth.users (id) on delete cascade,
@@ -397,7 +397,7 @@ create table public.media_items (
   check (finished_on is null or started_on is null or finished_on >= started_on)
 );
 
--- 07 // ROUTINE --------------------------------------------------------------
+-- 07 // RUTINA --------------------------------------------------------------
 create table public.habits (
   id                 uuid primary key default gen_random_uuid(),
   user_id            uuid not null default auth.uid() references auth.users (id) on delete cascade,
@@ -440,7 +440,7 @@ create table public.focus_sessions (
   check (ended_at is null or ended_at > started_at)
 );
 
--- 01 // HOME · salida del agente programado ----------------------------------
+-- 01 // INICIO · salida del agente programado ----------------------------------
 create table public.daily_briefings (
   id             uuid primary key default gen_random_uuid(),
   user_id        uuid not null references auth.users (id) on delete cascade,
@@ -1359,7 +1359,7 @@ export async function signInWithGoogle(formData: FormData) {
   redirect(data.url);
 }
 
-/** Cierra la sesión de este dispositivo. Cerrar todas es una opción de 08 // SETTINGS. */
+/** Cierra la sesión de este dispositivo. Cerrar todas es una opción de 08 // AJUSTES. */
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut({ scope: 'local' });
