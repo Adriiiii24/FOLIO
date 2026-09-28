@@ -1,6 +1,6 @@
-# DOSSIER_OS — Propuesta de producto
+# FOLIO — Propuesta de producto
 
-> **Documento:** `PROPOSAL.md` · **Versión:** 1.1 · **Estado:** propuesta doc-first (previa al código) · **Fecha:** 2026-09-27
+> **Documento:** `PROPOSAL.md` · **Versión:** 1.2 · **Estado:** Fases 1 y 2 implementadas (1.0 y 1.1: propuesta doc-first) · **Fecha:** 2026-09-28
 > **Documentos hermanos:** [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) (identidad, tokens, componentes, motion) · [`ARCHITECTURE.md`](./ARCHITECTURE.md) (esquema SQL, RLS, pipeline de IA, estructura de carpetas)
 
 ---
@@ -23,7 +23,7 @@
 
 ### 1.1 En una frase
 
-**DOSSIER_OS** es un sistema operativo personal que archiva ocho áreas de la vida (entreno, dinero, diario, nutrición, consumo cultural, hábitos y foco, más un inicio y una configuración) en un único archivador digital, y usa IA multimodal para que registrar cueste un gesto y para que los datos de un área expliquen los de otra.
+**FOLIO** es un sistema operativo personal que archiva ocho áreas de la vida (entreno, dinero, diario, nutrición, consumo cultural, hábitos y foco, más un inicio y una configuración) en un único archivador digital, y usa IA multimodal para que registrar cueste un gesto y para que los datos de un área expliquen los de otra.
 
 ### 1.2 El problema
 
@@ -134,7 +134,7 @@ flowchart TB
 
 ### 2.2 La `QuickInputBar`: una sola entrada para todo el sistema
 
-Es el mecanismo que diferencia a DOSSIER_OS de ocho apps pegadas: una barra flotante, siempre presente, que acepta texto, foto o voz. Dos reglas la hacen predecible:
+Es el mecanismo que diferencia a FOLIO de ocho apps pegadas: una barra flotante, siempre presente, que acepta texto, foto o voz. Dos reglas la hacen predecible:
 
 1. **La pestaña activa es el contexto.** Una foto en `03 // VAULT` es un ticket; en `05 // NUTRITION`, un plato. Fuera de esas pestañas, la barra pregunta «¿Ticket o plato?» con dos botones en vez de adivinar.
 2. **Dos modos explícitos, `REGISTRAR` y `PREGUNTAR`, no un clasificador.** Un clasificador de intención añade una llamada de IA, latencia y errores a la acción más frecuente del producto. Un conmutador visible cuesta cero y nunca se equivoca.
@@ -498,6 +498,18 @@ Supuesto de planificación: **dedicación parcial, unas 15 h/semana**. Las fecha
 
 **Criterios de salida:** las 8 pestañas navegables solo con teclado · 0 violaciones graves o críticas de axe · CLS < 0,1 e INP < 200 ms en un móvil de gama media.
 
+> [!NOTE]
+> **Estado a 2026-09-28: cumplido.** Medido sobre el build de producción en Chromium, con un móvil emulado (390 px y CPU ×4) y datos sintéticos:
+>
+> - **Teclado:** el primer Tab lleva al enlace de salto y el segundo a `01 // HOME`. Los atajos `1`–`8` y `/` funcionan y el foco siempre se ve.
+> - **axe:** 0 infracciones en 26 pantallas (las 8 pestañas, sus formularios de edición, el borrador y el login, con datos y sin ellos).
+> - **Rendimiento:** CLS 0 en las 8 pestañas e INP máximo de 64 ms.
+>
+> Desviaciones respecto al plan:
+>
+> - La barra de entrada es solo de texto, con un analizador determinista y sin IA. La pestaña activa decide qué se registra (en `03 // VAULT`, «12,40 Mercadona» es un gasto) y todo pasa por el borrador antes de guardarse. Si en `02 // GYM` o `03 // VAULT` no entiende el texto, lo deja en la barra y enseña un ejemplo del formato. En el resto de pestañas abre el borrador con el texto ya puesto.
+> - La transición de láminas y el resto de la identidad visual están en [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md), cuya nota de la versión 1.2 recoge lo que cambió al construir.
+
 ### Fase 3 — Integración de IA & Vector DB
 
 **Objetivo:** la capa que convierte el CRUD en un sistema operativo.
@@ -526,7 +538,7 @@ Supuesto de planificación: **dedicación parcial, unas 15 h/semana**. Las fecha
 
 ```mermaid
 gantt
-    title DOSSIER_OS · plan orientativo con unas 15 h por semana
+    title FOLIO · plan orientativo con unas 15 h por semana
     dateFormat YYYY-MM-DD
     axisFormat %d/%m
     section Fase 0 · Doc-first
@@ -595,7 +607,8 @@ Lo que se publicará en `docs/BENCHMARK.md` al cerrar la Fase 4. Los umbrales so
 |---|---|---|
 | Proveedor de visión | Claude Opus 5 · Gemini Flash | Eval de tickets y platos: precisión × coste × latencia |
 | Modelo por ruta | Opus 5 en todas · Sonnet 5 o Haiku 4.5 en extracción | Decisión del autor tras el eval; el valor por defecto no baja por coste sin datos |
-| Tipografía de display | Space Grotesk (libre) · Helvetica Now Display (licencia comercial) | Presupuesto de licencia; ver `DESIGN_SYSTEM.md` §3 |
+| Tipografía de display | **Decidida (1.2): Helvetica Now Display.** Falta comprar la licencia web y conseguir los archivos; mientras tanto, Inter Tight | Ver `DESIGN_SYSTEM.md` §3 |
+| Presupuesto de IA por cuenta | El valor por defecto del esquema (25 USD al mes) · Un tope bajo para visitantes y el completo para el autor · IA solo para el autor | La app admite visitantes con cuenta propia (unas 10 personas; ver `PRODUCT.md`). Con 25 USD por cuenta, el peor caso supera los 250 USD al mes. Decisión del autor antes de activar la IA en la Fase 3 |
 | Programación del briefing | Cron diario de Vercel · `pg_cron` horario en Supabase | Diario basta con una zona horaria; horario si hay usuarios en varias zonas |
 | PWA y notificaciones | Sí · No en v1 | Margen al final de la Fase 4 |
 

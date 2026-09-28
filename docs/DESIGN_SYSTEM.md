@@ -1,11 +1,23 @@
-# DOSSIER_OS — Design System
+# FOLIO — Design System
 
-> **Documento:** `DESIGN_SYSTEM.md` · **Versión:** 1.1 · **Estado:** especificación doc-first (previa al código) · **Fecha:** 2026-09-27
+> **Documento:** `DESIGN_SYSTEM.md` · **Versión:** 1.2 · **Estado:** Fase 2 implementada (1.0 y 1.1: especificación doc-first) · **Fecha:** 2026-09-28
 > **Documentos hermanos:** [`PROPOSAL.md`](./PROPOSAL.md) (producto) · [`ARCHITECTURE.md`](./ARCHITECTURE.md) (datos, IA, carpetas)
 > **Stack de UI:** Next.js 16 · React 19.3 · Tailwind CSS 4.3 · Motion 13 (`motion/react`) · `next/font`
 
 > [!NOTE]
 > **Verificado el 2026-09-27:** el `globals.css` de §2.7 compila con Tailwind 4.3.3 y genera todas las utilidades que usan los componentes (la sombra contextual sale como `4px 4px 0 0 var(--shadow-ink)`, resuelta en cada elemento). Todos los componentes TSX compilan con `tsc --strict` contra Next.js 16.3.6, React 19.3.0 y Motion 13.4.4. Los contrastes de §2.3 y la curva `--ease-sheet` están calculados, no estimados. Falta verlo renderizado en navegadores reales.
+
+> [!IMPORTANT]
+> **Versión 1.2 (2026-09-28): lo que cambió al construir la Fase 2.** Los bloques de código de este documento se copian ahora del repositorio, que manda: `globals.css`, `fonts.ts`, `tabs.ts`, el layout del archivador, `FolderTabs`, `TabShortcuts`, `Sheet`, `BrutalistCard`, `DisplayNumeral`, `DeltaChip`, `QuickInputBar`, los tokens de motion y `MotionProvider`. El detalle visual derivado de lo construido está en `DESIGN.md`, en la raíz. Las reglas de este documento siguen siendo normativas; se desvían en estos puntos, todos verificados en el navegador:
+>
+> - **Tipografía display:** el autor eligió Helvetica Now Display (§3.1). Hasta tener la licencia y los `.woff2`, que no pueden ir al repositorio público, Inter Tight hace de sustituto.
+> - **Cifra protagonista (§5.5):** ocupa el ancho de su contenedor según su número de caracteres (`--chars`), con 15rem de tope. El tope de `--text-display` la dejaba en 72 px en móvil. Con Inter Tight el tracking es −0,03em, porque con −0,055em se tocaban las cifras («11»); hay que recalibrarlo con Helvetica. Lleva `padding-block-end: 0.1em` para que los descendentes no pisen la línea siguiente.
+> - **Pestañas en móvil (§5.2):** todas muestran su nombre, no solo el índice. Los visitantes llegan sin contexto y un «05» suelto no dice qué carpeta es. La tira se desplaza sola para enseñar la activa, sin `scrollIntoView`, que movía el punto de partida del tabulador. Con `forced-colors`, las pestañas llevan borde y la activa se pinta en `Highlight`.
+> - **Rejilla del archivador (§5.1):** `grid-cols-[minmax(0,1fr)]`. Sin ese mínimo, la tira de pestañas ensanchaba la página a 464–513 px en un móvil de 390.
+> - **Barra de entrada (§5.6):** la prop `capabilities` apaga `PREGUNTAR`, `FOTO` y `VOZ` hasta que exista la IA de la Fase 3. Mientras tanto, la barra es solo de texto, con un analizador determinista, y el botón principal es siempre `ENVIAR`. El interruptor dice «Preguntar», sin el glifo «?». Lo escrito solo se borra cuando se guarda.
+> - **Borrador (§5.7):** las acciones van en un pie fijo (`sticky`) dentro del papel, para que `GUARDAR` se vea sin desplazarse. Descartar devuelve el texto a la barra y Escape también descarta. `DESHACER` dura 5 s. Todavía no hay campo de confianza ni gesto de arrastre: llegan con la IA.
+> - **Controles de formulario:** clases `.control`, `.field-label`, `.field-hint` y `.field-error`, con variantes para `paper`. En papel, el botón principal no lleva sombra: sin el naranja detrás, la sombra negra sobre blanco ensuciaba.
+> - **`DeltaChip`:** anima con `requestAnimationFrame` en lugar de un estado dentro de un efecto, que prohíben las reglas de React 19.
 
 ---
 
@@ -41,7 +53,7 @@
 
 La referencia visual (archivo local, fuera del repositorio público) es un póster digital: un campo naranja saturado que ocupa media pantalla, un bloque negro anclado abajo, una cifra blanca gigantesca (`22‘98`) a todo el ancho, microtipografía en mayúsculas en las esquinas, un único punto naranja sobre el negro y tres etiquetas repartidas en la base (`HOME`, `CATALOG`, `CHART`).
 
-| Elemento de la referencia | Traducción en DOSSIER_OS |
+| Elemento de la referencia | Traducción en FOLIO |
 |---|---|
 | Campo naranja que domina la mitad superior | **`canvas`**: la mesa del archivador. Siempre visible como banda superior (barra de sistema + pestañas) y como marco en escritorio |
 | Bloque negro anclado | **`folder`**: la carpeta abierta, que ocupa el área de trabajo |
@@ -54,13 +66,13 @@ La referencia visual (archivo local, fuera del repositorio público) es un póst
 |---|---|
 | El degradado vertical del naranja | Contradice la regla de superficies opacas y planas, y convierte cada contraste en una incógnita |
 | Los caracteres chinos decorativos | Texto sin significado para quien usa el producto. Aquí cada rótulo dice algo |
-| La composición estática de póster | DOSSIER_OS es una herramienta de uso diario: la cifra **abre** la lámina y el resto se desplaza por debajo |
+| La composición estática de póster | FOLIO es una herramienta de uso diario: la cifra **abre** la lámina y el resto se desplaza por debajo |
 
 ### 1.2 La metáfora: cuatro superficies físicas
 
 ```text
 ┌──────────────────────────────────────────────┐  canvas  · #FF3B00 · la mesa del archivador
-│  DOSSIER_OS            DOM 27·09   ● EN LÍNEA │
+│  FOLIO                 DOM 27·09   ● EN LÍNEA │
 │  ┌01┐ ┌02┐ ┌03 // VAULT┐ ┌04┐ ┌05┐ ┌06┐ …     │  pestañas: la de delante está izada y es negra
 ├──┴──┴─┴──┴─┘           └─┴──┴─┴──┴─┴──┴───────┤
 │  folder · #000000 · la carpeta abierta        │
@@ -99,7 +111,7 @@ La referencia visual (archivo local, fuera del repositorio público) es un póst
 
 ### 1.4 Presupuesto de expresión
 
-DOSSIER_OS es una superficie de **operación**: quien la usa viene a completar una tarea (registrar, consultar, decidir). La identidad vive en los detalles precisos y nunca puede tapar la tarea.
+FOLIO es una superficie de **operación**: quien la usa viene a completar una tarea (registrar, consultar, decidir). La identidad vive en los detalles precisos y nunca puede tapar la tarea.
 
 | Recurso | Límite por lámina |
 |---|---|
@@ -111,7 +123,7 @@ DOSSIER_OS es una superficie de **operación**: quien la usa viene a completar u
 
 ### 1.5 Por qué oscuro
 
-**Escena física:** quien usa DOSSIER_OS lo abre a las 07:00 para leer el briefing, apunta series entre repeticiones bajo la luz del gimnasio, fotografía tickets en la caja del supermercado y dicta el diario de noche, en la cama.
+**Escena física:** quien usa FOLIO lo abre a las 07:00 para leer el briefing, apunta series entre repeticiones bajo la luz del gimnasio, fotografía tickets en la caja del supermercado y dicta el diario de noche, en la cama.
 
 Consecuencias: el área de trabajo es negra (uso nocturno, pantallas OLED), el naranja se limita a una banda y un marco para no deslumbrar, y cada acción frecuente cabe bajo el pulgar. Hay **un solo tema**: el sistema no ofrece modo claro porque la identidad *es* esta relación naranja-negro.
 
@@ -211,7 +223,7 @@ El color de un cambio depende de **la dirección y de si subir es bueno** en esa
 Ruta: `src/app/globals.css`.
 
 ```css
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ─────────────────────────────────────────────────────────────────
    1 · PRIMITIVOS — valores literales (sin `inline`).
@@ -264,17 +276,48 @@ Ruta: `src/app/globals.css`.
   /* Curvas (§6.2). --ease-sheet es el spring 300/30 muestreado; se regenera con scripts/spring-to-linear.ts. */
   --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
-  --ease-sheet: linear(0 0%, 0.049 5%, 0.161 10%, 0.297 15%, 0.435 20%, 0.561 25%, 0.669 30%, 0.758 35%, 0.829 40%, 0.883 45%, 0.923 50%, 0.952 55%, 0.972 60%, 0.985 65%, 0.994 70%, 1 75%, 1.003 80%, 1.004 85%, 1.004 90%, 1.004 95%, 1 100%);
+  --ease-sheet: linear(
+    0 0%,
+    0.049 5%,
+    0.161 10%,
+    0.297 15%,
+    0.435 20%,
+    0.561 25%,
+    0.669 30%,
+    0.758 35%,
+    0.829 40%,
+    0.883 45%,
+    0.923 50%,
+    0.952 55%,
+    0.972 60%,
+    0.985 65%,
+    0.994 70%,
+    1 75%,
+    1.003 80%,
+    1.004 85%,
+    1.004 90%,
+    1.004 95%,
+    1 100%
+  );
 
   --animate-rec-pulse: rec-pulse 1.2s var(--ease-in-out-strong) infinite;
   --animate-caret-blink: caret-blink 1s steps(1) infinite;
 
   @keyframes rec-pulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.35); opacity: 0.6; }
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.35);
+      opacity: 0.6;
+    }
   }
   @keyframes caret-blink {
-    50% { opacity: 0; }
+    50% {
+      opacity: 0;
+    }
   }
 }
 
@@ -282,7 +325,7 @@ Ruta: `src/app/globals.css`.
    2 · CONTEXTUALES — `inline` para que var() se resuelva en el elemento
    ───────────────────────────────────────────────────────────────── */
 @theme inline {
-  --font-display: var(--font-display-face), "Arial Narrow", Arial, sans-serif;
+  --font-display: var(--font-display-face), 'Arial Narrow', Arial, sans-serif;
   --font-sans: var(--font-sans-face), system-ui, sans-serif;
   --font-mono: var(--font-mono-face), ui-monospace, monospace;
 
@@ -320,14 +363,32 @@ Ruta: `src/app/globals.css`.
     scroll-padding-bottom: calc(var(--quick-bar-height) + env(safe-area-inset-bottom));
   }
 
-  [data-surface="canvas"] { background: var(--color-brand-orange); color: var(--color-black); }
-  [data-surface="folder"] { background: var(--color-black); color: var(--color-white); }
-  [data-surface="paper"]  { background: var(--color-white); color: var(--color-black); }
+  [data-surface='canvas'] {
+    background: var(--color-brand-orange);
+    color: var(--color-black);
+  }
+  [data-surface='folder'] {
+    background: var(--color-black);
+    color: var(--color-white);
+  }
+  [data-surface='paper'] {
+    background: var(--color-white);
+    color: var(--color-black);
+  }
 
   /* La superficie define la tinta para lo que se apoya ENCIMA, no para sí misma. */
-  [data-surface="canvas"] > * { --shadow-ink: var(--color-black); --focus-ring: var(--color-black); }
-  [data-surface="folder"] > * { --shadow-ink: var(--color-brand-orange); --focus-ring: var(--color-brand-orange); }
-  [data-surface="paper"]  > * { --shadow-ink: var(--color-black); --focus-ring: var(--color-black); }
+  [data-surface='canvas'] > * {
+    --shadow-ink: var(--color-black);
+    --focus-ring: var(--color-black);
+  }
+  [data-surface='folder'] > * {
+    --shadow-ink: var(--color-brand-orange);
+    --focus-ring: var(--color-brand-orange);
+  }
+  [data-surface='paper'] > * {
+    --shadow-ink: var(--color-black);
+    --focus-ring: var(--color-black);
+  }
 
   :focus-visible {
     outline: 3px solid var(--focus-ring);
@@ -340,7 +401,9 @@ Ruta: `src/app/globals.css`.
   }
 
   @media (max-width: 47.99rem) {
-    :root { --sheet-offset: 24px; }
+    :root {
+      --sheet-offset: 24px;
+    }
   }
 }
 
@@ -349,16 +412,20 @@ Ruta: `src/app/globals.css`.
    ───────────────────────────────────────────────────────────────── */
 @layer components {
   /* §5.2 FolderTabs */
-  .folder-tabs { padding-inline: 16px; }
+  .folder-tabs {
+    padding-inline: 16px;
+  }
   .folder-tabs__list {
     display: grid;
     grid-template-columns: repeat(8, minmax(0, 1fr));
     gap: 4px;
   }
-  .folder-tabs__list > li { display: flex; }
+  .folder-tabs__list > li {
+    display: flex;
+  }
 
   .folder-tab {
-    --tab-rise: 0px;                       /* 0 inactiva · 4px hover · 8px activa */
+    --tab-rise: 0px; /* 0 inactiva · 4px hover · 8px activa */
     --tab-fill: var(--color-brand-orange);
     --tab-ink: var(--color-black);
     position: relative;
@@ -366,7 +433,7 @@ Ruta: `src/app/globals.css`.
     display: flex;
     flex: 1;
     align-items: flex-end;
-    height: 48px;                          /* caja fija: el área táctil nunca cambia */
+    height: 48px; /* caja fija: el área táctil nunca cambia */
     padding: 0 14px 10px;
     color: var(--tab-ink);
     text-decoration: none;
@@ -374,14 +441,25 @@ Ruta: `src/app/globals.css`.
   /* Dos capas recortadas: contorno negro y relleno desplazado 2 px hacia dentro. */
   .folder-tab::before,
   .folder-tab::after {
-    content: "";
+    content: '';
     position: absolute;
     z-index: -1;
-    clip-path: polygon(10px calc(8px - var(--tab-rise)), calc(100% - 10px) calc(8px - var(--tab-rise)), 100% 100%, 0 100%);
+    clip-path: polygon(
+      10px calc(8px - var(--tab-rise)),
+      calc(100% - 10px) calc(8px - var(--tab-rise)),
+      100% 100%,
+      0 100%
+    );
     transition: clip-path var(--duration-fast) var(--ease-out-strong);
   }
-  .folder-tab::before { inset: 0; background: var(--color-black); }
-  .folder-tab::after  { inset: 2px 2px 0; background: var(--tab-fill); }
+  .folder-tab::before {
+    inset: 0;
+    background: var(--color-black);
+  }
+  .folder-tab::after {
+    inset: 2px 2px 0;
+    background: var(--tab-fill);
+  }
 
   .folder-tab__label {
     display: flex;
@@ -397,19 +475,23 @@ Ruta: `src/app/globals.css`.
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .folder-tab:not([aria-current="page"]):hover { --tab-rise: 4px; }
+    .folder-tab:not([aria-current='page']):hover {
+      --tab-rise: 4px;
+    }
   }
-  .folder-tab:not([aria-current="page"]):active { --tab-rise: 2px; }
+  .folder-tab:not([aria-current='page']):active {
+    --tab-rise: 2px;
+  }
 
-  .folder-tab[aria-current="page"] {
+  .folder-tab[aria-current='page'] {
     --tab-rise: 8px;
     --tab-fill: var(--color-black);
     --tab-ink: var(--color-white);
     z-index: 1;
-    margin-bottom: -2px;                   /* se funde con la carpeta: sin costura */
+    margin-bottom: -2px; /* se funde con la carpeta: sin costura */
   }
 
-  /* < 1024 px: la tira se reduce a índices y desliza; la activa despliega su nombre. */
+  /* < 1024 px: la tira desliza en horizontal con snap; cada pestaña conserva su nombre (ver abajo). */
   @media (max-width: 63.99rem) {
     .folder-tabs__list {
       display: flex;
@@ -418,25 +500,46 @@ Ruta: `src/app/globals.css`.
       scroll-snap-type: x proximity;
       scroll-padding-inline: 16px;
     }
-    .folder-tabs__list > li { flex: none; }
-    .folder-tab { min-width: 48px; padding-inline: 12px; scroll-snap-align: start; }
-    .folder-tab:not([aria-current="page"]) .folder-tab__name { display: none; }
+    .folder-tabs__list > li {
+      flex: none;
+    }
+    .folder-tab {
+      min-width: 48px;
+      padding-inline: 12px;
+      scroll-snap-align: start;
+    }
+    /* FOLIO: DESIGN_SYSTEM §5.2 ocultaba aquí el nombre de las pestañas inactivas («05»). Con visitantes que
+       llegan sin contexto (PRODUCT.md), un número suelto no dice qué carpeta es: todas llevan su nombre y la
+       tira se desplaza con snap. */
   }
   /* El separador «//» solo cabe a partir de 1280 px. */
   @media (max-width: 79.99rem) {
-    .folder-tab__sep { display: none; }
+    .folder-tab__sep {
+      display: none;
+    }
   }
   @media (min-width: 64rem) {
-    .folder-tabs { padding-inline: 0; }
+    .folder-tabs {
+      padding-inline: 0;
+    }
   }
 
   /* §5.5 DisplayNumeral: la cifra se ajusta al ancho de su contenedor según su número de caracteres. */
   .numeral {
-    font-family: var(--font-display-face), "Arial Narrow", Arial, sans-serif;
+    /* FOLIO: la cifra ocupa la línea (§5.5) con tope de 15rem. Con --text-display como tope, en móvil se
+       quedaba en 72 px y media línea vacía.
+       El tracking y el ancho medio de glifo dependen de la cara: −0,055em es para Space Grotesk o Helvetica;
+       Inter Tight (sustituto temporal) ya es estrecha y con ese valor se tocaban las cifras («11», «17»).
+       --glyph-em medido en el navegador con −0,03em. Recalibrar los dos al pasar a Helvetica Now Display. */
+    --numeral-tracking: -0.03em;
+    --glyph-em: 0.54;
+    font-family: var(--font-display-face), 'Arial Narrow', Arial, sans-serif;
     font-weight: 700;
-    font-size: min(var(--text-display), calc(100cqi / (var(--chars, 5) * var(--glyph-em, 0.62))));
+    font-size: min(15rem, calc(100cqi / (var(--chars, 5) * var(--glyph-em))));
+    /* Con interlineado 0,82, la coma, la g o la ‘ bajan fuera de la caja y pisarían el pie. */
+    padding-block-end: 0.1em;
     line-height: 0.82;
-    letter-spacing: -0.055em;
+    letter-spacing: var(--numeral-tracking);
     font-variant-numeric: proportional-nums lining-nums;
     white-space: nowrap;
   }
@@ -451,25 +554,196 @@ Ruta: `src/app/globals.css`.
   animation: none;
 }
 
-::view-transition-new(.sheet-in-from-right) { animation: sheet-in-from-right var(--duration-sheet) var(--ease-sheet) both; }
-::view-transition-new(.sheet-in-from-left)  { animation: sheet-in-from-left var(--duration-sheet) var(--ease-sheet) both; }
-::view-transition-old(.sheet-out-to-left)   { animation: sheet-out-to-left var(--duration-exit) var(--ease-out-strong) both; }
-::view-transition-old(.sheet-out-to-right)  { animation: sheet-out-to-right var(--duration-exit) var(--ease-out-strong) both; }
+::view-transition-new(.sheet-in-from-right) {
+  animation: sheet-in-from-right var(--duration-sheet) var(--ease-sheet) both;
+}
+::view-transition-new(.sheet-in-from-left) {
+  animation: sheet-in-from-left var(--duration-sheet) var(--ease-sheet) both;
+}
+::view-transition-old(.sheet-out-to-left) {
+  animation: sheet-out-to-left var(--duration-exit) var(--ease-out-strong) both;
+}
+::view-transition-old(.sheet-out-to-right) {
+  animation: sheet-out-to-right var(--duration-exit) var(--ease-out-strong) both;
+}
 
-@keyframes sheet-in-from-right { from { transform: translateX(var(--sheet-offset)); opacity: 0; } }
-@keyframes sheet-in-from-left  { from { transform: translateX(calc(var(--sheet-offset) * -1)); opacity: 0; } }
-@keyframes sheet-out-to-left   { to { transform: translateX(calc(var(--sheet-offset) * -1)); opacity: 0; } }
-@keyframes sheet-out-to-right  { to { transform: translateX(var(--sheet-offset)); opacity: 0; } }
+@keyframes sheet-in-from-right {
+  from {
+    transform: translateX(var(--sheet-offset));
+    opacity: 0;
+  }
+}
+@keyframes sheet-in-from-left {
+  from {
+    transform: translateX(calc(var(--sheet-offset) * -1));
+    opacity: 0;
+  }
+}
+@keyframes sheet-out-to-left {
+  to {
+    transform: translateX(calc(var(--sheet-offset) * -1));
+    opacity: 0;
+  }
+}
+@keyframes sheet-out-to-right {
+  to {
+    transform: translateX(var(--sheet-offset));
+    opacity: 0;
+  }
+}
 
 /* Movimiento reducido: menos movimiento, no cero. Se conserva un fundido corto sin desplazamiento. */
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-new(.sheet-in-from-right),
-  ::view-transition-new(.sheet-in-from-left) { animation: sheet-fade-in 120ms linear both; }
+  ::view-transition-new(.sheet-in-from-left) {
+    animation: sheet-fade-in 120ms linear both;
+  }
   ::view-transition-old(.sheet-out-to-left),
-  ::view-transition-old(.sheet-out-to-right) { animation: sheet-fade-out 80ms linear both; }
+  ::view-transition-old(.sheet-out-to-right) {
+    animation: sheet-fade-out 80ms linear both;
+  }
 }
-@keyframes sheet-fade-in  { from { opacity: 0; } }
-@keyframes sheet-fade-out { to { opacity: 0; } }
+@keyframes sheet-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes sheet-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   6 · FOLIO — extensiones sobre DESIGN_SYSTEM §2.7
+   ───────────────────────────────────────────────────────────────── */
+@layer components {
+  /* §6.5: contenido que llega por streaming después de la lámina. */
+  .stream-reveal {
+    transition: opacity var(--duration-fast) var(--ease-out-strong);
+    @starting-style {
+      opacity: 0;
+    }
+  }
+}
+
+@layer base {
+  /* Lo que el navegador dibuja por su cuenta también lleva el sistema. */
+  html {
+    scrollbar-color: var(--color-steel) var(--color-black);
+    scrollbar-width: thin;
+  }
+  [data-surface='folder'] {
+    color-scheme: dark;
+    caret-color: var(--color-brand-orange);
+    accent-color: var(--color-brand-orange);
+  }
+  [data-surface='paper'] {
+    color-scheme: light;
+    caret-color: var(--color-black);
+    accent-color: var(--color-black);
+  }
+  [data-surface='canvas'] {
+    color-scheme: light;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-ash);
+    opacity: 1;
+  }
+  [data-surface='paper'] input::placeholder,
+  [data-surface='paper'] textarea::placeholder {
+    color: var(--color-steel);
+  }
+
+  /* Cifras de tablas y columnas: tabulares (§3.4). */
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Colores forzados (§8): las pestañas se dibujan con pseudo-elementos que el modo elimina;
+   se sustituyen por un borde real y el estado activo por el color de sistema de selección. */
+@media (forced-colors: active) {
+  .folder-tab {
+    border: 2px solid CanvasText;
+  }
+  .folder-tab::before,
+  .folder-tab::after {
+    display: none;
+  }
+  .folder-tab[aria-current='page'] {
+    border-color: Highlight;
+    color: Highlight;
+  }
+}
+
+/* Controles de formulario según la superficie: negros en la carpeta, blancos en el papel (borradores).
+   Sobre papel, ni `ash` ni `signal-down` dan contraste de texto (§2.3): etiquetas en `steel`, errores en negro. */
+@layer components {
+  .control {
+    border: 2px solid var(--color-steel);
+    background: var(--color-black);
+    color: var(--color-white);
+    border-radius: 0;
+  }
+  .control:hover:not(:disabled) {
+    border-color: var(--color-ash);
+  }
+  .control[aria-invalid='true'] {
+    border-color: var(--color-signal-down);
+  }
+  .control:disabled {
+    color: var(--color-ash);
+  }
+  .field-label {
+    color: var(--color-ash);
+  }
+  .field-hint {
+    color: var(--color-ash);
+  }
+  .field-error {
+    color: var(--color-signal-down);
+  }
+
+  [data-surface='paper'] .control {
+    border-color: var(--color-black);
+    background: var(--color-white);
+    color: var(--color-black);
+  }
+  [data-surface='paper'] .control:hover:not(:disabled) {
+    border-color: var(--color-steel);
+  }
+  [data-surface='paper'] .control[aria-invalid='true'] {
+    border-color: var(--color-black);
+    border-style: dashed;
+  }
+  [data-surface='paper'] .field-label,
+  [data-surface='paper'] .field-hint {
+    color: var(--color-steel);
+  }
+  [data-surface='paper'] .field-error {
+    color: var(--color-black);
+    font-weight: 600;
+  }
+}
+
+/* Borrador (§5.7): GUARDAR y DESCARTAR siempre a la vista. Si el formulario no cabe (móvil, teclado abierto),
+   se desplaza por dentro del papel y la fila de acciones queda fija al pie, tapando el relleno inferior. */
+@layer components {
+  .draft-sheet [data-form-actions] {
+    position: sticky;
+    /* Chrome descuenta el relleno del contenedor (p-4) del área de sticky: −1rem la deja a ras del borde. */
+    bottom: -1rem;
+    z-index: 1;
+    margin-inline: -1rem;
+    margin-block-end: -1rem;
+    padding: 0.75rem 1rem;
+    background: var(--color-white);
+    border-top: 2px solid var(--color-black);
+  }
+}
 ```
 
 ---
@@ -480,31 +754,36 @@ Ruta: `src/app/globals.css`.
 
 | Rol | Familia | Pesos disponibles | Licencia | Carga | Estado |
 |---|---|---|---|---|---|
-| Display: cifras y titulares | **Space Grotesk** | 300–700 (variable) | SIL OFL | `next/font/google` | **Por defecto** |
-| Display, alternativa | Helvetica Now Display | Hasta Black | Comercial (Monotype) | `next/font/local` | Solo con licencia web |
+| Display: cifras y titulares | **Helvetica Now Display** | Hasta Black | Comercial (Monotype) | `next/font/local` | **Elegida por el autor**; pendiente de licencia web y archivos |
+| Display, sustituto temporal | Inter Tight | 100–900 (variable) | SIL OFL | `next/font/google` | **En uso** hasta tener Helvetica |
+| Display, opción descartada | Space Grotesk | 300–700 (variable) | SIL OFL | `next/font/google` | Era la opción por defecto de la 1.1 |
 | UI y texto | **Geist** | 100–900 (variable) | SIL OFL | `next/font/google` | **Por defecto** |
 | Datos, índices y etiquetas | **Geist Mono** | 100–900 (variable) | SIL OFL | `next/font/google` | **Por defecto** |
 
 > [!WARNING]
 > **«Ultra-bold» no existe en Space Grotesk:** su techo es 700. A tamaño cartel, 700 se lee como negrita plena, pero no llega a *black*. Si la jerarquía exige 800–900, la única opción del brief es Helvetica Now Display, que requiere licencia comercial (no puede subirse a un repositorio público). Syne llega a 800, pero su dibujo ancho y excéntrico pertenece a otra tradición, no al diseño suizo.
 
-**Por qué esta combinación.** Space Grotesk y Syne son de las caras más repetidas en interfaces generadas; Space Grotesk se mantiene porque el brief la nombra, porque tiene cifras tabulares y porque su dibujo industrial encaja con la metáfora del archivador. Si se busca distinción real, el camino es Helvetica Now Display, la heredera directa de la tradición suiza. Para la UI, Geist es una cara de trabajo neutra con hermana mono, lo que permite un sistema de dos familias y tres papeles. Space Grotesk y Geist no compiten porque **nunca aparecen a tamaños parecidos**: Space Grotesk solo a partir de 36 px.
+**Por qué esta combinación.** En la 1.2 el autor eligió Helvetica Now Display, la opción que este párrafo dejaba para quien buscara distinción real. El resto es el razonamiento de la 1.1. Space Grotesk y Syne son de las caras más repetidas en interfaces generadas; Space Grotesk se mantiene porque el brief la nombra, porque tiene cifras tabulares y porque su dibujo industrial encaja con la metáfora del archivador. Si se busca distinción real, el camino es Helvetica Now Display, la heredera directa de la tradición suiza. Para la UI, Geist es una cara de trabajo neutra con hermana mono, lo que permite un sistema de dos familias y tres papeles. Space Grotesk y Geist no compiten porque **nunca aparecen a tamaños parecidos**: Space Grotesk solo a partir de 36 px.
 
 ### 3.2 Carga con `next/font`
 
 Ruta: `src/app/fonts.ts`. Las variables tienen nombres neutros (`--font-display-face`), así que cambiar de familia es una línea y ningún CSS se entera.
 
 ```ts
-import { Geist, Geist_Mono, Space_Grotesk } from 'next/font/google';
+import { Geist, Geist_Mono, Inter_Tight } from 'next/font/google';
 
-export const displayFace = Space_Grotesk({ subsets: ['latin'], variable: '--font-display-face', display: 'swap' });
+// Display: Helvetica Now Display (decisión del autor, PRODUCT.md). Requiere licencia web y sus .woff2
+// no pueden ir al repositorio público. Hasta tenerlos, Inter Tight hace de sustituto temporal: grotesca
+// neutra, autoalojada por next/font y con cortes hasta Black. Con los archivos, este export pasa a ser
+// el localFont de DESIGN_SYSTEM §3.2; la variable CSS no cambia y ningún componente se entera.
+export const displayFace = Inter_Tight({ subsets: ['latin'], variable: '--font-display-face', display: 'swap' });
 export const sansFace = Geist({ subsets: ['latin'], variable: '--font-sans-face', display: 'swap' });
 export const monoFace = Geist_Mono({ subsets: ['latin'], variable: '--font-mono-face', display: 'swap' });
 
 export const fontVariables = `${displayFace.variable} ${sansFace.variable} ${monoFace.variable}`;
 ```
 
-Alternativa con licencia:
+Con la licencia y los archivos, `displayFace` pasa a ser este `localFont`. Los `.woff2` no pueden publicarse en el repositorio público: tienen que llegar al build por otra vía (por ejemplo, un secreto de Vercel que los descargue antes de compilar). Al cambiar de cara, hay que recalibrar `--numeral-tracking` y `--glyph-em` en `.numeral` (§5.5):
 
 ```ts
 import localFont from 'next/font/local';
@@ -526,7 +805,7 @@ export const displayFace = localFont({
 
 | Utilidad | Tamaño | Interlineado | Tracking | Peso | Familia | Uso |
 |---|---|---|---|---|---|---|
-| `text-display` | `clamp(4.5rem, 17vw, 15rem)` | 0,82 | −0,055em | 700 | Display | Cifra protagonista |
+| `text-display` | `clamp(4.5rem, 17vw, 15rem)` | 0,82 | −0,055em | 700 | Display | Cifra protagonista en la 1.1. En la 1.2, `.numeral` usa su propia fórmula de ajuste al ancho (§5.5), con 15rem de tope y −0,03em con Inter Tight; el token queda para usos puntuales |
 | `text-headline` | `clamp(2.25rem, 5vw, 4rem)` | 0,95 | −0,03em | 700 | Display | Titular del briefing, cabecera de lámina |
 | `text-title` | 24 px | 1,15 | −0,01em | 600 | Sans | Título de ficha |
 | `text-body` | 16 px | 1,5 | 0 | 400 | Sans | Texto corrido, inputs (evita el zoom de iOS) |
@@ -553,8 +832,8 @@ export const displayFace = localFont({
 
 ```text
 ┌──────────────────────────────┐ canvas
-│ DOSSIER_OS      DOM 27·09  ● │ SystemBar · mono 11 px, negro
-│ ┌01┐┌02┐┌03 VAULT┐┌04┐┌05┐ → │ FolderTabs · índices; la activa despliega nombre
+│ FOLIO           DOM 27·09  ● │ SystemBar · mono 11 px, negro
+│ ┌01 HOME┐┌02 GYM┐┌03 VAULT┐ →│ FolderTabs · todas con nombre; la tira desliza
 ├──────────────────────────────┤ folder
 │ ● 03 // VAULT   MES EN CURSO │ cabecera de lámina · mono 11 px, ash
 │                              │
@@ -573,7 +852,7 @@ export const displayFace = localFont({
 
 ```text
 ┌────────────────────────────────────────────────────────────────────┐ canvas
-│ DOSSIER_OS / VOL. 01            DOM 27·09·2026 07:42       ● EN LÍNEA│
+│ FOLIO                           DOM 27·09·2026 07:42       ● EN LÍNEA│
 │ ┌01 // HOME┐┌02 // GYM┐┌03 // VAULT┐┌04 // BRAIN┐┌05 // NUTRITION┐ …│
 │ ┌────────────────────────────────────────────────────────────────┐ │
 │ │ ● 03 // VAULT                                    MES EN CURSO   │ │
@@ -640,20 +919,40 @@ Ruta: `src/app/(os)/layout.tsx`. Persiste entre pestañas; solo la lámina cambi
 
 ```tsx
 import type { ReactNode } from 'react';
+import { redirect } from 'next/navigation';
 import { FolderTabs } from '@/components/os/FolderTabs';
 import { QuickInputDock } from '@/components/os/QuickInputDock';
 import { SystemBar } from '@/components/os/SystemBar';
 import { TabShortcuts } from '@/components/os/TabShortcuts';
+import { createClient, requireUserId } from '@/lib/supabase/server';
+import { getProfile } from '@/modules/settings/queries';
 
-export default function OsLayout({ children }: { children: ReactNode }) {
+// FolderShell (DESIGN_SYSTEM §5.1): persiste entre pestañas; solo cambia la lámina.
+// El proxy ya redirige sin sesión; comprobarlo aquí es la segunda barrera.
+export default async function OsLayout({ children }: { children: ReactNode }) {
+  if (!(await requireUserId(await createClient()))) redirect('/login');
+  const profile = await getProfile();
+
   return (
-    <div data-surface="canvas" className="grid min-h-dvh grid-rows-[auto_auto_1fr] lg:px-6 lg:pb-6">
-      <a href="#contenido" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-60 focus:bg-black focus:px-3 focus:py-2 focus:text-white">
+    // grid-cols-[minmax(0,1fr)]: sin plantilla, la columna implícita crece hasta el ancho mínimo del contenido
+    // (la tira de pestañas, una tabla) y en móvil toda la carpeta desbordaba en horizontal.
+    <div
+      data-surface="canvas"
+      className="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr] lg:px-6 lg:pb-6"
+    >
+      <a
+        href="#contenido"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-60 focus:bg-black focus:px-3 focus:py-2 focus:text-white"
+      >
         Saltar al contenido
       </a>
-      <SystemBar />
+      <SystemBar displayName={profile.display_name} timeZone={profile.timezone} />
       <FolderTabs />
-      <main id="contenido" data-surface="folder" className="relative flex flex-col pb-[calc(var(--quick-bar-height)+env(safe-area-inset-bottom))]">
+      <main
+        id="contenido"
+        data-surface="folder"
+        className="relative flex flex-col pb-[calc(var(--quick-bar-height)+env(safe-area-inset-bottom))]"
+      >
         {children}
         <QuickInputDock />
       </main>
@@ -663,7 +962,7 @@ export default function OsLayout({ children }: { children: ReactNode }) {
 }
 ```
 
-`QuickInputDock` es el contenedor cliente que conecta la `QuickInputBar` (§5.6) con las subidas y las Server Actions de [`ARCHITECTURE.md`](./ARCHITECTURE.md) §3. `SystemBar` es un Server Component: `DOSSIER_OS` a la izquierda, fecha y hora en la zona horaria del perfil en el centro, punto de estado a la derecha, todo en `text-micro`.
+`QuickInputDock` es el contenedor cliente que conecta la `QuickInputBar` (§5.6) con las subidas y las Server Actions de [`ARCHITECTURE.md`](./ARCHITECTURE.md) §3. `SystemBar` es un Server Component: `FOLIO` a la izquierda, fecha y hora en la zona horaria del perfil en el centro, punto de estado a la derecha, todo en `text-micro`.
 
 ### 5.2 `FolderTabs.tsx`
 
@@ -715,7 +1014,7 @@ Cada pestaña es un **trapecio troquelado** (lados a 10 px de inclinación) dibu
 |---|---|
 | ≥ 1280 px | `05 // NUTRITION` |
 | 1024–1279 px | `05 NUTRITION` |
-| < 1024 px | Inactivas: `05`. Activa: `05 NUTRITION`. La tira desliza en horizontal con *snap* y la activa se desplaza a la vista, sin animar el scroll |
+| < 1024 px | `05 NUTRITION` en todas (1.2: antes, las inactivas solo mostraban `05`). La tira desliza en horizontal con *snap* y la activa se desplaza a la vista moviendo solo la tira, sin animar el scroll |
 
 #### Implementación
 
@@ -734,7 +1033,15 @@ export function FolderTabs() {
 
   useEffect(() => {
     // En móvil la tira desliza: la pestaña activa queda siempre a la vista, sin animar el scroll.
-    activeLink.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    // Se desplaza solo la tira, y solo si desborda. scrollIntoView() movía además el punto de inicio de la
+    // navegación con Tab a la pestaña activa, y el primer Tab se saltaba el enlace «Saltar al contenido».
+    const link = activeLink.current;
+    const list = link?.closest('ol');
+    if (!link || !list || list.scrollWidth <= list.clientWidth) return;
+    const left = link.offsetLeft - list.offsetLeft;
+    if (left < list.scrollLeft || left + link.offsetWidth > list.scrollLeft + list.clientWidth) {
+      list.scrollLeft = left - 16;
+    }
   }, [active?.slug]);
 
   return (
@@ -756,8 +1063,12 @@ export function FolderTabs() {
               >
                 <span className="folder-tab__label">
                   <span>{formatIndex(tab.index)}</span>
-                  <span className="folder-tab__sep" aria-hidden="true">//</span>
-                  <span className="folder-tab__name" lang="en">{tab.label}</span>
+                  <span className="folder-tab__sep" aria-hidden="true">
+                    {'//'}
+                  </span>
+                  <span className="folder-tab__name" lang="en">
+                    {tab.label}
+                  </span>
                   <span className="sr-only">, {tab.name}</span>
                 </span>
               </Link>
@@ -847,23 +1158,23 @@ export function Sheet({ children }: { children: ReactNode }) {
 Uso en una página:
 
 ```tsx
-// src/app/(os)/vault/page.tsx
+// src/app/(os)/vault/page.tsx (simplificado: la página real añade señales, formularios y la lista del mes)
 import { Sheet } from '@/components/os/Sheet';
 import { SheetHeader } from '@/components/os/SheetHeader';
 import { DisplayNumeral } from '@/components/ui/DisplayNumeral';
-import { getVaultOverview } from '@/modules/vault/queries';
+import { getVaultMonth } from '@/modules/vault/queries';
 
 export default async function VaultPage() {
-  const overview = await getVaultOverview();
+  const vault = await getVaultMonth();
 
   return (
     <Sheet>
-      <SheetHeader index={3} label="VAULT" meta="MES EN CURSO" />
+      <SheetHeader tab="vault" meta="Mes en curso" />
       <DisplayNumeral
-        value={overview.spentThisMonth}
-        format={{ style: 'currency', currency: 'EUR' }}
+        value={vault.spent}
+        format={{ style: 'currency', currency: vault.currency }}
         label="Gasto del mes"
-        caption={`Gasto · ${overview.budgetPct} % del presupuesto`}
+        caption={vault.budget ? `Gasto · ${vault.budgetPct} % del presupuesto` : 'Gasto del mes'}
         lastSeenKey="vault.spend_mtd"
         upIsGood={false}
       />
@@ -926,8 +1237,20 @@ type BrutalistCardProps = {
   children: ReactNode;
 };
 
-export function BrutalistCard({ variant = 'flat', title, eyebrow, href, className = '', children }: BrutalistCardProps) {
-  const classes = ['@container relative block border-2 p-4 lg:p-5', VARIANT[variant], href ? PRESSABLE : '', className].join(' ');
+export function BrutalistCard({
+  variant = 'flat',
+  title,
+  eyebrow,
+  href,
+  className = '',
+  children,
+}: BrutalistCardProps) {
+  const classes = [
+    '@container relative block border-2 p-4 lg:p-5',
+    VARIANT[variant],
+    href ? PRESSABLE : '',
+    className,
+  ].join(' ');
   const surface = variant === 'paper' ? 'paper' : undefined;
 
   const content = (
@@ -962,7 +1285,7 @@ export function BrutalistCard({ variant = 'flat', title, eyebrow, href, classNam
 
 - **Server Component.** La cifra llega pintada en el HTML: sin parpadeo, sin JavaScript y lista para ser el LCP.
 - **Sin conteo animado.** Un contador que sube desde 0 en cada visita es decoración en una acción frecuente. Lo que sí informa es *qué ha cambiado*: si el valor es distinto al de la última visita, aparece un chip con el delta (`▲ +12,40 €`) durante 4 s.
-- **Ajuste al ancho:** el tamaño se calcula con unidades de contenedor según el número de caracteres (`--chars`), así `812,40 €` y `12.840,00 €` ocupan siempre la línea sin desbordar. `--glyph-em` (0,62) es el ancho medio del glifo de la cara display; se calibra una vez con la fuente final.
+- **Ajuste al ancho:** el tamaño se calcula con unidades de contenedor según el número de caracteres (`--chars`), así `812,40 €` y `12.840,00 €` ocupan siempre la línea sin desbordar. `--glyph-em` es el ancho medio del glifo de la cara display: 0,54 con Inter Tight y −0,03em de tracking, medido en el navegador sobre cifras reales. Se recalibra con la fuente final.
 
 ```tsx
 // src/components/ui/DisplayNumeral.tsx
@@ -986,7 +1309,16 @@ type DisplayNumeralProps = {
   upIsGood?: boolean;
 };
 
-export function DisplayNumeral({ value, format, label, caption, display, srValue, lastSeenKey, upIsGood = true }: DisplayNumeralProps) {
+export function DisplayNumeral({
+  value,
+  format,
+  label,
+  caption,
+  display,
+  srValue,
+  lastSeenKey,
+  upIsGood = true,
+}: DisplayNumeralProps) {
   const text = display ?? new Intl.NumberFormat('es-ES', format).format(value);
 
   return (
@@ -996,9 +1328,11 @@ export function DisplayNumeral({ value, format, label, caption, display, srValue
         <span className="sr-only">{`${label}: ${srValue ?? text}`}</span>
       </p>
       {caption || lastSeenKey ? (
-        <figcaption className="mt-3 flex flex-wrap items-center gap-3 font-mono text-label uppercase text-ash">
+        <figcaption className="mt-3 flex flex-wrap items-center gap-3 font-mono text-label text-ash uppercase">
           {caption}
-          {lastSeenKey ? <DeltaChip value={value} storageKey={lastSeenKey} format={format} upIsGood={upIsGood} /> : null}
+          {lastSeenKey ? (
+            <DeltaChip value={value} storageKey={lastSeenKey} format={format} upIsGood={upIsGood} />
+          ) : null}
         </figcaption>
       ) : null}
     </figure>
@@ -1037,13 +1371,19 @@ export function DeltaChip({ value, storageKey, format, upIsGood }: DeltaChipProp
     }
     if (previous === null || Number.isNaN(previous) || previous === value) return;
 
-    setDelta(value - previous);
-    const timer = setTimeout(() => setDelta(null), 4000);
-    return () => clearTimeout(timer);
+    // El chip aparece en el siguiente fotograma, no dentro del efecto: evita un render en cascada.
+    const change = previous;
+    const show = requestAnimationFrame(() => setDelta(value - change));
+    const hide = setTimeout(() => setDelta(null), 4000);
+    return () => {
+      cancelAnimationFrame(show);
+      clearTimeout(hide);
+    };
   }, [storageKey, value]);
 
   const favourable = delta !== null && delta > 0 === upIsGood;
-  const formatted = delta === null ? '' : new Intl.NumberFormat('es-ES', { ...format, signDisplay: 'always' }).format(delta);
+  const formatted =
+    delta === null ? '' : new Intl.NumberFormat('es-ES', { ...format, signDisplay: 'always' }).format(delta);
 
   return (
     <AnimatePresence>
@@ -1106,7 +1446,7 @@ Ruta: `src/components/os/QuickInputBar.tsx`. Barra flotante inferior, siempre pr
 
 import { AnimatePresence } from 'motion/react';
 import * as m from 'motion/react-m';
-import { useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import type { TabSlug } from '@/config/tabs';
 import { exitFast, springSheet } from '@/lib/motion/tokens';
 
@@ -1117,36 +1457,59 @@ export type QuickStatus =
   | { kind: 'recording'; seconds: number }
   | { kind: 'uploading' }
   | { kind: 'processing'; label: string }
-  | { kind: 'error'; message: string };
+  | { kind: 'error'; message: string }
+  /** Hay un borrador encima de la barra esperando confirmación. */
+  | { kind: 'draft' }
+  /** Recién guardado: el aviso ofrece DESHACER durante unos segundos (§5.7). */
+  | { kind: 'saved'; message: string; undoable: boolean };
 
 type QuickInputBarProps = {
   context: TabSlug;
   status: QuickStatus;
   /** Borrador de IA pendiente de confirmar, si lo hay. */
   draft?: ReactNode;
-  onText: (mode: QuickMode, text: string) => void;
+  /** Devuelve false si el texto no se ha podido usar: entonces se conserva en la barra. */
+  onText: (mode: QuickMode, text: string) => boolean | Promise<boolean>;
   onImage: (file: File) => void;
   onToggleRecording: () => void;
   onRetry?: () => void;
+  onUndo?: () => void;
+  /**
+   * Qué entradas hay disponibles. Fase 2: solo texto (PROPOSAL §5), así que el contenedor apaga preguntar,
+   * foto y voz; sin voz, el botón principal es siempre ENVIAR. Fase 3: todo activo, como en §5.6.
+   */
+  capabilities?: { ask?: boolean; photo?: boolean; voice?: boolean };
 };
 
 const HINTS: Record<TabSlug, string> = {
   home: '«12,40 Mercadona», «sentadilla 5×5 a 100»…',
   gym: '«press banca, 4 series de 8 a 80»',
-  vault: '«12,40 Mercadona» o foto del ticket',
-  brain: 'Escribe o dicta la entrada de hoy',
-  nutrition: '«200 g de pollo con arroz» o foto del plato',
+  vault: '«12,40 Mercadona»',
+  brain: 'Escribe la entrada de hoy',
+  nutrition: '«200 g de pollo con arroz»',
   media: '«terminado: Dune, 9 sobre 10»',
   routine: '«hecho: meditar»',
-  settings: 'Registra o pregunta desde cualquier pestaña',
+  settings: 'Registra desde cualquier pestaña',
 };
 
 const clock = (seconds: number) =>
   `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 
-const BUTTON = 'flex h-11 min-w-11 items-center justify-center gap-2 border-2 border-black px-3 font-mono text-label uppercase';
+const BUTTON =
+  'flex h-11 min-w-11 items-center justify-center gap-2 border-2 border-black px-3 font-mono text-label uppercase';
 
-export function QuickInputBar({ context, status, draft, onText, onImage, onToggleRecording, onRetry }: QuickInputBarProps) {
+export function QuickInputBar({
+  context,
+  status,
+  draft,
+  onText,
+  onImage,
+  onToggleRecording,
+  onRetry,
+  onUndo,
+  capabilities = {},
+}: QuickInputBarProps) {
+  const { ask: canAsk = true, photo: canPhoto = true, voice: canVoice = true } = capabilities;
   const [asking, setAsking] = useState(false);
   const [text, setText] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
@@ -1156,11 +1519,24 @@ export function QuickInputBar({ context, status, draft, onText, onImage, onToggl
   const busy = status.kind === 'uploading' || status.kind === 'processing';
   const hasText = text.trim().length > 0;
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  // Los ejemplos de los estados vacíos escriben aquí: `folio:prefill` con el texto en `detail`.
+  useEffect(() => {
+    function onPrefill(event: Event) {
+      const value = (event as CustomEvent<string>).detail;
+      if (typeof value !== 'string') return;
+      setAsking(false);
+      setText(value);
+      document.getElementById('quick-input')?.focus();
+    }
+    window.addEventListener('folio:prefill', onPrefill);
+    return () => window.removeEventListener('folio:prefill', onPrefill);
+  }, []);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!hasText || busy) return;
-    onText(asking ? 'ask' : 'log', text.trim());
-    setText('');
+    // Nunca se pierde lo escrito (§5.6, estado `error`): solo se vacía si el texto se ha podido usar.
+    if (await onText(asking ? 'ask' : 'log', text.trim())) setText('');
   }
 
   return (
@@ -1186,72 +1562,120 @@ export function QuickInputBar({ context, status, draft, onText, onImage, onToggl
         aria-describedby={statusId}
         className="flex items-center gap-2 border-2 border-black p-1.5 shadow-hard focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-brand-orange"
       >
-        <button
-          type="button"
-          role="switch"
-          aria-checked={asking}
-          onClick={() => setAsking((value) => !value)}
-          className={`${BUTTON} aria-checked:bg-black aria-checked:text-white`}
-        >
-          <span aria-hidden="true" className="md:hidden">?</span>
-          <span className="sr-only md:not-sr-only">Preguntar</span>
-        </button>
+        {canAsk ? (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={asking}
+            onClick={() => setAsking((value) => !value)}
+            className={`${BUTTON} aria-checked:bg-black aria-checked:text-white`}
+          >
+            Preguntar
+          </button>
+        ) : null}
 
         <label htmlFor="quick-input" className="sr-only">
-          {asking ? 'Pregunta a tu dossier' : 'Registro rápido'}
+          {asking ? 'Pregunta a tu archivador' : 'Registro rápido'}
         </label>
         <input
           id="quick-input"
           value={text}
           onChange={(event) => setText(event.target.value)}
           disabled={recording}
-          placeholder={asking ? 'Pregunta a tu dossier…' : HINTS[context]}
+          placeholder={asking ? 'Pregunta a tu archivador…' : HINTS[context]}
           enterKeyHint={asking ? 'search' : 'send'}
           autoComplete="off"
           className="h-11 min-w-0 flex-1 bg-transparent px-2 text-body outline-none placeholder:text-steel"
         />
 
-        <button type="button" onClick={() => fileInput.current?.click()} disabled={busy || recording} className={`${BUTTON} disabled:border-steel disabled:text-steel`}>
-          Foto
-        </button>
-        <input
-          ref={fileInput}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            event.target.value = '';
-            if (file) onImage(file);
-          }}
-        />
+        {canPhoto ? (
+          <>
+            <button
+              type="button"
+              onClick={() => fileInput.current?.click()}
+              disabled={busy || recording}
+              className={`${BUTTON} disabled:border-steel disabled:text-steel`}
+            >
+              Foto
+            </button>
+            <input
+              ref={fileInput}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = '';
+                if (file) onImage(file);
+              }}
+            />
+          </>
+        ) : null}
 
-        {hasText && !recording ? (
-          <button type="submit" disabled={busy} className={`${BUTTON} bg-black text-white`}>
+        {(hasText || !canVoice) && !recording ? (
+          <button
+            type="submit"
+            disabled={busy || !hasText}
+            className={`${BUTTON} bg-black text-white disabled:border-steel disabled:bg-transparent disabled:text-steel`}
+          >
             Enviar
           </button>
         ) : (
-          <button type="button" onClick={onToggleRecording} disabled={busy} aria-pressed={recording} className={`${BUTTON} aria-pressed:bg-black aria-pressed:text-white`}>
-            {recording ? <span aria-hidden="true" className="size-2.5 rounded-full bg-brand-orange motion-safe:animate-rec-pulse" /> : null}
+          <button
+            type="button"
+            onClick={onToggleRecording}
+            disabled={busy}
+            aria-pressed={recording}
+            className={`${BUTTON} aria-pressed:bg-black aria-pressed:text-white`}
+          >
+            {recording ? (
+              <span
+                aria-hidden="true"
+                className="size-2.5 rounded-full bg-brand-orange motion-safe:animate-rec-pulse"
+              />
+            ) : null}
             {recording ? 'Parar' : 'Voz'}
           </button>
         )}
       </form>
 
       <div className="mt-1 flex min-h-5 items-center gap-3 px-1">
-        <p id={statusId} role="status" className="font-mono text-micro uppercase text-ash">
+        {/* Fondo propio: la fila flota sobre el contenido que pasa por detrás y debe leerse siempre. */}
+        <p
+          id={statusId}
+          role="status"
+          className={`px-1 font-mono text-micro text-ash uppercase ${status.kind === 'idle' || status.kind === 'draft' ? '' : 'bg-black'}`}
+        >
           {status.kind === 'recording' && `Grabando ${clock(status.seconds)}`}
           {status.kind === 'uploading' && 'Subiendo…'}
           {status.kind === 'processing' && (
             <>
               {status.label}
-              <span aria-hidden="true" className="motion-safe:animate-caret-blink">_</span>
+              <span aria-hidden="true" className="motion-safe:animate-caret-blink">
+                _
+              </span>
             </>
           )}
           {status.kind === 'error' && status.message}
+          {/* El borrador ya lo dice a la vista; aquí solo se anuncia a los lectores de pantalla. */}
+          {status.kind === 'draft' && <span className="sr-only">Borrador abierto: revisa y confirma</span>}
+          {status.kind === 'saved' && <span className="text-white">{status.message}</span>}
         </p>
+        {status.kind === 'saved' && status.undoable && onUndo ? (
+          <button
+            type="button"
+            onClick={onUndo}
+            className="font-mono text-micro text-white uppercase underline underline-offset-4"
+          >
+            Deshacer
+          </button>
+        ) : null}
         {status.kind === 'error' && onRetry ? (
-          <button type="button" onClick={onRetry} className="font-mono text-micro uppercase text-white underline underline-offset-4">
+          <button
+            type="button"
+            onClick={onRetry}
+            className="font-mono text-micro text-white uppercase underline underline-offset-4"
+          >
             Reintentar
           </button>
         ) : null}
@@ -1556,7 +1980,7 @@ Objetivo: **WCAG 2.2 AA**.
    import './globals.css';
 
    export const metadata: Metadata = {
-     title: { default: 'DOSSIER_OS', template: '%s · DOSSIER_OS' },
+     title: { default: 'FOLIO', template: '%s · FOLIO' },
      description: 'Sistema operativo personal.',
    };
 

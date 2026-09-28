@@ -10,3 +10,7 @@ CLAUDE.md
 package-lock.json
 src/lib/supabase/database.types.ts
 supabase/.temp/
+
+# Los escribe el documentador de Impeccable a partir del build.
+DESIGN.md
+.impeccable/

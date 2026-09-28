@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-28T12:00:00Z",
+  "title": "Design System: FOLIO",
+  "extensions": {
+    "colorMeta": {
+      "brand-orange": { "role": "primary", "displayName": "Naranja Mesa", "canonical": "#ff3b00", "tonalRamp": ["#3d0e00", "#661800", "#992400", "#cc2f00", "#ff3b00", "#ff6e42", "#ffa283", "#ffd6c7"] },
+      "black": { "role": "neutral", "displayName": "Negro Carpeta", "canonical": "#000000", "tonalRamp": ["#000000", "#0a0a0a", "#121212", "#1c1c1c", "#2a2a2a", "#3d3d3d", "#555555", "#6b6b6b"] },
+      "white": { "role": "neutral", "displayName": "Blanco Papel", "canonical": "#ffffff", "tonalRamp": ["#8a8a8a", "#a3a3a3", "#bbbbbb", "#d1d1d1", "#e3e3e3", "#efefef", "#f7f7f7", "#ffffff"] },
+      "structure": { "role": "neutral", "displayName": "Ficha Grafito", "canonical": "#121212", "tonalRamp": ["#000000", "#090909", "#121212", "#1b1b1b", "#242424", "#2e2e2e", "#383838", "#424242"] },
+      "line": { "role": "neutral", "displayName": "Línea Hollín", "canonical": "#2a2a2a", "tonalRamp": ["#0f0f0f", "#181818", "#212121", "#2a2a2a", "#363636", "#444444", "#525252", "#606060"] },
+      "steel": { "role": "neutral", "displayName": "Acero", "canonical": "#6b6b6b", "tonalRamp": ["#262626", "#383838", "#4b4b4b", "#5d5d5d", "#6b6b6b", "#858585", "#a3a3a3", "#c4c4c4"] },
+      "ash": { "role": "neutral", "displayName": "Ceniza", "canonical": "#8a8a8a", "tonalRamp": ["#303030", "#454545", "#5c5c5c", "#737373", "#8a8a8a", "#a3a3a3", "#bdbdbd", "#d8d8d8"] },
+      "signal-up": { "role": "tertiary", "displayName": "Verde Subida", "canonical": "#00e08a", "tonalRamp": ["#003520", "#005a37", "#00804f", "#00a867", "#00e08a", "#4debad", "#94f3cd", "#d2fbeb"] },
+      "signal-down": { "role": "tertiary", "displayName": "Rosa Bajada", "canonical": "#ff2d55", "tonalRamp": ["#3d0a14", "#660f22", "#991733", "#cc2044", "#ff2d55", "#ff6583", "#ff9fb2", "#ffd8e0"] },
+      "signal-warn": { "role": "tertiary", "displayName": "Amarillo Aviso", "canonical": "#ffd400", "tonalRamp": ["#3d3300", "#665500", "#998000", "#ccaa00", "#ffd400", "#ffe042", "#ffeb85", "#fff6c7"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Cifra protagonista", "purpose": "Una por lámina. Se ajusta a la línea con tope de 15rem; tracking −0,03em y ancho de glifo 0,54 con Inter Tight, a recalibrar con Helvetica Now Display." },
+      "headline": { "displayName": "Titular", "purpose": "Titulares puntuales: acceso, 404, temporizador de foco." },
+      "title": { "displayName": "Título de ficha", "purpose": "Título de cada BrutalistCard." },
+      "body": { "displayName": "Cuerpo", "purpose": "Texto corrido e inputs (16 px evita el zoom de iOS); medida máxima 65ch." },
+      "small": { "displayName": "Pequeño", "purpose": "Celdas, ayudas y errores de campo." },
+      "label": { "displayName": "Etiqueta", "purpose": "Mono mayúscula: pestañas, botones, etiquetas de campo, pies de cifra, señales." },
+      "micro": { "displayName": "Micro", "purpose": "Mono mayúscula de esquina: barra de sistema, cabecera de lámina, metadatos de ficha. Dos bloques por lámina como máximo." }
+    },
+    "shadows": [
+      { "name": "hard-sm", "value": "2px 2px 0 0 var(--shadow-ink)", "purpose": "Definida pero sin uso en la Fase 2; para piezas pequeñas pulsables." },
+      { "name": "hard", "value": "4px 4px 0 0 var(--shadow-ink)", "purpose": "Botón principal sobre la carpeta, ficha pulsable, barra de entrada, borrador y formulario de acceso." },
+      { "name": "hard-lg", "value": "6px 6px 0 0 var(--shadow-ink)", "purpose": "Hover de la ficha pulsable, que se levanta 2 px en diagonal." },
+      { "name": "none", "value": "0 0 #0000", "purpose": "Estado pulsado: el elemento se hunde 4 px en su sombra." },
+      { "name": "shadow-ink", "value": "canvas/paper → #000000 · folder → #ff3b00", "purpose": "Tinta contextual: la decide la superficie de debajo mediante [data-surface] > *." }
+    ],
+    "motion": [
+      { "name": "spring-sheet", "value": "spring stiffness 300, damping 30, mass 1", "purpose": "Lámina y borrador; asienta en 0,31 s." },
+      { "name": "spring-snap", "value": "spring stiffness 700, damping 50, mass 1", "purpose": "Retroalimentación pequeña (delta)." },
+      { "name": "ease-sheet", "value": "linear(0, 0.049 5%, 0.161 10%, 0.297 15%, 0.435 20%, 0.561 25%, 0.669 30%, 0.758 35%, 0.829 40%, 0.883 45%, 0.923 50%, 0.952 55%, 0.972 60%, 0.985 65%, 0.994 70%, 1 75%, 1.003 80%, 1.004 85%, 1.004 90%, 1.004 95%, 1 100%)", "purpose": "El muelle 300/30 muestreado para View Transitions." },
+      { "name": "ease-out-strong", "value": "cubic-bezier(0.23, 1, 0.32, 1)", "purpose": "Salidas y transiciones de estado." },
+      { "name": "ease-in-out-strong", "value": "cubic-bezier(0.77, 0, 0.175, 1)", "purpose": "Pulso de grabación." },
+      { "name": "duration-press", "value": "100ms", "purpose": "Hundimiento al pulsar." },
+      { "name": "duration-fast", "value": "160ms", "purpose": "Izado de pestañas, hover de fichas." },
+      { "name": "duration-base", "value": "240ms", "purpose": "Transiciones medias." },
+      { "name": "duration-exit", "value": "200ms", "purpose": "Salida de lámina; siempre más corta que la entrada." },
+      { "name": "duration-sheet", "value": "400ms", "purpose": "Entrada de lámina, 32 px (24 px en móvil) desde el lado de su pestaña." },
+      { "name": "reduced-motion", "value": "fade 120ms in / 80ms out, linear", "purpose": "Menos movimiento, no cero: fundido sin desplazamiento." }
+    ],
+    "breakpoints": [
+      { "name": "md", "value": "48rem" },
+      { "name": "lg", "value": "64rem" },
+      { "name": "xl", "value": "80rem" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón principal (carpeta)",
+      "kind": "button",
+      "refersTo": "button-primary-folder",
+      "description": "Acción principal sobre la carpeta negra: bloque blanco con sombra dura naranja que se hunde al pulsar.",
+      "html": "<div class=\"ds-folder\"><button class=\"ds-btn-primary\">Guardar</button></div>",
+      "css": ".ds-folder { background: #000; padding: 24px; } .ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; height: 44px; min-width: 44px; padding: 0 16px; border: 2px solid #fff; border-radius: 0; background: #fff; color: #000; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.75rem; line-height: 1.2; letter-spacing: 0.08em; text-transform: uppercase; box-shadow: 4px 4px 0 0 #ff3b00; transition: translate 160ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 160ms cubic-bezier(0.23, 1, 0.32, 1); cursor: pointer; } .ds-btn-primary:active { translate: 4px 4px; box-shadow: 0 0 #0000; transition-duration: 100ms; } .ds-btn-primary:focus-visible { outline: 3px solid #ff3b00; outline-offset: 2px; }"
+    },
+    {
+      "name": "Botón secundario (carpeta)",
+      "kind": "button",
+      "refersTo": "button-secondary-folder",
+      "description": "Acción secundaria sobre la carpeta: contorno acero que pasa a blanco en hover, sin sombra.",
+      "html": "<div class=\"ds-folder\"><button class=\"ds-btn-secondary\">Cancelar</button></div>",
+      "css": ".ds-folder { background: #000; padding: 24px; } .ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; height: 44px; min-width: 44px; padding: 0 16px; border: 2px solid #6b6b6b; border-radius: 0; background: transparent; color: #fff; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; } .ds-btn-secondary:hover { border-color: #fff; } .ds-btn-secondary:focus-visible { outline: 3px solid #ff3b00; outline-offset: 2px; }"
+    },
+    {
+      "name": "Botón principal (papel)",
+      "kind": "button",
+      "refersTo": "button-primary-paper",
+      "description": "Acción principal en borradores y barra de entrada: bloque negro sin sombra (The No Misprint Rule).",
+      "html": "<div class=\"ds-paper\"><button class=\"ds-btn-paper\">Guardar</button> <button class=\"ds-btn-paper-sec\">Descartar</button></div>",
+      "css": ".ds-paper { background: #fff; padding: 24px; display: flex; gap: 12px; } .ds-btn-paper, .ds-btn-paper-sec { display: inline-flex; align-items: center; justify-content: center; height: 44px; min-width: 44px; padding: 0 16px; border: 2px solid #000; border-radius: 0; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; } .ds-btn-paper { background: #000; color: #fff; } .ds-btn-paper:hover { background: #6b6b6b; border-color: #6b6b6b; } .ds-btn-paper:active { translate: 0 1px; } .ds-btn-paper-sec { background: transparent; color: #000; } .ds-btn-paper:focus-visible, .ds-btn-paper-sec:focus-visible { outline: 3px solid #000; outline-offset: 2px; }"
+    },
+    {
+      "name": "Campo de formulario (carpeta)",
+      "kind": "input",
+      "refersTo": "input-folder",
+      "description": "Etiqueta mono ceniza encima, control negro de 44 px con borde acero; el color lo pone la superficie.",
+      "html": "<div class=\"ds-folder\"><label class=\"ds-label\" for=\"ds-in\">Importe</label><input id=\"ds-in\" class=\"ds-control\" placeholder=\"12,40\"></div>",
+      "css": ".ds-folder { background: #000; padding: 24px; display: flex; flex-direction: column; gap: 6px; } .ds-label { color: #8a8a8a; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; } .ds-control { height: 44px; padding: 0 12px; border: 2px solid #6b6b6b; border-radius: 0; background: #000; color: #fff; font-family: Geist, system-ui, sans-serif; font-size: 1rem; caret-color: #ff3b00; } .ds-control::placeholder { color: #8a8a8a; opacity: 1; } .ds-control:hover { border-color: #8a8a8a; } .ds-control:focus-visible { outline: 3px solid #ff3b00; outline-offset: 2px; }"
+    },
+    {
+      "name": "Pestaña de carpeta",
+      "kind": "nav",
+      "refersTo": "folder-tab",
+      "description": "Trapecio troquelado de dos capas; la activa se iza 8 px, se vuelve negra y se funde con la carpeta.",
+      "html": "<nav class=\"ds-tabs\"><a class=\"ds-tab is-active\" href=\"#\"><span class=\"ds-tab-label\">01 // HOME</span></a><a class=\"ds-tab\" href=\"#\"><span class=\"ds-tab-label\">02 // GYM</span></a><a class=\"ds-tab\" href=\"#\"><span class=\"ds-tab-label\">03 // VAULT</span></a></nav><div class=\"ds-tabs-folder\"></div>",
+      "css": ".ds-tabs { display: flex; gap: 4px; background: #ff3b00; padding: 16px 16px 0; } .ds-tab { --rise: 0px; --fill: #ff3b00; position: relative; isolation: isolate; display: flex; align-items: flex-end; height: 48px; padding: 0 14px 10px; color: #000; text-decoration: none; } .ds-tab::before, .ds-tab::after { content: ''; position: absolute; z-index: -1; clip-path: polygon(10px calc(8px - var(--rise)), calc(100% - 10px) calc(8px - var(--rise)), 100% 100%, 0 100%); transition: clip-path 160ms cubic-bezier(0.23, 1, 0.32, 1); } .ds-tab::before { inset: 0; background: #000; } .ds-tab::after { inset: 2px 2px 0; background: var(--fill); } .ds-tab-label { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.75rem; line-height: 1; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; translate: 0 calc(var(--rise) * -1); transition: translate 160ms cubic-bezier(0.23, 1, 0.32, 1); } .ds-tab:not(.is-active):hover { --rise: 4px; } .ds-tab.is-active { --rise: 8px; --fill: #000; color: #fff; z-index: 1; margin-bottom: -2px; } .ds-tab:focus-visible { outline: 3px solid #000; outline-offset: 2px; } .ds-tabs-folder { height: 40px; background: #000; }"
+    },
+    {
+      "name": "Ficha pulsable",
+      "kind": "card",
+      "refersTo": "card-raised",
+      "description": "Ficha-enlace grafito con borde blanco y sombra naranja; se levanta en hover y se hunde al pulsar.",
+      "html": "<div class=\"ds-folder\"><a class=\"ds-card\" href=\"#\"><p class=\"ds-card-meta\">03 // VAULT</p><p class=\"ds-card-fig\">1724,68 €</p><p class=\"ds-card-cap\">Gasto del mes</p></a></div>",
+      "css": ".ds-folder { background: #000; padding: 24px; } .ds-card { display: block; padding: 16px; border: 2px solid #fff; border-radius: 0; background: #121212; color: #fff; text-decoration: none; box-shadow: 4px 4px 0 0 #ff3b00; transition: translate 160ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 160ms cubic-bezier(0.23, 1, 0.32, 1); } .ds-card:hover { translate: -2px -2px; box-shadow: 6px 6px 0 0 #ff3b00; } .ds-card:active { translate: 4px 4px; box-shadow: 0 0 #0000; transition-duration: 100ms; } .ds-card:focus-visible { outline: 3px solid #ff3b00; outline-offset: 2px; } .ds-card-meta, .ds-card-cap { margin: 0; color: #8a8a8a; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; } .ds-card-fig { margin: 40px 0 8px; font-family: 'Helvetica Now Display', 'Inter Tight', 'Arial Narrow', Arial, sans-serif; font-weight: 700; font-size: 2.25rem; line-height: 1; letter-spacing: -0.03em; }"
+    },
+    {
+      "name": "Señal",
+      "kind": "chip",
+      "refersTo": "signal",
+      "description": "Color de señal siempre con glifo y texto, en recuadro de 2 px.",
+      "html": "<div class=\"ds-card-flat\"><span class=\"ds-signal ds-up\"><span aria-hidden=\"true\">▲</span> +4 %</span> <span class=\"ds-signal ds-down\"><span aria-hidden=\"true\">▼</span> −12,40 €</span> <span class=\"ds-signal ds-warn\"><span aria-hidden=\"true\">!</span> Cerca del límite</span></div>",
+      "css": ".ds-card-flat { background: #121212; border: 2px solid #2a2a2a; padding: 16px; display: flex; flex-wrap: wrap; gap: 8px; } .ds-signal { display: inline-flex; align-items: center; gap: 6px; padding: 2px 6px; border: 2px solid currentColor; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; } .ds-up { color: #00e08a; } .ds-down { color: #ff2d55; } .ds-warn { color: #ffd400; }"
+    },
+    {
+      "name": "Cifra protagonista",
+      "kind": "custom",
+      "refersTo": "display",
+      "description": "Una por lámina: ocupa la línea según su número de caracteres, con tope de 15rem.",
+      "html": "<figure class=\"ds-numeral-wrap\"><p class=\"ds-numeral\" style=\"--chars: 5\">28‘09</p><figcaption class=\"ds-numeral-cap\">Lunes, 28 de septiembre</figcaption></figure>",
+      "css": ".ds-numeral-wrap { container-type: inline-size; margin: 0; background: #000; color: #fff; padding: 24px; } .ds-numeral { --glyph-em: 0.54; margin: 0; font-family: 'Helvetica Now Display', 'Inter Tight', 'Arial Narrow', Arial, sans-serif; font-weight: 700; font-size: min(15rem, calc(100cqi / (var(--chars, 5) * var(--glyph-em)))); line-height: 0.82; letter-spacing: -0.03em; padding-block-end: 0.1em; font-variant-numeric: proportional-nums lining-nums; white-space: nowrap; } .ds-numeral-cap { margin-top: 12px; color: #8a8a8a; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; }"
+    },
+    {
+      "name": "Barra de entrada",
+      "kind": "input",
+      "refersTo": "quick-bar",
+      "description": "Papel fijo abajo; en la Fase 2 solo texto, con ENVIAR como botón principal.",
+      "html": "<div class=\"ds-folder\"><form class=\"ds-quick\"><input class=\"ds-quick-in\" placeholder=\"«12,40 Mercadona»\"><button class=\"ds-quick-btn\" type=\"button\">Enviar</button></form></div>",
+      "css": ".ds-folder { background: #000; padding: 24px; } .ds-quick { display: flex; align-items: center; gap: 8px; max-width: 768px; padding: 6px; border: 2px solid #000; background: #fff; color: #000; box-shadow: 4px 4px 0 0 #ff3b00; } .ds-quick:focus-within { outline: 3px solid #ff3b00; outline-offset: 2px; } .ds-quick-in { flex: 1; min-width: 0; height: 44px; padding: 0 8px; border: 0; background: transparent; font-family: Geist, system-ui, sans-serif; font-size: 1rem; outline: none; } .ds-quick-in::placeholder { color: #6b6b6b; } .ds-quick-btn { height: 44px; min-width: 44px; padding: 0 12px; border: 2px solid #000; border-radius: 0; background: #000; color: #fff; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El archivador que opera",
+    "overview": "FOLIO es un archivador físico que funciona como sistema operativo. Sobre una mesa naranja descansa una carpeta negra abierta, con una pestaña troquelada por cada área de la vida. Dentro, cada lámina tiene una sola cifra a tamaño cartel y fichas oscuras con lo archivado. El papel blanco aparece solo donde toca escribir o decidir. El lenguaje es suizo y brutalista: superficies opacas y planas, esquinas vivas, bordes de 2 px, sombras duras sin desenfoque y etiquetas mono en mayúsculas.\n\nEs una superficie de operación, no un escaparate. La densidad es media y la jerarquía se construye con tamaño y peso, no con color. El naranja no decora: dentro de la carpeta significa *aquí, activo o en vivo*. El movimiento se reserva para el espacio: la lámina entra por el lado en que está su pestaña, con un muelle 300/30. Rechaza el dashboard por defecto de la categoría: tarjetas redondeadas, barra lateral y gráficos pastel.\n\nHay un solo tema, oscuro, porque la identidad es la relación naranja-negro y el uso es nocturno y en movimiento (gimnasio, caja del supermercado, cama).",
+    "keyCharacteristics": [
+      "Cuatro superficies físicas: mesa `canvas` naranja, carpeta `folder` negra, fichas `structure` y `paper` blanco solo para escribir o decidir.",
+      "Radio 0 y bordes de 0 o 2 px, sin excepciones salvo el punto de estado.",
+      "Sombras duras de 2, 4 o 6 px en la tinta de la superficie de debajo.",
+      "Una cifra protagonista por lámina, ajustada a la línea.",
+      "Etiquetas mono en mayúsculas con tracking abierto; cifras apretadas.",
+      "Toda señal de color lleva glifo y texto."
+    ],
+    "rules": [
+      { "name": "The Paper Means You Rule", "body": "El blanco como superficie significa «te toca a ti». Solo lo llevan la barra de entrada, los borradores pendientes de confirmar y el formulario de acceso. Una ficha de datos nunca es blanca.", "section": "colors" },
+      { "name": "The Orange Is State Rule", "body": "Dentro de la carpeta el naranja solo dice *activo, foco o en vivo*, más la sombra de lo pulsable. Nunca rellena ni decora, y nunca significa «negativo».", "section": "colors" },
+      { "name": "The Glyph Rule", "body": "Ningún color de señal va solo: siempre `▲`, `▼`, `!` o `●` más texto, en un recuadro de 2 px del mismo color. Qué dirección es buena lo decide la métrica: más gasto es `▲` en rosa, más volumen es `▲` en verde.", "section": "colors" },
+      { "name": "The Surface Text Rule", "body": "Sobre papel, ni ceniza ni rosa dan contraste de texto. Las etiquetas pasan a acero y los errores a negro en seminegrita, con el control en borde discontinuo.", "section": "colors" },
+      { "name": "The Fit-the-Line Rule", "body": "La cifra protagonista no usa un tamaño fijo: se ajusta al ancho de su contenedor (`--chars` × `--glyph-em`) con tope de 15rem. El tracking y el ancho medio de glifo dependen de la cara (−0,03em y 0,54 con Inter Tight) y deben recalibrarse, medidos en el navegador, cuando entre Helvetica Now Display.", "section": "typography" },
+      { "name": "The Tracking Polarity Rule", "body": "El display se aprieta y las mayúsculas mono se abren. Nunca al revés.", "section": "typography" },
+      { "name": "The Label Case Rule", "body": "Mayúsculas solo en etiquetas de tres palabras como máximo. Los párrafos y los títulos de ficha van en caja normal. Las etiquetas de módulo van en inglés con `lang=\"en\"` (`03 // VAULT`) y el resto del texto, en español con tuteo.", "section": "typography" },
+      { "name": "The Tabular Columns Rule", "body": "Las tablas usan cifras tabulares y la cifra protagonista, proporcionales. Los números se formatean con `Intl` `es-ES`.", "section": "typography" },
+      { "name": "The Surface Ink Rule", "body": "La sombra y el anillo de foco los decide la superficie para lo que se apoya encima, nunca el componente. Negro sobre `canvas` y `paper`, naranja sobre `folder`.", "section": "elevation" },
+      { "name": "The Sink Rule", "body": "Pulsar es hundirse en la propia sombra: 4 px de desplazamiento, la sombra a cero y 100 ms. El *hover* solo levanta lo que ya tiene sombra.", "section": "elevation" },
+      { "name": "The No Misprint Rule", "body": "Un bloque negro relleno sobre papel no lleva sombra: una sombra negra bajo un bloque negro se lee como un fallo de impresión. El botón principal sobre papel responde con un cambio a acero y un hundimiento de 1 px.", "section": "elevation" }
+    ],
+    "dos": [
+      "**Do** usar solo los diez colores del sistema. La paleta de Tailwind se elimina (`--color-*: initial`), igual que los radios y las sombras suaves.",
+      "**Do** marcar cada superficie con `data-surface` (`canvas`, `folder`, `paper`) y dejar que ella decida la tinta de sombra, el anillo de foco, `color-scheme` y el color de los controles.",
+      "**Do** dar a cada lámina una sola cifra protagonista, ajustada a la línea con tope de 15rem.",
+      "**Do** acompañar todo color de señal con glifo y texto, en recuadro de 2 px.",
+      "**Do** medir cada control al menos 44 × 44 px y mantener los inputs a 16 px.",
+      "**Do** mantener GUARDAR y DESCARTAR siempre visibles en los borradores (fila fija al pie).",
+      "**Do** mostrar el nombre de todas las pestañas también en móvil.",
+      "**Do** recalibrar `--numeral-tracking` y `--glyph-em` midiendo en el navegador al cambiar la cara display."
+    ],
+    "donts": [
+      "**Don't** redondear esquinas ni usar un borde que no sea de 0 o 2 px. La única curva es el punto de estado.",
+      "**Don't** usar degradados, transparencias, desenfoques ni sombras con desenfoque.",
+      "**Don't** poner una sombra negra bajo un bloque negro relleno sobre papel.",
+      "**Don't** usar el naranja como relleno o decoración dentro de la carpeta, ni para significar «negativo».",
+      "**Don't** pintar de blanco una ficha de datos: el papel es solo para escribir o decidir.",
+      "**Don't** poner texto blanco pequeño sobre naranja (3,57:1). Sobre la mesa, el texto es negro.",
+      "**Don't** usar ceniza ni rosa como texto sobre papel.",
+      "**Don't** animar el color, ni animar la entrada de la lámina más allá de su transición.",
+      "**Don't** meter controles dentro de una ficha que ya es un enlace."
+    ]
+  }
+}
