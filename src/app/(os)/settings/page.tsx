@@ -85,7 +85,7 @@ export default async function SettingsPage() {
               <a
                 href={`/api/export?format=csv&tabla=${table}`}
                 download
-                className="flex min-h-11 items-center justify-between gap-3 text-body hover:text-brand-orange"
+                className="flex min-h-11 items-center justify-between gap-3 text-body decoration-2 underline-offset-4 hover:underline"
               >
                 {EXPORT_LABEL[table]}
                 <span className="font-mono text-label text-ash uppercase">CSV</span>

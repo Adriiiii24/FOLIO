@@ -71,8 +71,8 @@ export function HabitToggle({
         ) : null}
       </div>
       {streak > 0 ? (
-        <p className="shrink-0 font-mono text-label uppercase">
-          <span className="text-brand-orange">{streak}</span> {streak === 1 ? 'día' : 'días'}
+        <p className="shrink-0 font-mono text-label text-ash uppercase">
+          <span className="text-white">{streak}</span> {streak === 1 ? 'día' : 'días'}
         </p>
       ) : null}
     </li>

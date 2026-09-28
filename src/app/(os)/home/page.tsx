@@ -6,6 +6,7 @@ import { SheetHeader } from '@/components/os/SheetHeader';
 import { BrutalistCard } from '@/components/ui/BrutalistCard';
 import { DisplayNumeral } from '@/components/ui/DisplayNumeral';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Signal } from '@/components/ui/Signal';
 import { PrefillButton } from '@/components/ui/RowActions';
 import { formatIndex, TABS, type TabSlug } from '@/config/tabs';
 import { longDate, money, number, plural, posterDate } from '@/lib/format';
@@ -93,7 +94,15 @@ export default async function HomePage() {
         slug="vault"
         figure={money(vault.spent, vault.currency)}
         caption={vault.budgetPct === null ? 'Gasto del mes' : `Gasto del mes · ${vault.budgetPct} % del presupuesto`}
-      />
+      >
+        {vault.budgetPct !== null && vault.budgetPct > 100 ? (
+          <p className="mt-3">
+            <Signal tone="down" glyph="!">
+              Presupuesto superado
+            </Signal>
+          </p>
+        ) : null}
+      </IndexCard>
       <IndexCard
         slug="brain"
         figure={plural(brain.streak, 'día', 'días')}

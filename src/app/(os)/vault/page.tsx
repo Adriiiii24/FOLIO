@@ -42,6 +42,11 @@ export default async function VaultPage({ searchParams }: PageProps<'/vault'>) {
         upIsGood={false}
       />
       <div className="col-span-full -mt-2 flex flex-wrap gap-3">
+        {vault.budget !== null && vault.spent > vault.budget ? (
+          <Signal tone="down" glyph="!">
+            Presupuesto superado en {money(vault.spent - vault.budget, vault.currency)}
+          </Signal>
+        ) : null}
         {vault.isCurrentMonth && vault.paceDelta !== null && Math.abs(vault.paceDelta) >= 5 ? (
           vault.paceDelta > 0 ? (
             <Signal tone="down" glyph="▲">

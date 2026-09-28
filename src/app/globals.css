@@ -266,7 +266,7 @@
     margin-bottom: -2px; /* se funde con la carpeta: sin costura */
   }
 
-  /* < 1024 px: la tira se reduce a índices y desliza; la activa despliega su nombre. */
+  /* < 1024 px: la tira desliza en horizontal con snap; cada pestaña conserva su nombre (ver abajo). */
   @media (max-width: 63.99rem) {
     .folder-tabs__list {
       display: flex;
