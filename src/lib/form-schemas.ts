@@ -3,7 +3,10 @@ import { z } from 'zod';
 // Piezas Zod para campos de formulario: lo que llega de un <form> son cadenas, y aquí se convierten
 // en el tipo que espera la base de datos. Los mensajes son los que verá la persona.
 
-const blankToNull = (value: unknown) => (typeof value === 'string' && value.trim() === '' ? null : value);
+// Un campo AUSENTE del FormData (el `id` de un alta, un campo que un borrador no pinta) vale lo mismo que
+// uno vacío. Sin esto, Zod recibe undefined y rechaza el alta con «Revisa los campos marcados».
+const blankToNull = (value: unknown) =>
+  value === undefined || (typeof value === 'string' && value.trim() === '') ? null : value;
 
 /** «12,40», «12.40» y « 12 » son números; una cadena vacía es null. */
 const toNumber = (value: unknown) => {
@@ -20,7 +23,8 @@ export const optionalText = (max: number) =>
 
 export const requiredNumber = (schema: z.ZodNumber) => z.preprocess(toNumber, schema);
 
-export const optionalNumber = (schema: z.ZodNumber) => z.preprocess(toNumber, schema.nullable());
+export const optionalNumber = (schema: z.ZodNumber) =>
+  z.preprocess((value) => (value === undefined ? null : toNumber(value)), schema.nullable());
 
 export const num = (message = 'Escribe un número.') => z.number({ error: message });
 
