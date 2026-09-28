@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { ReactNode } from 'react';
 import { MotionProvider } from '@/components/providers/MotionProvider';
 import { fontVariables } from './fonts';
@@ -20,6 +21,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="es" className={fontVariables}>
       <body>
         <MotionProvider>{children}</MotionProvider>
+        {/* LCP, INP y CLS reales de producción para el benchmark (PROPOSAL §7). En desarrollo no mide nada. */}
+        <SpeedInsights />
       </body>
     </html>
   );
