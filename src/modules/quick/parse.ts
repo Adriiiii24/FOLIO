@@ -9,16 +9,34 @@ type Category = (typeof TRANSACTION_CATEGORIES)[number];
 type MediaKind = 'book' | 'film' | 'series' | 'podcast' | 'game' | 'album';
 type MediaStatus = 'backlog' | 'in_progress' | 'done' | 'dropped';
 
+// Los campos opcionales solo los rellenan los borradores de IA (foto y voz, Fase 3); el texto no los usa.
 export type QuickDraft =
   | {
       kind: 'transaction';
-      values: { kind: 'expense' | 'income'; amount: string; merchant: string; category: Category };
+      values: {
+        kind: 'expense' | 'income';
+        amount: string;
+        merchant: string;
+        category: Category;
+        paymentMethod?: string;
+        occurredAt?: string;
+      };
     }
   | { kind: 'sets'; values: { exercise: string; count: number; reps: number; weightKg: string } }
   | { kind: 'habit'; values: { habitName: string } }
   | { kind: 'media'; values: { kind: MediaKind; status: MediaStatus; title: string; rating: string } }
-  | { kind: 'meal'; values: { description: string } }
-  | { kind: 'note'; values: { content: string } };
+  | {
+      kind: 'meal';
+      values: {
+        description: string;
+        mealType?: string;
+        caloriesKcal?: string;
+        proteinG?: string;
+        carbsG?: string;
+        fatG?: string;
+      };
+    }
+  | { kind: 'note'; values: { content: string; title?: string; mood?: string; tags?: string } };
 
 export type ParseResult = { ok: true; draft: QuickDraft } | { ok: false; message: string };
 

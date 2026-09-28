@@ -14,7 +14,7 @@ import { deleteNote } from '@/modules/brain/actions';
 import { deleteSets } from '@/modules/gym/actions';
 import { deleteMediaItem } from '@/modules/media/actions';
 import { deleteMeal } from '@/modules/nutrition/actions';
-import type { InterpretedDraft } from '@/modules/quick/actions';
+import type { AiDraftInfo, InterpretedDraft } from '@/modules/quick/types';
 import { deleteHabitLog } from '@/modules/routine/actions';
 import { deleteTransaction } from '@/modules/vault/actions';
 
@@ -55,7 +55,8 @@ export function DraftSheet({ draft, onSaved, onDiscard }: DraftSheetProps) {
   );
   const saved = (undo: (id: string) => Promise<FormState>) => (state: Saved) =>
     onSaved(state.message, state.id ? () => undo(state.id as string) : null);
-  const { context } = draft;
+  const { context, ai } = draft;
+  const aiMeta = ai?.meta ?? undefined;
 
   let form;
   switch (draft.kind) {
@@ -69,6 +70,7 @@ export function DraftSheet({ draft, onSaved, onDiscard }: DraftSheetProps) {
           submitLabel="Guardar"
           onSaved={saved(deleteTransaction)}
           secondaryAction={discard}
+          aiMeta={aiMeta}
         />
       );
       break;
@@ -116,12 +118,13 @@ export function DraftSheet({ draft, onSaved, onDiscard }: DraftSheetProps) {
       form = (
         <MealForm
           surface="paper"
-          initial={{ description: draft.values.description }}
+          initial={draft.values}
           defaultEatenAt={context.now}
           defaultMealType={context.mealType}
           submitLabel="Guardar comida"
           onSaved={saved(deleteMeal)}
           secondaryAction={discard}
+          aiMeta={aiMeta}
         />
       );
       break;
@@ -129,11 +132,12 @@ export function DraftSheet({ draft, onSaved, onDiscard }: DraftSheetProps) {
       form = (
         <NoteForm
           surface="paper"
-          initial={{ content: draft.values.content }}
+          initial={draft.values}
           defaultEntryDate={context.today}
           submitLabel="Guardar entrada"
           onSaved={saved(deleteNote)}
           secondaryAction={discard}
+          aiMeta={aiMeta}
         />
       );
       break;
@@ -151,9 +155,55 @@ export function DraftSheet({ draft, onSaved, onDiscard }: DraftSheetProps) {
     >
       <header className="mb-4 flex flex-wrap items-baseline justify-between gap-2 font-mono text-micro uppercase">
         <h2 id={titleId}>Borrador · revisa antes de guardar</h2>
-        <p className="text-steel">Texto · {KIND_LABEL[draft.kind]}</p>
+        <p className="text-steel">
+          {ai?.origin ?? 'Texto'} · {KIND_LABEL[draft.kind]}
+        </p>
       </header>
+      {ai ? <AiReading ai={ai} /> : null}
       {form}
     </section>
+  );
+}
+
+const CONFIDENCE = [
+  { min: 0.8, label: 'alta' },
+  { min: 0.6, label: 'media' },
+  { min: 0, label: 'baja' },
+] as const;
+
+/**
+ * Lo que el modelo ha leído y cuánto se fía (§5.7): texto primero, barra después. Por debajo de 0,6
+ * lo dice y pide revisar cada campo. Sobre papel, el aviso va en negro con glifo: el amarillo no contrasta.
+ */
+function AiReading({ ai }: { ai: AiDraftInfo }) {
+  if (ai.confidence === null && ai.warnings.length === 0 && !ai.heard) return null;
+  const level = ai.confidence === null ? null : CONFIDENCE.find((entry) => ai.confidence! >= entry.min)!;
+  return (
+    <div className="mb-4 grid gap-3">
+      {ai.heard ? (
+        <p className="max-w-[65ch] text-small text-steel">
+          Has dicho: <q className="text-black">{ai.heard}</q>
+        </p>
+      ) : null}
+      {level && ai.confidence !== null ? (
+        <div className="grid gap-1.5">
+          <p className="text-small font-semibold">
+            {level.label === 'baja' ? <span aria-hidden="true">! </span> : null}
+            Confianza {level.label}
+            {level.label === 'baja' ? ': revisa cada campo antes de guardar.' : '.'}
+          </p>
+          <div aria-hidden="true" className="h-2 w-full max-w-48 border-2 border-black">
+            <div className="h-full bg-black" style={{ width: `${Math.round(ai.confidence * 100)}%` }} />
+          </div>
+        </div>
+      ) : null}
+      {ai.warnings.length > 0 ? (
+        <ul aria-label="Avisos" className="grid max-w-[65ch] gap-1 border-l-2 border-black pl-3 text-small">
+          {ai.warnings.map((warning) => (
+            <li key={warning}>{warning}</li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
   );
 }

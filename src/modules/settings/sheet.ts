@@ -1,21 +1,20 @@
 import 'server-only';
-import { createClient } from '@/lib/supabase/server';
+import { getAiQuota } from '@/lib/ai/quota';
+import { createClient, requireUserId } from '@/lib/supabase/server';
 import { getProfile, getSessionEmail } from './queries';
 
 export async function getSettingsSheet() {
   const supabase = await createClient();
-  const [profile, email, spend] = await Promise.all([
-    getProfile(),
-    getSessionEmail(),
-    supabase.rpc('ai_spend_this_month'),
-  ]);
-  if (spend.error) throw new Error(spend.error.message);
+  const [profile, email, userId] = await Promise.all([getProfile(), getSessionEmail(), requireUserId(supabase)]);
+  // Con la IA gratuita el gasto en dólares es 0: lo que limita es el tope diario de usos (lib/ai/quota.ts).
+  const quota = userId
+    ? await getAiQuota(supabase, userId, profile.timezone)
+    : { used: 0, limit: 0, remaining: 0, exceeded: true };
 
   return {
     profile,
     email,
-    aiSpend: Number(spend.data ?? 0),
-    aiBudget: Number(profile.ai_monthly_budget_usd),
+    aiQuota: quota,
     timeZones: Intl.supportedValuesOf('timeZone'),
   };
 }

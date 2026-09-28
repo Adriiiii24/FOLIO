@@ -21,6 +21,8 @@ type NoteFormProps = {
   doneHref?: string;
   onSaved?: (state: Saved) => void;
   secondaryAction?: ReactNode;
+  /** Metadato del borrador de IA (origen, archivo, confianza), en JSON. */
+  aiMeta?: string;
 };
 
 export function NoteForm({
@@ -31,6 +33,7 @@ export function NoteForm({
   doneHref,
   onSaved,
   secondaryAction,
+  aiMeta,
 }: NoteFormProps) {
   const editing = Boolean(initial?.id);
   return (
@@ -42,6 +45,7 @@ export function NoteForm({
       doneHref={doneHref}
       onSaved={onSaved}
       secondaryAction={secondaryAction}
+      aiMeta={aiMeta}
     >
       {(errors) => (
         <>

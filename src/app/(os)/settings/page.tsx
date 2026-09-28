@@ -19,12 +19,10 @@ import { getSettingsSheet } from '@/modules/settings/sheet';
 
 export const metadata: Metadata = { title: 'SETTINGS · Configuración' };
 
-const usd = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD' }).format(value);
-
 export default async function SettingsPage() {
   const settings = await getSettingsSheet();
   const { profile } = settings;
-  const pct = settings.aiBudget > 0 ? Math.round((settings.aiSpend / settings.aiBudget) * 100) : null;
+  const { aiQuota } = settings;
   const profileProps = {
     display_name: profile.display_name,
     timezone: profile.timezone,
@@ -42,14 +40,11 @@ export default async function SettingsPage() {
     <Sheet>
       <SheetHeader tab="settings" meta={settings.email ?? 'Tu cuenta'} />
       <DisplayNumeral
-        value={settings.aiSpend}
-        format={{ style: 'currency', currency: 'USD' }}
-        label="Gasto de IA del mes"
-        caption={
-          pct === null
-            ? 'Gasto de IA del mes · IA desactivada'
-            : `Gasto de IA del mes · ${pct} % de ${usd(settings.aiBudget)}`
-        }
+        value={Math.min(aiQuota.used, aiQuota.limit)}
+        display={`${Math.min(aiQuota.used, aiQuota.limit)}/${aiQuota.limit}`}
+        srValue={`${Math.min(aiQuota.used, aiQuota.limit)} de ${aiQuota.limit}`}
+        label="Usos de IA hoy"
+        caption={`Usos de IA hoy · ${aiQuota.remaining === 1 ? 'queda 1' : `quedan ${aiQuota.remaining}`}`}
       />
 
       <BrutalistCard title="Perfil" className="col-span-full lg:col-span-6">
@@ -60,10 +55,11 @@ export default async function SettingsPage() {
         <TargetsForm profile={profileProps} />
       </BrutalistCard>
 
-      <BrutalistCard title="IA" eyebrow="Llega en la Fase 3" className="col-span-full lg:col-span-6">
+      <BrutalistCard title="IA" eyebrow={`${aiQuota.limit} usos al día`} className="col-span-full lg:col-span-6">
         <p className="mb-5 max-w-[65ch] text-small text-ash">
-          Leer tickets y platos por foto, dictar notas, preguntar a tu archivador y el briefing de cada mañana. Hasta
-          entonces, todo se registra a mano o desde la barra de abajo.
+          Leer tickets y platos por foto, dictar notas y preguntar a tu archivador. La IA es gratuita y compartida: cada
+          cuenta tiene {aiQuota.limit} usos al día y, si se agotan, todo sigue funcionando a mano. El briefing de cada
+          mañana no gasta tus usos.
         </p>
         <AiForm profile={profileProps} />
       </BrutalistCard>

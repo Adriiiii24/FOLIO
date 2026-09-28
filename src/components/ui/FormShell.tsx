@@ -22,6 +22,8 @@ export type FormShellProps = {
   secondaryAction?: ReactNode;
   className?: string;
   submitTone?: 'primary' | 'secondary' | 'danger';
+  /** Metadato de un borrador de IA (JSON de AiMetaInput): viaja en el campo oculto `ai`. */
+  aiMeta?: string;
 };
 
 /** Formulario de módulo: validación en servidor, errores por campo, envío con estado y resultado anunciado. */
@@ -37,6 +39,7 @@ export function FormShell({
   secondaryAction,
   className,
   submitTone,
+  aiMeta,
 }: FormShellProps) {
   const router = useRouter();
   const { state, pending, errors, formProps } = useFormAction(action, {
@@ -49,6 +52,7 @@ export function FormShell({
 
   return (
     <form {...formProps} className={className ?? 'grid grid-cols-1 gap-4 @md:grid-cols-2'}>
+      {aiMeta ? <input type="hidden" name="ai" value={aiMeta} /> : null}
       {children(errors)}
       {/* col-span-full: en las rejillas de 2 o 4 columnas, la fila de acciones ocupa siempre todo el ancho.
           data-form-actions: dentro de un borrador, esta fila se queda fija al pie (globals.css, .draft-sheet). */}

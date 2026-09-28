@@ -1,0 +1,16 @@
+{
+  "merchant": "TABERNA EL PATIO",
+  "merchantTaxId": "B87654321",
+  "issuedAt": "2026-09-27T14:18",
+  "currency": "EUR",
+  "total": 31.6,
+  "category": "restaurants",
+  "paymentMethod": "cash",
+  "vat": [
+    {
+      "ratePct": 10,
+      "base": 28.73,
+      "amount": 2.87
+    }
+  ]
+}

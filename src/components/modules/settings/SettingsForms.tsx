@@ -115,17 +115,9 @@ export function TargetsForm({ profile }: { profile: Profile }) {
 export function AiForm({ profile }: { profile: Profile }) {
   return (
     <FormShell action={saveAiSettings} submitLabel="Guardar ajustes de IA">
-      {(errors) => (
+      {() => (
         <>
-          <TextField
-            label="Presupuesto mensual de IA (USD)"
-            name="aiMonthlyBudgetUsd"
-            inputMode="decimal"
-            defaultValue={text(Number(profile.ai_monthly_budget_usd))}
-            error={errors.aiMonthlyBudgetUsd}
-            hint="Al llegar al límite, todo sigue funcionando a mano."
-          />
-          <label className="flex min-h-11 items-center gap-3 self-end text-body">
+          <label className="flex min-h-11 items-center gap-3 text-body">
             <input
               type="checkbox"
               name="briefingEnabled"

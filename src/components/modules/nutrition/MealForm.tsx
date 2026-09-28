@@ -27,6 +27,8 @@ type MealFormProps = {
   doneHref?: string;
   onSaved?: (state: Saved) => void;
   secondaryAction?: ReactNode;
+  /** Metadato del borrador de IA (origen, archivo, confianza), en JSON. */
+  aiMeta?: string;
 };
 
 const toNumber = (value: FormDataEntryValue | null) => Number(String(value ?? '').replace(',', '.')) || 0;
@@ -40,6 +42,7 @@ export function MealForm({
   doneHref,
   onSaved,
   secondaryAction,
+  aiMeta,
 }: MealFormProps) {
   const editing = Boolean(initial?.id);
   // Pista viva: kcal que salen de los macros (Atwater 4/4/9), para contrastar con las escritas.
@@ -67,6 +70,7 @@ export function MealForm({
           onSaved?.(state);
         }}
         secondaryAction={secondaryAction}
+        aiMeta={aiMeta}
         className="grid grid-cols-2 gap-4 @lg:grid-cols-4"
       >
         {(errors) => (

@@ -5,11 +5,13 @@ import { Sheet } from '@/components/os/Sheet';
 import { SheetHeader } from '@/components/os/SheetHeader';
 import { BrutalistCard } from '@/components/ui/BrutalistCard';
 import { DisplayNumeral } from '@/components/ui/DisplayNumeral';
+import { BriefingCard } from '@/components/modules/home/BriefingCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Signal } from '@/components/ui/Signal';
 import { PrefillButton } from '@/components/ui/RowActions';
 import { formatIndex, TABS, type TabSlug } from '@/config/tabs';
 import { longDate, money, number, plural, posterDate } from '@/lib/format';
+import { getTodayBriefing } from '@/modules/home/briefing/queries';
 import { getHomeSheet } from '@/modules/home/queries';
 
 export const metadata: Metadata = { title: 'HOME · Inicio' };
@@ -53,7 +55,7 @@ function IndexCard({
 }
 
 export default async function HomePage() {
-  const home = await getHomeSheet();
+  const [home, briefing] = await Promise.all([getHomeSheet(), getTodayBriefing()]);
   const { gym, vault, brain, nutrition, media, routine } = home;
   const kcalLeft = nutrition.target === null ? null : nutrition.target - nutrition.eaten;
 
@@ -67,6 +69,14 @@ export default async function HomePage() {
         label="Hoy"
         caption={longDate(home.today)}
       />
+
+      {briefing.briefing ? (
+        <BriefingCard briefing={briefing.briefing} />
+      ) : briefing.enabled && !home.empty ? (
+        <p className="col-span-full max-w-[65ch] font-mono text-label text-ash uppercase">
+          El briefing llega cada mañana con lo más importante de ayer.
+        </p>
+      ) : null}
 
       {home.empty ? (
         <BrutalistCard title="Empieza por aquí" className="col-span-full">

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { checkbox, num, optionalNumber, optionalText, requiredNumber } from '@/lib/form-schemas';
+import { checkbox, num, optionalNumber, optionalText } from '@/lib/form-schemas';
 
 export function isValidTimeZone(value: string): boolean {
   try {
@@ -33,10 +33,9 @@ export const TargetsFormSchema = z.object({
   monthlyBudget: optionalNumber(num().min(0, 'No puede ser negativo.').max(1_000_000, 'Demasiado alto.')),
 });
 
+// El presupuesto mensual en USD (ai_monthly_budget_usd) sigue en el esquema, pero con la IA gratuita no
+// limita nada: el límite es el tope diario de usos (lib/ai/quota.ts).
 export const AiFormSchema = z.object({
-  aiMonthlyBudgetUsd: requiredNumber(
-    num('Escribe el presupuesto (0 desactiva la IA).').min(0, 'Entre 0 y 1000.').max(1000, 'Entre 0 y 1000.'),
-  ),
   briefingEnabled: checkbox,
 });
 

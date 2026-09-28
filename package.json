@@ -21,6 +21,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "eval": "vitest run --config vitest.eval.config.mts",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
@@ -28,8 +29,7 @@
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "4.0.65",
-    "@ai-sdk/openai": "4.0.78",
+    "@ai-sdk/google": "4.0.82",
     "@ai-sdk/react": "4.0.121",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.117.2",

@@ -58,7 +58,7 @@ export async function saveAiSettings(_previous: FormState, formData: FormData): 
   if (!userId) return failure('Tu sesión ha caducado. Vuelve a entrar.');
   const { error } = await supabase
     .from('profiles')
-    .update({ ai_monthly_budget_usd: parsed.data.aiMonthlyBudgetUsd, briefing_enabled: parsed.data.briefingEnabled })
+    .update({ briefing_enabled: parsed.data.briefingEnabled })
     .eq('id', userId);
   if (error) return fromDb(error);
   revalidateAll();

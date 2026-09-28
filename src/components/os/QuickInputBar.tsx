@@ -4,6 +4,7 @@ import { AnimatePresence } from 'motion/react';
 import * as m from 'motion/react-m';
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import type { TabSlug } from '@/config/tabs';
+import { Icon } from '@/components/ui/Icon';
 import { exitFast, springSheet } from '@/lib/motion/tokens';
 
 export type QuickMode = 'log' | 'ask';
@@ -14,6 +15,8 @@ export type QuickStatus =
   | { kind: 'uploading' }
   | { kind: 'processing'; label: string }
   | { kind: 'error'; message: string }
+  /** Aviso que no es un error: «¿Ticket o plato?», lo que menciona una nota de voz… */
+  | { kind: 'notice'; message: string }
   /** Hay un borrador encima de la barra esperando confirmación. */
   | { kind: 'draft' }
   /** Recién guardado: el aviso ofrece DESHACER durante unos segundos (§5.7). */
@@ -30,6 +33,8 @@ type QuickInputBarProps = {
   onToggleRecording: () => void;
   onRetry?: () => void;
   onUndo?: () => void;
+  /** Acciones de la fila de estado que decide el contenedor (elegir ticket o plato, registrar lo mencionado). */
+  statusActions?: { label: string; onClick: () => void }[];
   /**
    * Qué entradas hay disponibles. Fase 2: solo texto (PROPOSAL §5), así que el contenedor apaga preguntar,
    * foto y voz; sin voz, el botón principal es siempre ENVIAR. Fase 3: todo activo, como en §5.6.
@@ -63,6 +68,7 @@ export function QuickInputBar({
   onToggleRecording,
   onRetry,
   onUndo,
+  statusActions = [],
   capabilities = {},
 }: QuickInputBarProps) {
   const { ask: canAsk = true, photo: canPhoto = true, voice: canVoice = true } = capabilities;
@@ -75,18 +81,20 @@ export function QuickInputBar({
   const busy = status.kind === 'uploading' || status.kind === 'processing';
   const hasText = text.trim().length > 0;
 
-  // Los ejemplos de los estados vacíos escriben aquí: `folio:prefill` con el texto en `detail`.
+  // Los ejemplos de los estados vacíos y las acciones del briefing escriben aquí: `folio:prefill` con el
+  // texto en `detail`, o { text, ask: true } para dejar la barra en PREGUNTAR.
   useEffect(() => {
     function onPrefill(event: Event) {
-      const value = (event as CustomEvent<string>).detail;
+      const detail = (event as CustomEvent<string | { text?: unknown; ask?: unknown }>).detail;
+      const value = typeof detail === 'string' ? detail : detail?.text;
       if (typeof value !== 'string') return;
-      setAsking(false);
+      setAsking(canAsk && typeof detail === 'object' && detail?.ask === true);
       setText(value);
       document.getElementById('quick-input')?.focus();
     }
     window.addEventListener('folio:prefill', onPrefill);
     return () => window.removeEventListener('folio:prefill', onPrefill);
-  }, []);
+  }, [canAsk]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -126,7 +134,9 @@ export function QuickInputBar({
             onClick={() => setAsking((value) => !value)}
             className={`${BUTTON} aria-checked:bg-black aria-checked:text-white`}
           >
-            Preguntar
+            {/* En móvil, solo el icono: el campo necesita el ancho. El nombre accesible sigue siendo el texto. */}
+            <Icon name="ask" className="size-5 md:hidden" />
+            <span className="sr-only md:not-sr-only">Preguntar</span>
           </button>
         ) : null}
 
@@ -152,7 +162,8 @@ export function QuickInputBar({
               disabled={busy || recording}
               className={`${BUTTON} disabled:border-steel disabled:text-steel`}
             >
-              Foto
+              <Icon name="camera" className="size-5 md:hidden" />
+              <span className="sr-only md:not-sr-only">Foto</span>
             </button>
             <input
               ref={fileInput}
@@ -190,12 +201,19 @@ export function QuickInputBar({
                 className="size-2.5 rounded-full bg-brand-orange motion-safe:animate-rec-pulse"
               />
             ) : null}
-            {recording ? 'Parar' : 'Voz'}
+            {recording ? (
+              'Parar'
+            ) : (
+              <>
+                <Icon name="mic" className="size-5 md:hidden" />
+                <span className="sr-only md:not-sr-only">Voz</span>
+              </>
+            )}
           </button>
         )}
       </form>
 
-      <div className="mt-1 flex min-h-5 items-center gap-3 px-1">
+      <div className="mt-1 flex min-h-6 flex-wrap items-center gap-x-3 px-1">
         {/* Fondo propio: la fila flota sobre el contenido que pasa por detrás y debe leerse siempre. */}
         <p
           id={statusId}
@@ -212,7 +230,7 @@ export function QuickInputBar({
               </span>
             </>
           )}
-          {status.kind === 'error' && status.message}
+          {(status.kind === 'error' || status.kind === 'notice') && status.message}
           {/* El borrador ya lo dice a la vista; aquí solo se anuncia a los lectores de pantalla. */}
           {status.kind === 'draft' && <span className="sr-only">Borrador abierto: revisa y confirma</span>}
           {status.kind === 'saved' && <span className="text-white">{status.message}</span>}
@@ -221,16 +239,26 @@ export function QuickInputBar({
           <button
             type="button"
             onClick={onUndo}
-            className="font-mono text-micro text-white uppercase underline underline-offset-4"
+            className="min-h-6 bg-black px-1 font-mono text-micro text-white uppercase underline underline-offset-4"
           >
             Deshacer
           </button>
         ) : null}
+        {statusActions.map((action) => (
+          <button
+            key={action.label}
+            type="button"
+            onClick={action.onClick}
+            className="min-h-6 bg-black px-1 font-mono text-micro text-white uppercase underline underline-offset-4"
+          >
+            {action.label}
+          </button>
+        ))}
         {status.kind === 'error' && onRetry ? (
           <button
             type="button"
             onClick={onRetry}
-            className="font-mono text-micro text-white uppercase underline underline-offset-4"
+            className="min-h-6 bg-black px-1 font-mono text-micro text-white uppercase underline underline-offset-4"
           >
             Reintentar
           </button>

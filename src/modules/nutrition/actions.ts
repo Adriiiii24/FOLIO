@@ -2,8 +2,10 @@
 
 import { revalidatePath } from 'next/cache';
 import { failure, formFields, fromDb, fromZod, success, type FormState } from '@/lib/action-result';
+import { parseAiMeta } from '@/lib/ai/draft-meta';
 import { zonedToUtcIso } from '@/lib/dates';
-import { createClient } from '@/lib/supabase/server';
+import type { Json } from '@/lib/supabase/database.types';
+import { createClient, requireUserId } from '@/lib/supabase/server';
 import { getProfile } from '@/modules/settings/queries';
 import { atwaterWarning, MealFormSchema } from './form';
 
@@ -17,6 +19,13 @@ export async function saveMeal(_previous: FormState, formData: FormData): Promis
   if (!parsed.success) return fromZod(parsed.error);
   const { id, mealType, description, caloriesKcal, proteinG, carbsG, fatG, eatenAt } = parsed.data;
 
+  const supabase = await createClient();
+  const userId = await requireUserId(supabase);
+  if (!userId) return failure('Tu sesión ha caducado. Vuelve a entrar.');
+  // Un borrador de foto trae sus alimentos, la ruta y la confianza. Solo en altas.
+  const ai = id ? null : parseAiMeta(formData.get('ai'), userId);
+  if (ai === 'invalid') return failure('El borrador no es válido. Descártalo y vuelve a intentarlo.');
+
   const profile = await getProfile();
   const row = {
     meal_type: mealType,
@@ -28,12 +37,18 @@ export async function saveMeal(_previous: FormState, formData: FormData): Promis
     eaten_at: zonedToUtcIso(eatenAt, profile.timezone),
   };
 
-  const supabase = await createClient();
   const query = id
     ? supabase.from('macros').update(row).eq('id', id).select('id').single()
     : supabase
         .from('macros')
-        .insert({ ...row, source: 'manual' })
+        .insert({
+          ...row,
+          source: ai?.source ?? 'manual',
+          items: ai?.items ?? [],
+          photo_path: ai?.path ?? null,
+          ai_confidence: ai?.confidence ?? null,
+          raw_extraction: (ai?.raw ?? null) as Json,
+        })
         .select('id')
         .single();
   const { data, error } = await query;

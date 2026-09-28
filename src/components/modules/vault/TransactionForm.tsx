@@ -18,6 +18,8 @@ type TransactionFormProps = {
   doneHref?: string;
   onSaved?: (state: Saved) => void;
   secondaryAction?: ReactNode;
+  /** Metadato del borrador de IA (origen, archivo, confianza), en JSON. */
+  aiMeta?: string;
 };
 
 export function TransactionForm({
@@ -29,6 +31,7 @@ export function TransactionForm({
   doneHref,
   onSaved,
   secondaryAction,
+  aiMeta,
 }: TransactionFormProps) {
   const editing = Boolean(initial?.id);
   return (
@@ -40,6 +43,7 @@ export function TransactionForm({
       doneHref={doneHref}
       onSaved={onSaved}
       secondaryAction={secondaryAction}
+      aiMeta={aiMeta}
     >
       {(errors) => (
         <>

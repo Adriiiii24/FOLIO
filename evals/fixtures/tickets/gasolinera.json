@@ -1,0 +1,16 @@
+{
+  "merchant": "ESTACION DE SERVICIO RUTA 5",
+  "merchantTaxId": "A11223344",
+  "issuedAt": "2026-09-25T08:05",
+  "currency": "EUR",
+  "total": 52.4,
+  "category": "transport",
+  "paymentMethod": "card",
+  "vat": [
+    {
+      "ratePct": 21,
+      "base": 43.31,
+      "amount": 9.09
+    }
+  ]
+}
