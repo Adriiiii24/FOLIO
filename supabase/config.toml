@@ -155,7 +155,7 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-# DOSSIER_OS: localhost y no 127.0.0.1, porque es lo que abre `next dev`. Las cookies de sesión
+# FOLIO: localhost y no 127.0.0.1, porque es lo que abre `next dev`. Las cookies de sesión
 # son por host: empezar el login en uno y volver al otro pierde la sesión.
 site_url = "http://localhost:3000"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
@@ -249,16 +249,16 @@ otp_expiry = 3600
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
-# DOSSIER_OS: enlace mágico con token_hash, que /auth/confirm canjea con verifyOtp. A diferencia del
+# FOLIO: enlace mágico con token_hash, que /auth/confirm canjea con verifyOtp. A diferencia del
 # ?code= de PKCE, funciona aunque el correo se abra en otro navegador o dispositivo. signInWithOtp
 # envía «confirmation» a un usuario nuevo y «magic_link» a uno existente: las dos llevan el mismo enlace.
 # En el proyecto remoto hay que copiar las mismas plantillas en Authentication → Emails.
 [auth.email.template.magic_link]
-subject = "Tu enlace de acceso a DOSSIER_OS"
+subject = "Tu enlace de acceso a FOLIO"
 content_path = "./supabase/templates/magic_link.html"
 
 [auth.email.template.confirmation]
-subject = "Tu enlace de acceso a DOSSIER_OS"
+subject = "Tu enlace de acceso a FOLIO"
 content_path = "./supabase/templates/magic_link.html"
 
 # Uncomment to customize notification email template
@@ -347,7 +347,7 @@ skip_nonce_check = false
 # If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
 email_optional = false
 
-# DOSSIER_OS: Google en local. Cliente OAuth web del proyecto de Google Cloud «folio-509918», con la
+# FOLIO: Google en local. Cliente OAuth web del proyecto de Google Cloud «folio-509918», con la
 # URI de redirección http://127.0.0.1:54321/auth/v1/callback. Las dos variables van en supabase/.env
 # (no se versiona); la CI usa valores ficticios.
 [auth.external.google]

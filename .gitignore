@@ -43,3 +43,6 @@ docs/reference/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Impeccable: capturas de revisión (se regeneran); el brief de superficie sí se versiona
+.impeccable/review/

@@ -1,0 +1,62 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+import type { ReactNode } from 'react';
+import type { FormState } from '@/lib/action-result';
+import { FormMessage, SubmitButton } from './FormControls';
+import { useFormAction } from './useFormAction';
+
+export type Saved = Extract<FormState, { status: 'success' }>;
+
+export type FormShellProps = {
+  action: (previous: FormState, formData: FormData) => Promise<FormState>;
+  children: (errors: Record<string, string>) => ReactNode;
+  submitLabel: string;
+  pendingLabel?: string;
+  surface?: 'folder' | 'paper';
+  /** Vaciar el formulario al guardar (alta). En edición y en borradores no. */
+  resetOnSuccess?: boolean;
+  /** Tras guardar, volver aquí (p. ej. la lámina sin `?edit`). */
+  doneHref?: string;
+  onSaved?: (state: Saved) => void;
+  secondaryAction?: ReactNode;
+  className?: string;
+  submitTone?: 'primary' | 'secondary' | 'danger';
+};
+
+/** Formulario de módulo: validación en servidor, errores por campo, envío con estado y resultado anunciado. */
+export function FormShell({
+  action,
+  children,
+  submitLabel,
+  pendingLabel,
+  surface = 'folder',
+  resetOnSuccess,
+  doneHref,
+  onSaved,
+  secondaryAction,
+  className,
+  submitTone,
+}: FormShellProps) {
+  const router = useRouter();
+  const { state, pending, errors, formProps } = useFormAction(action, {
+    reset: resetOnSuccess,
+    onSuccess: (result) => {
+      onSaved?.(result);
+      if (doneHref) router.replace(doneHref, { scroll: false });
+    },
+  });
+
+  return (
+    <form {...formProps} className={className ?? 'grid grid-cols-1 gap-4 @md:grid-cols-2'}>
+      {children(errors)}
+      <div className="flex flex-wrap items-center gap-3 @md:col-span-2">
+        <SubmitButton pending={pending} pendingLabel={pendingLabel} surface={surface} tone={submitTone}>
+          {submitLabel}
+        </SubmitButton>
+        {secondaryAction}
+        <FormMessage state={state} />
+      </div>
+    </form>
+  );
+}

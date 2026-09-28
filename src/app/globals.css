@@ -1,26 +1,502 @@
 @import 'tailwindcss';
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ─────────────────────────────────────────────────────────────────
+   1 · PRIMITIVOS — valores literales (sin `inline`).
+   `static`: Tailwind solo emite las variables que usan sus utilidades, y el CSS
+   propio de este archivo (pestañas, View Transitions) lee varias con var().
+   ───────────────────────────────────────────────────────────────── */
+@theme static {
+  /* Solo existen los colores del sistema: no hay bg-blue-500 que usar por despiste. */
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-brand-orange: #ff3b00;
+  --color-black: #000000;
+  --color-white: #ffffff;
+  --color-structure: #121212;
+  --color-line: #2a2a2a;
+  --color-steel: #6b6b6b;
+  --color-ash: #8a8a8a;
+  --color-signal-up: #00e08a;
+  --color-signal-down: #ff2d55;
+  --color-signal-warn: #ffd400;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  /* Sin radios y sin sombras suaves: el brutalismo no se negocia por despiste. */
+  --radius-*: initial;
+  --shadow-*: initial;
+
+  /* Escala tipográfica cerrada (ver §3.3). */
+  --text-*: initial;
+  --text-display: clamp(4.5rem, 17vw, 15rem);
+  --text-display--line-height: 0.82;
+  --text-display--letter-spacing: -0.055em;
+  --text-headline: clamp(2.25rem, 5vw, 4rem);
+  --text-headline--line-height: 0.95;
+  --text-headline--letter-spacing: -0.03em;
+  --text-title: 1.5rem;
+  --text-title--line-height: 1.15;
+  --text-title--letter-spacing: -0.01em;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5;
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.45;
+  --text-label: 0.75rem;
+  --text-label--line-height: 1.2;
+  --text-label--letter-spacing: 0.08em;
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1.2;
+  --text-micro--letter-spacing: 0.1em;
+
+  /* Curvas (§6.2). --ease-sheet es el spring 300/30 muestreado; se regenera con scripts/spring-to-linear.ts. */
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-sheet: linear(
+    0 0%,
+    0.049 5%,
+    0.161 10%,
+    0.297 15%,
+    0.435 20%,
+    0.561 25%,
+    0.669 30%,
+    0.758 35%,
+    0.829 40%,
+    0.883 45%,
+    0.923 50%,
+    0.952 55%,
+    0.972 60%,
+    0.985 65%,
+    0.994 70%,
+    1 75%,
+    1.003 80%,
+    1.004 85%,
+    1.004 90%,
+    1.004 95%,
+    1 100%
+  );
+
+  --animate-rec-pulse: rec-pulse 1.2s var(--ease-in-out-strong) infinite;
+  --animate-caret-blink: caret-blink 1s steps(1) infinite;
+
+  @keyframes rec-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.35);
+      opacity: 0.6;
+    }
+  }
+  @keyframes caret-blink {
+    50% {
+      opacity: 0;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ─────────────────────────────────────────────────────────────────
+   2 · CONTEXTUALES — `inline` para que var() se resuelva en el elemento
+   ───────────────────────────────────────────────────────────────── */
+@theme inline {
+  --font-display: var(--font-display-face), 'Arial Narrow', Arial, sans-serif;
+  --font-sans: var(--font-sans-face), system-ui, sans-serif;
+  --font-mono: var(--font-mono-face), ui-monospace, monospace;
+
+  --shadow-hard-sm: 2px 2px 0 0 var(--shadow-ink);
+  --shadow-hard: 4px 4px 0 0 var(--shadow-ink);
+  --shadow-hard-lg: 6px 6px 0 0 var(--shadow-ink);
+  --shadow-none: 0 0 #0000;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   3 · BASE Y SUPERFICIES
+   ───────────────────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    --shadow-ink: var(--color-black);
+    --focus-ring: var(--color-black);
+    --sheet-offset: 32px;
+    --duration-press: 100ms;
+    --duration-fast: 160ms;
+    --duration-base: 240ms;
+    --duration-exit: 200ms;
+    --duration-sheet: 400ms;
+    --quick-bar-height: 96px;
+  }
+
+  html {
+    /* El fondo va SOLO en html: con fondo opaco en html y en body a la vez,
+       cualquier hijo con z-index negativo queda tapado por el fondo de body. */
+    background: var(--color-brand-orange);
+    color: var(--color-black);
+    font-family: var(--font-sans-face), system-ui, sans-serif;
+    text-rendering: optimizeLegibility;
+    -webkit-text-size-adjust: 100%;
+    /* El foco nunca queda escondido bajo la barra de entrada fija (WCAG 2.4.11). */
+    scroll-padding-bottom: calc(var(--quick-bar-height) + env(safe-area-inset-bottom));
+  }
+
+  [data-surface='canvas'] {
+    background: var(--color-brand-orange);
+    color: var(--color-black);
+  }
+  [data-surface='folder'] {
+    background: var(--color-black);
+    color: var(--color-white);
+  }
+  [data-surface='paper'] {
+    background: var(--color-white);
+    color: var(--color-black);
+  }
+
+  /* La superficie define la tinta para lo que se apoya ENCIMA, no para sí misma. */
+  [data-surface='canvas'] > * {
+    --shadow-ink: var(--color-black);
+    --focus-ring: var(--color-black);
+  }
+  [data-surface='folder'] > * {
+    --shadow-ink: var(--color-brand-orange);
+    --focus-ring: var(--color-brand-orange);
+  }
+  [data-surface='paper'] > * {
+    --shadow-ink: var(--color-black);
+    --focus-ring: var(--color-black);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--color-brand-orange);
+    color: var(--color-black);
+  }
+
+  @media (max-width: 47.99rem) {
+    :root {
+      --sheet-offset: 24px;
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   4 · COMPONENTES — ver §5 para la especificación de cada uno
+   ───────────────────────────────────────────────────────────────── */
+@layer components {
+  /* §5.2 FolderTabs */
+  .folder-tabs {
+    padding-inline: 16px;
+  }
+  .folder-tabs__list {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .folder-tabs__list > li {
+    display: flex;
+  }
+
+  .folder-tab {
+    --tab-rise: 0px; /* 0 inactiva · 4px hover · 8px activa */
+    --tab-fill: var(--color-brand-orange);
+    --tab-ink: var(--color-black);
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex: 1;
+    align-items: flex-end;
+    height: 48px; /* caja fija: el área táctil nunca cambia */
+    padding: 0 14px 10px;
+    color: var(--tab-ink);
+    text-decoration: none;
+  }
+  /* Dos capas recortadas: contorno negro y relleno desplazado 2 px hacia dentro. */
+  .folder-tab::before,
+  .folder-tab::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    clip-path: polygon(
+      10px calc(8px - var(--tab-rise)),
+      calc(100% - 10px) calc(8px - var(--tab-rise)),
+      100% 100%,
+      0 100%
+    );
+    transition: clip-path var(--duration-fast) var(--ease-out-strong);
+  }
+  .folder-tab::before {
+    inset: 0;
+    background: var(--color-black);
+  }
+  .folder-tab::after {
+    inset: 2px 2px 0;
+    background: var(--tab-fill);
+  }
+
+  .folder-tab__label {
+    display: flex;
+    gap: 0.5ch;
+    font-family: var(--font-mono-face), ui-monospace, monospace;
+    font-size: var(--text-label);
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    translate: 0 calc(var(--tab-rise) * -1);
+    transition: translate var(--duration-fast) var(--ease-out-strong);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .folder-tab:not([aria-current='page']):hover {
+      --tab-rise: 4px;
+    }
+  }
+  .folder-tab:not([aria-current='page']):active {
+    --tab-rise: 2px;
+  }
+
+  .folder-tab[aria-current='page'] {
+    --tab-rise: 8px;
+    --tab-fill: var(--color-black);
+    --tab-ink: var(--color-white);
+    z-index: 1;
+    margin-bottom: -2px; /* se funde con la carpeta: sin costura */
+  }
+
+  /* < 1024 px: la tira se reduce a índices y desliza; la activa despliega su nombre. */
+  @media (max-width: 63.99rem) {
+    .folder-tabs__list {
+      display: flex;
+      overflow-x: auto;
+      scrollbar-width: none;
+      scroll-snap-type: x proximity;
+      scroll-padding-inline: 16px;
+    }
+    .folder-tabs__list > li {
+      flex: none;
+    }
+    .folder-tab {
+      min-width: 48px;
+      padding-inline: 12px;
+      scroll-snap-align: start;
+    }
+    .folder-tab:not([aria-current='page']) .folder-tab__name {
+      display: none;
+    }
+  }
+  /* El separador «//» solo cabe a partir de 1280 px. */
+  @media (max-width: 79.99rem) {
+    .folder-tab__sep {
+      display: none;
+    }
+  }
+  @media (min-width: 64rem) {
+    .folder-tabs {
+      padding-inline: 0;
+    }
+  }
+
+  /* §5.5 DisplayNumeral: la cifra se ajusta al ancho de su contenedor según su número de caracteres. */
+  .numeral {
+    /* FOLIO: la cifra ocupa la línea (§5.5) con tope de 15rem. Con --text-display como tope, en móvil se
+       quedaba en 72 px y media línea vacía. --glyph-em medido en el navegador: Inter Tight Bold con −0,055em
+       ocupa 0,40–0,50 em por carácter en textos reales. Recalibrar al pasar a Helvetica Now Display. */
+    --glyph-em: 0.52;
+    font-family: var(--font-display-face), 'Arial Narrow', Arial, sans-serif;
+    font-weight: 700;
+    font-size: min(15rem, calc(100cqi / (var(--chars, 5) * var(--glyph-em))));
+    /* Con interlineado 0,82, la coma, la g o la ‘ bajan fuera de la caja y pisarían el pie. */
+    padding-block-end: 0.1em;
+    line-height: 0.82;
+    letter-spacing: -0.055em;
+    font-variant-numeric: proportional-nums lining-nums;
+    white-space: nowrap;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   5 · CAMBIO DE LÁMINA — React <ViewTransition> (§6.3)
+   ───────────────────────────────────────────────────────────────── */
+/* La raíz no se anima: barra de sistema, pestañas y barra de entrada quedan quietas. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-new(.sheet-in-from-right) {
+  animation: sheet-in-from-right var(--duration-sheet) var(--ease-sheet) both;
+}
+::view-transition-new(.sheet-in-from-left) {
+  animation: sheet-in-from-left var(--duration-sheet) var(--ease-sheet) both;
+}
+::view-transition-old(.sheet-out-to-left) {
+  animation: sheet-out-to-left var(--duration-exit) var(--ease-out-strong) both;
+}
+::view-transition-old(.sheet-out-to-right) {
+  animation: sheet-out-to-right var(--duration-exit) var(--ease-out-strong) both;
+}
+
+@keyframes sheet-in-from-right {
+  from {
+    transform: translateX(var(--sheet-offset));
+    opacity: 0;
+  }
+}
+@keyframes sheet-in-from-left {
+  from {
+    transform: translateX(calc(var(--sheet-offset) * -1));
+    opacity: 0;
+  }
+}
+@keyframes sheet-out-to-left {
+  to {
+    transform: translateX(calc(var(--sheet-offset) * -1));
+    opacity: 0;
+  }
+}
+@keyframes sheet-out-to-right {
+  to {
+    transform: translateX(var(--sheet-offset));
+    opacity: 0;
+  }
+}
+
+/* Movimiento reducido: menos movimiento, no cero. Se conserva un fundido corto sin desplazamiento. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-new(.sheet-in-from-right),
+  ::view-transition-new(.sheet-in-from-left) {
+    animation: sheet-fade-in 120ms linear both;
+  }
+  ::view-transition-old(.sheet-out-to-left),
+  ::view-transition-old(.sheet-out-to-right) {
+    animation: sheet-fade-out 80ms linear both;
+  }
+}
+@keyframes sheet-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes sheet-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   6 · FOLIO — extensiones sobre DESIGN_SYSTEM §2.7
+   ───────────────────────────────────────────────────────────────── */
+@layer components {
+  /* §6.5: contenido que llega por streaming después de la lámina. */
+  .stream-reveal {
+    transition: opacity var(--duration-fast) var(--ease-out-strong);
+    @starting-style {
+      opacity: 0;
+    }
+  }
+}
+
+@layer base {
+  /* Lo que el navegador dibuja por su cuenta también lleva el sistema. */
+  html {
+    scrollbar-color: var(--color-steel) var(--color-black);
+    scrollbar-width: thin;
+  }
+  [data-surface='folder'] {
+    color-scheme: dark;
+    caret-color: var(--color-brand-orange);
+    accent-color: var(--color-brand-orange);
+  }
+  [data-surface='paper'] {
+    color-scheme: light;
+    caret-color: var(--color-black);
+    accent-color: var(--color-black);
+  }
+  [data-surface='canvas'] {
+    color-scheme: light;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-ash);
+    opacity: 1;
+  }
+  [data-surface='paper'] input::placeholder,
+  [data-surface='paper'] textarea::placeholder {
+    color: var(--color-steel);
+  }
+
+  /* Cifras de tablas y columnas: tabulares (§3.4). */
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Colores forzados (§8): las pestañas se dibujan con pseudo-elementos que el modo elimina;
+   se sustituyen por un borde real y el estado activo por el color de sistema de selección. */
+@media (forced-colors: active) {
+  .folder-tab {
+    border: 2px solid CanvasText;
+  }
+  .folder-tab::before,
+  .folder-tab::after {
+    display: none;
+  }
+  .folder-tab[aria-current='page'] {
+    border-color: Highlight;
+    color: Highlight;
+  }
+}
+
+/* Controles de formulario según la superficie: negros en la carpeta, blancos en el papel (borradores).
+   Sobre papel, ni `ash` ni `signal-down` dan contraste de texto (§2.3): etiquetas en `steel`, errores en negro. */
+@layer components {
+  .control {
+    border: 2px solid var(--color-steel);
+    background: var(--color-black);
+    color: var(--color-white);
+    border-radius: 0;
+  }
+  .control:hover:not(:disabled) {
+    border-color: var(--color-ash);
+  }
+  .control[aria-invalid='true'] {
+    border-color: var(--color-signal-down);
+  }
+  .control:disabled {
+    color: var(--color-ash);
+  }
+  .field-label {
+    color: var(--color-ash);
+  }
+  .field-hint {
+    color: var(--color-ash);
+  }
+  .field-error {
+    color: var(--color-signal-down);
+  }
+
+  [data-surface='paper'] .control {
+    border-color: var(--color-black);
+    background: var(--color-white);
+    color: var(--color-black);
+  }
+  [data-surface='paper'] .control:hover:not(:disabled) {
+    border-color: var(--color-steel);
+  }
+  [data-surface='paper'] .control[aria-invalid='true'] {
+    border-color: var(--color-black);
+    border-style: dashed;
+  }
+  [data-surface='paper'] .field-label,
+  [data-surface='paper'] .field-hint {
+    color: var(--color-steel);
+  }
+  [data-surface='paper'] .field-error {
+    color: var(--color-black);
+    font-weight: 600;
+  }
 }
