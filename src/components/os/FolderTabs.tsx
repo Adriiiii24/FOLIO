@@ -12,7 +12,15 @@ export function FolderTabs() {
 
   useEffect(() => {
     // En móvil la tira desliza: la pestaña activa queda siempre a la vista, sin animar el scroll.
-    activeLink.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    // Se desplaza solo la tira, y solo si desborda. scrollIntoView() movía además el punto de inicio de la
+    // navegación con Tab a la pestaña activa, y el primer Tab se saltaba el enlace «Saltar al contenido».
+    const link = activeLink.current;
+    const list = link?.closest('ol');
+    if (!link || !list || list.scrollWidth <= list.clientWidth) return;
+    const left = link.offsetLeft - list.offsetLeft;
+    if (left < list.scrollLeft || left + link.offsetWidth > list.scrollLeft + list.clientWidth) {
+      list.scrollLeft = left - 16;
+    }
   }, [active?.slug]);
 
   return (

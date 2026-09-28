@@ -14,7 +14,12 @@ export default async function OsLayout({ children }: { children: ReactNode }) {
   const profile = await getProfile();
 
   return (
-    <div data-surface="canvas" className="grid min-h-dvh grid-rows-[auto_auto_1fr] lg:px-6 lg:pb-6">
+    // grid-cols-[minmax(0,1fr)]: sin plantilla, la columna implícita crece hasta el ancho mínimo del contenido
+    // (la tira de pestañas, una tabla) y en móvil toda la carpeta desbordaba en horizontal.
+    <div
+      data-surface="canvas"
+      className="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr] lg:px-6 lg:pb-6"
+    >
       <a
         href="#contenido"
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-60 focus:bg-black focus:px-3 focus:py-2 focus:text-white"
