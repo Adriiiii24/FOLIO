@@ -1,6 +1,6 @@
 # FOLIO — Design System
 
-> **Documento:** `DESIGN_SYSTEM.md` · **Versión:** 1.2 · **Estado:** Fase 2 implementada (1.0 y 1.1: especificación doc-first) · **Fecha:** 2026-09-28
+> **Documento:** `DESIGN_SYSTEM.md` · **Versión:** 1.3 · **Estado:** Fase 2 implementada; Fase 3 en curso (1.0 y 1.1: especificación doc-first) · **Fecha:** 2026-09-28
 > **Documentos hermanos:** [`PROPOSAL.md`](./PROPOSAL.md) (producto) · [`ARCHITECTURE.md`](./ARCHITECTURE.md) (datos, IA, carpetas)
 > **Stack de UI:** Next.js 16 · React 19.3 · Tailwind CSS 4.3 · Motion 13 (`motion/react`) · `next/font`
 
@@ -18,6 +18,28 @@
 > - **Borrador (§5.7):** las acciones van en un pie fijo (`sticky`) dentro del papel, para que `GUARDAR` se vea sin desplazarse. Descartar devuelve el texto a la barra y Escape también descarta. `DESHACER` dura 5 s. Todavía no hay campo de confianza ni gesto de arrastre: llegan con la IA.
 > - **Controles de formulario:** clases `.control`, `.field-label`, `.field-hint` y `.field-error`, con variantes para `paper`. En papel, el botón principal no lleva sombra: sin el naranja detrás, la sombra negra sobre blanco ensuciaba.
 > - **`DeltaChip`:** anima con `requestAnimationFrame` en lugar de un estado dentro de un efecto, que prohíben las reglas de React 19.
+>
+> **Versión 1.3 (Fase 3, en curso): superficies nuevas.** Siguen este documento y `DESIGN.md`. Aún no han pasado la revisión de Impeccable.
+>
+> - **Barra (§5.6):**
+>   - Con IA, `capabilities` enciende PREGUNTAR, FOTO y VOZ.
+>   - Nuevo estado `notice` para avisos que no son errores, como «¿Ticket o plato?» fuera de VAULT y NUTRITION.
+>   - La fila de estado lleva acciones del contenedor con 24 px de alto mínimo: TICKET, PLATO, «Registrar: …» tras una nota de voz.
+>   - `folio:prefill` admite `{ text, ask: true }` para dejar la barra en PREGUNTAR.
+> - **Borrador (§5.7):**
+>   - La cabecera dice el origen (TEXTO, TICKET, FOTO o VOZ).
+>   - La confianza va en texto primero («Confianza alta.») y después en barra. Por debajo de 0,6: «! Confianza baja: revisa cada campo antes de guardar.»
+>   - Los avisos concretos van en una lista con borde izquierdo de 2 px.
+>   - Lo oído en una orden de voz se muestra aparte, como cita, no como aviso.
+>   - Sobre papel, sin amarillo: no contrasta.
+> - **Respuestas del chat:**
+>   - Superficie oscura (`structure`, borde blanco, sombra naranja), porque se lee y no se decide.
+>   - Cada resultado de herramienta es una ficha de evidencia con borde `line`: notas con fecha y enlace, tablas con cifras tabulares, o el periodo consultado.
+>   - Escape cierra y el texto va sin Markdown.
+> - **Briefing en HOME:**
+>   - Titular en `text-headline`.
+>   - Cada hallazgo lleva su pestaña, una señal (`Signal`: «! Atención», «▲ Bien», «● Dato») y su acción.
+>   - La cascada de §6.5 solo aparece la primera vez que se ve cada día (`read_at`).
 
 ---
 
@@ -1458,6 +1480,8 @@ export type QuickStatus =
   | { kind: 'uploading' }
   | { kind: 'processing'; label: string }
   | { kind: 'error'; message: string }
+  /** Aviso que no es un error: «¿Ticket o plato?», lo que menciona una nota de voz… */
+  | { kind: 'notice'; message: string }
   /** Hay un borrador encima de la barra esperando confirmación. */
   | { kind: 'draft' }
   /** Recién guardado: el aviso ofrece DESHACER durante unos segundos (§5.7). */
@@ -1474,6 +1498,8 @@ type QuickInputBarProps = {
   onToggleRecording: () => void;
   onRetry?: () => void;
   onUndo?: () => void;
+  /** Acciones de la fila de estado que decide el contenedor (elegir ticket o plato, registrar lo mencionado). */
+  statusActions?: { label: string; onClick: () => void }[];
   /**
    * Qué entradas hay disponibles. Fase 2: solo texto (PROPOSAL §5), así que el contenedor apaga preguntar,
    * foto y voz; sin voz, el botón principal es siempre ENVIAR. Fase 3: todo activo, como en §5.6.
@@ -1507,6 +1533,7 @@ export function QuickInputBar({
   onToggleRecording,
   onRetry,
   onUndo,
+  statusActions = [],
   capabilities = {},
 }: QuickInputBarProps) {
   const { ask: canAsk = true, photo: canPhoto = true, voice: canVoice = true } = capabilities;
@@ -1519,18 +1546,20 @@ export function QuickInputBar({
   const busy = status.kind === 'uploading' || status.kind === 'processing';
   const hasText = text.trim().length > 0;
 
-  // Los ejemplos de los estados vacíos escriben aquí: `folio:prefill` con el texto en `detail`.
+  // Los ejemplos de los estados vacíos y las acciones del briefing escriben aquí: `folio:prefill` con el
+  // texto en `detail`, o { text, ask: true } para dejar la barra en PREGUNTAR.
   useEffect(() => {
     function onPrefill(event: Event) {
-      const value = (event as CustomEvent<string>).detail;
+      const detail = (event as CustomEvent<string | { text?: unknown; ask?: unknown }>).detail;
+      const value = typeof detail === 'string' ? detail : detail?.text;
       if (typeof value !== 'string') return;
-      setAsking(false);
+      setAsking(canAsk && typeof detail === 'object' && detail?.ask === true);
       setText(value);
       document.getElementById('quick-input')?.focus();
     }
     window.addEventListener('folio:prefill', onPrefill);
     return () => window.removeEventListener('folio:prefill', onPrefill);
-  }, []);
+  }, [canAsk]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1639,7 +1668,7 @@ export function QuickInputBar({
         )}
       </form>
 
-      <div className="mt-1 flex min-h-5 items-center gap-3 px-1">
+      <div className="mt-1 flex min-h-6 flex-wrap items-center gap-x-3 px-1">
         {/* Fondo propio: la fila flota sobre el contenido que pasa por detrás y debe leerse siempre. */}
         <p
           id={statusId}
@@ -1656,7 +1685,7 @@ export function QuickInputBar({
               </span>
             </>
           )}
-          {status.kind === 'error' && status.message}
+          {(status.kind === 'error' || status.kind === 'notice') && status.message}
           {/* El borrador ya lo dice a la vista; aquí solo se anuncia a los lectores de pantalla. */}
           {status.kind === 'draft' && <span className="sr-only">Borrador abierto: revisa y confirma</span>}
           {status.kind === 'saved' && <span className="text-white">{status.message}</span>}
@@ -1665,16 +1694,26 @@ export function QuickInputBar({
           <button
             type="button"
             onClick={onUndo}
-            className="font-mono text-micro text-white uppercase underline underline-offset-4"
+            className="min-h-6 bg-black px-1 font-mono text-micro text-white uppercase underline underline-offset-4"
           >
             Deshacer
           </button>
         ) : null}
+        {statusActions.map((action) => (
+          <button
+            key={action.label}
+            type="button"
+            onClick={action.onClick}
+            className="min-h-6 bg-black px-1 font-mono text-micro text-white uppercase underline underline-offset-4"
+          >
+            {action.label}
+          </button>
+        ))}
         {status.kind === 'error' && onRetry ? (
           <button
             type="button"
             onClick={onRetry}
-            className="font-mono text-micro text-white uppercase underline underline-offset-4"
+            className="min-h-6 bg-black px-1 font-mono text-micro text-white uppercase underline underline-offset-4"
           >
             Reintentar
           </button>

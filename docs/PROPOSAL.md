@@ -1,6 +1,6 @@
 # FOLIO — Propuesta de producto
 
-> **Documento:** `PROPOSAL.md` · **Versión:** 1.2 · **Estado:** Fases 1 y 2 implementadas (1.0 y 1.1: propuesta doc-first) · **Fecha:** 2026-09-28
+> **Documento:** `PROPOSAL.md` · **Versión:** 1.3 · **Estado:** Fases 1 y 2 implementadas; Fase 3 en curso (1.0 y 1.1: propuesta doc-first) · **Fecha:** 2026-09-28
 > **Documentos hermanos:** [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) (identidad, tokens, componentes, motion) · [`ARCHITECTURE.md`](./ARCHITECTURE.md) (esquema SQL, RLS, pipeline de IA, estructura de carpetas)
 
 ---
@@ -522,6 +522,24 @@ Supuesto de planificación: **dedicación parcial, unas 15 h/semana**. Las fecha
 
 **Criterios de salida:** línea base de los evals registrada · respuestas del chat con citas verificables · briefing generado 7 días seguidos sin intervención.
 
+> [!NOTE]
+> **Estado a 2026-09-28: en curso.** Requisito nuevo del autor: la IA tiene que ser **gratuita**, así que todo usa el nivel gratuito de la Gemini API ([`ARCHITECTURE.md`](./ARCHITECTURE.md) §3.0).
+>
+> **Hecho y probado de punta a punta** en Chromium con el Supabase local:
+>
+> - **Ticket y plato por foto:** la foto se comprime en el navegador, sin EXIF, y abre un borrador con confianza y avisos. El importe, la fecha, el comercio, el pago y el IVA se leen correctamente. Descartar borra la foto.
+> - **Nota de voz:** en BRAIN y HOME abre un borrador de diario con título, ánimo y etiquetas, y ofrece registrar lo que mencionas. En GYM y ROUTINE, la orden abre el mismo borrador que el texto.
+> - **Chat de solo lectura:** usa herramientas y enseña la evidencia (tablas, notas con fecha).
+> - **Embeddings y búsqueda híbrida.**
+> - **Briefing:** cron protegido con `CRON_SECRET`; las cifras salen de SQL.
+>
+> **Falta:**
+>
+> - **Línea base del eval:** el arnés está listo (`npm run eval`), pero hoy no había cuota ni modelos libres.
+> - **Briefing 7 días seguidos:** exige desplegar el cron en Vercel.
+>
+> **Hallazgo que cambia la escala:** el nivel gratuito da unas **20 peticiones al día por modelo y por proyecto**, compartidas por todas las cuentas, y responde 503 a menudo. Encadenar los seis modelos Gemini 3 suma su cuota. Si los seis tienen el límite medido en dos de ellos, la capacidad total ronda los 120 usos al día; es una estimación hasta ver los límites reales en aistudio.google.com/rate-limit.
+
 ### Fase 4 — Polishing & Benchmark
 
 **Objetivo:** demostrar con números lo que la propuesta afirma.
@@ -605,10 +623,10 @@ Lo que se publicará en `docs/BENCHMARK.md` al cerrar la Fase 4. Los umbrales so
 
 | Decisión | Opciones | Cómo se decide |
 |---|---|---|
-| Proveedor de visión | Claude Opus 5 · Gemini Flash | Eval de tickets y platos: precisión × coste × latencia |
-| Modelo por ruta | Opus 5 en todas · Sonnet 5 o Haiku 4.5 en extracción | Decisión del autor tras el eval; el valor por defecto no baja por coste sin datos |
+| Proveedor de IA | **Decidido (1.3): Gemini, nivel gratuito**, porque el autor exige IA gratuita | Claude y OpenAI no tienen nivel gratuito en su API |
+| Orden de modelos por ruta | Por calidad (3.8 Flash primero, el de hoy) · Por capacidad (Flash-Lite primero, si su cuota diaria es mayor) | Decisión del autor tras `npm run eval` y tras mirar los límites de cada modelo en aistudio.google.com/rate-limit |
 | Tipografía de display | **Decidida (1.2): Helvetica Now Display.** Falta comprar la licencia web y conseguir los archivos; mientras tanto, Inter Tight | Ver `DESIGN_SYSTEM.md` §3 |
-| Presupuesto de IA por cuenta | El valor por defecto del esquema (25 USD al mes) · Un tope bajo para visitantes y el completo para el autor · IA solo para el autor | La app admite visitantes con cuenta propia (unas 10 personas; ver `PRODUCT.md`). Con 25 USD por cuenta, el peor caso supera los 250 USD al mes. Decisión del autor antes de activar la IA en la Fase 3 |
+| Tope diario de IA por cuenta | 20 usos (provisional, `AI_DAILY_LIMIT`) · Unos 5 para visitantes y más para el autor · IA solo para el autor | La IA ya no cuesta dinero, pero la cuota gratuita de todo el proyecto rondaría los 120 usos al día (estimación con el límite medido de 20 por modelo). Con 10 cuentas a 20 usos, el peor caso pide el doble de lo que hay. Decisión del autor |
 | Programación del briefing | Cron diario de Vercel · `pg_cron` horario en Supabase | Diario basta con una zona horaria; horario si hay usuarios en varias zonas |
 | PWA y notificaciones | Sí · No en v1 | Margen al final de la Fase 4 |
 

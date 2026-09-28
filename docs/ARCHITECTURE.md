@@ -1,6 +1,6 @@
 # FOLIO — Arquitectura técnica
 
-> **Documento:** `ARCHITECTURE.md` · **Versión:** 1.2 · **Estado:** Fases 1 y 2 implementadas (1.0: especificación doc-first) · **Fecha:** 2026-09-28
+> **Documento:** `ARCHITECTURE.md` · **Versión:** 1.3 · **Estado:** Fases 1 y 2 implementadas; Fase 3 en curso (1.0: especificación doc-first) · **Fecha:** 2026-09-28
 > **Documentos hermanos:** [`PROPOSAL.md`](./PROPOSAL.md) (producto) · [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) (UI y motion)
 
 > [!NOTE]
@@ -11,7 +11,9 @@
 >
 > - **Versión 1.2 (Fase 2).** Las ocho pestañas y sus CRUD están construidos sobre este esquema, sin cambiar la migración. Los bloques de `ticket.ts`, `vault/schemas.ts` y la plantilla del correo son copia literal del repositorio.
 >
-> Falta lo que requiere claves de los modelos; el detalle está en §6.
+> - **Versión 1.3 (Fase 3, en curso).** El autor exige IA **gratuita**: todo el pipeline pasa del diseño Claude + OpenAI al nivel gratuito de la Gemini API. El bloque de `models.ts` de §3.2 es copia del repositorio. Los demás bloques de §3 conservan el diseño previo; la tabla de §3.0 dice dónde está cada pieza real.
+>
+> Falta la línea base del eval, que necesita cuota gratuita disponible; el detalle está en §6.
 
 > [!WARNING]
 > **Los bloques de la Fase 3 no se copian tal cual.** La Fase 2 ya creó `lib/dates.ts`, `lib/format.ts`, `lib/action-result.ts` y los `actions.ts` de vault, brain y nutrition, con las acciones manuales, sus esquemas de formulario y sus tests. Los bloques de §3 con esas rutas describen lo que la IA **añade**: hay que fusionarlos con los archivos existentes, no sobrescribirlos. Las funciones de `dates.ts` que ya existen (`localDayRangeUtc`, `zonedToUtcIso`, `utcIsoToZonedInput`, `addDays`, `weekStart`) tienen tests en `tests/unit/dates.test.ts` que deben seguir pasando.
@@ -42,8 +44,7 @@ Versiones estables consultadas en npm el 2026-09-27. Se fijan en `package.json` 
 | `motion` | 13.4.4 | Antes Framer Motion; se importa de `motion/react` |
 | `ai` | 7.0.118 | Vercel AI SDK 7: `Output.object`, `isStepCount`, partes `file` |
 | `@ai-sdk/react` | 4.0.121 | `useChat` |
-| `@ai-sdk/anthropic` | 4.0.65 | `effort`, `structuredOutputMode`, `cacheControl` |
-| `@ai-sdk/openai` | 4.0.78 | Embeddings y transcripción |
+| `@ai-sdk/google` | 4.0.82 | Versión 1.3: único proveedor (nivel gratuito de Gemini): `thinkingConfig`, `outputDimensionality`. Sustituye a `@ai-sdk/anthropic` 4.0.65 y `@ai-sdk/openai` 4.0.78, que siguen en los bloques del diseño previo de §3 |
 | `zod` | 4.6.5 | Importado directamente de `zod` |
 | `@supabase/supabase-js` | 2.117.2 | — |
 | `@supabase/ssr` | 0.12.7 | `setAll(cookies, headers)` con cabeceras anti-caché |
@@ -1398,6 +1399,31 @@ export async function GET(request: Request) {
 
 ## 3. AI Pipeline & Structured Outputs
 
+### 3.0 Lo implementado en la Fase 3 (versión 1.3)
+
+> [!IMPORTANT]
+> **Proveedor único y gratuito: Gemini.** Requisito del autor (2026-09-28): la IA no puede costar dinero. Claude y OpenAI no tienen nivel gratuito en su API, así que el pipeline usa el nivel gratuito de la Gemini API con una sola clave (`GOOGLE_GENERATIVE_AI_API_KEY`) en un proyecto de Google Cloud sin facturación. Desde el EEE, Google no usa los datos del nivel gratuito para mejorar sus productos (condiciones de la Gemini API).
+>
+> **Lo que se midió al construir:**
+>
+> - **Cuota:** es por modelo, por día y por PROYECTO, compartida por todas las cuentas. `gemini-3.8-flash` y `gemini-3.6-flash` admiten 20 peticiones al día cada uno (`GenerateRequestsPerDayPerProjectPerModel-FreeTier`). Se reinicia a medianoche de la hora del Pacífico.
+> - **Saturación:** el nivel gratuito devuelve 503 («high demand») a menudo, incluso con cuota libre.
+> - **Razonamiento:** `gemini-3.8-flash` rechaza `thinkingLevel: 'minimal'` con un 400; `'low'` es el mínimo común.
+> - **Audio:** el WebM/Opus que graba Chrome se acepta directamente; no hace falta modelo de transcripción aparte.
+> - **Embeddings:** `gemini-embedding-2` a 1536 dimensiones cabe en la columna existente sin tocar la migración. Se normaliza solo. La tarea va como prefijo del texto (`task: search result | query: …` y `title: … | text: …`).
+
+| Pieza | Diseño previo (§3.1–§3.9) | Implementación |
+|---|---|---|
+| Modelos | `claude-opus-5` + OpenAI | `src/lib/ai/models.ts`: una **cadena** por ruta (3.8 → 3.7 → 3.6 → 3.5 Flash → Flash-Lite). Un modelo sin cuota queda en reposo hasta el reinicio de Google y uno saturado, 30 s. Si no queda ninguno, `AiUnavailableError` al momento |
+| Presupuesto | USD al mes por cuenta (`ai_spend_this_month`) | `src/lib/ai/quota.ts`: **tope diario de usos por persona** (20, provisional; `AI_DAILY_LIMIT`), contado en `ai_runs`. Embeddings y briefing no cuentan. `cost_usd` se guarda a 0 |
+| Ticket y plato | `vault/actions.ts` y `nutrition/actions.ts` | `src/modules/quick/capture.ts` (`extractPhoto`), `vault/receipt-rules.ts`, `nutrition/meal-rules.ts`. Devuelven un **borrador**; guarda la acción del formulario |
+| Voz | Transcripción (OpenAI) + estructura, y la nota se guardaba sin confirmar | **Una** llamada con audio (`VoiceCaptureSchema`): transcripción literal más `command` en la sintaxis de la barra. Una orden pasa por el mismo analizador que el texto; lo demás es un **borrador** de nota. La IA propone, la persona confirma |
+| Metadato del borrador | Argumentos de la acción | Campo oculto `ai` (JSON) validado con `AiMetaSchema` (`src/lib/ai/draft-meta.ts`); solo en altas y con la ruta del archivo dentro de la carpeta propia |
+| Embeddings | `brain/embeddings.ts` | Igual, con Gemini; `after()` tras guardar una nota y backfill en el cron |
+| Chat | `app/api/chat/route.ts` + `ChatPanel` | Igual, con las mismas herramientas de solo lectura. `searchJournal` busca solo por palabras si no hay embedding. Máximo 5 pasos |
+| Briefing | `modules/home/briefing/*` | Igual. Además: la cuenta sin actividad no gasta cuota (`skipped_empty`), unidad repetida tras un marcador = rechazo, y el cron espera y reintenta si los modelos están saturados, con 220 s de presupuesto |
+| Eval | Fase 4 | `npm run eval` (`evals/extraction.eval.ts`): tickets sintéticos con verdad de referencia, platos CC0 y notas de voz sintéticas (TTS de Gemini) |
+
 ### 3.1 Restricciones que dan forma al diseño
 
 | Restricción | Valor | Consecuencia |
@@ -1412,38 +1438,195 @@ export async function GET(request: Request) {
 ### 3.2 Registro de modelos y coste
 
 ```ts
-// src/lib/ai/models.ts
+// src/lib/ai/models.ts (versión 1.3: copia del repositorio)
 import 'server-only';
-import { anthropic } from '@ai-sdk/anthropic';
-import { openai } from '@ai-sdk/openai';
+import { google, type GoogleLanguageModelOptions } from '@ai-sdk/google';
+import { APICallError, RetryError, wrapLanguageModel, type LanguageModel } from 'ai';
+import { addDays, localDate, zonedToUtcIso } from '@/lib/dates';
 
-/** Todos los modelos en un único sitio: cambiar uno es una línea y una ejecución del eval. */
-export const MODEL_ID = {
-  vision: 'claude-opus-5',
-  structuring: 'claude-opus-5',
-  chat: 'claude-opus-5',
-  briefing: 'claude-opus-5',
-  // Claude no acepta audio ni ofrece embeddings: estas dos tareas van a OpenAI.
-  transcription: 'gpt-4o-mini-transcribe',
-  embedding: 'text-embedding-3-small', // 1536 dimensiones = columna notes.embedding
+/**
+ * Todos los modelos en un único sitio. Requisito del autor: IA gratuita, así que todo va al nivel gratuito
+ * de la Gemini API (una sola clave, GOOGLE_GENERATIVE_AI_API_KEY).
+ *
+ * El nivel gratuito limita peticiones POR MODELO y por día, compartidas por todo el proyecto (comprobado el
+ * 2026-09-28: gemini-3.8-flash admite 20 al día). Por eso cada ruta es una cadena: el primero es el de más
+ * calidad y los demás suman su propia cuota. El orden definitivo sale del eval (PROPOSAL §8).
+ */
+export const MODEL_CHAIN = {
+  vision: [
+    'gemini-3.8-flash',
+    'gemini-3.7-flash',
+    'gemini-3.6-flash',
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-3.1-flash-lite',
+  ],
+  structuring: [
+    'gemini-3.8-flash',
+    'gemini-3.7-flash',
+    'gemini-3.6-flash',
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-3.1-flash-lite',
+  ],
+  // Los Flash-Lite no aceptan audio: la voz solo usa Flash.
+  audio: ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash'],
+  chat: [
+    'gemini-3.8-flash',
+    'gemini-3.7-flash',
+    'gemini-3.6-flash',
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-3.1-flash-lite',
+  ],
+  briefing: [
+    'gemini-3.8-flash',
+    'gemini-3.7-flash',
+    'gemini-3.6-flash',
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-3.1-flash-lite',
+  ],
 } as const;
 
-export const models = {
-  vision: anthropic(MODEL_ID.vision),
-  structuring: anthropic(MODEL_ID.structuring),
-  chat: anthropic(MODEL_ID.chat),
-  briefing: anthropic(MODEL_ID.briefing),
-  transcription: openai.transcription(MODEL_ID.transcription),
-  embedding: openai.embedding(MODEL_ID.embedding),
-};
+export type ModelRoute = keyof typeof MODEL_CHAIN;
 
-/** Esfuerzo por ruta: la primera palanca de coste, antes que cambiar de modelo. */
-export const EFFORT = {
+export const EMBEDDING_MODEL = 'gemini-embedding-2';
+/** Igual que la columna notes.embedding (vector(1536)). gemini-embedding-2 renormaliza al recortar. */
+export const EMBEDDING_DIMENSIONS = 1536;
+
+/**
+ * Razonamiento por ruta: la primera palanca de latencia y de cuota (los tokens de razonamiento cuentan
+ * en el límite por minuto). Ojo: gemini-3.8-flash rechaza 'minimal' con un 400 (comprobado el 2026-09-28);
+ * 'low' es el mínimo común de toda la cadena.
+ */
+const THINKING: Record<ModelRoute, 'low' | 'medium' | 'high'> = {
   vision: 'low',
   structuring: 'low',
-  chat: 'medium',
-  briefing: 'high',
-} as const;
+  audio: 'low',
+  chat: 'low',
+  briefing: 'medium',
+};
+
+export function providerOptions(route: ModelRoute) {
+  return { google: { thinkingConfig: { thinkingLevel: THINKING[route] } } satisfies GoogleLanguageModelOptions };
+}
+
+/** Ningún modelo de la cadena puede responder ahora. `daily`: todos han agotado su cuota de hoy. */
+export class AiUnavailableError extends Error {
+  constructor(readonly reason: 'daily' | 'busy') {
+    super(reason === 'daily' ? 'Cuota diaria gratuita agotada en todos los modelos' : 'Modelos saturados');
+    this.name = 'AiUnavailableError';
+  }
+}
+
+const unwrap = (error: unknown) => (RetryError.isInstance(error) ? error.lastError : error);
+
+/** 429 y 5xx: el nivel gratuito se satura a ratos y tiene cuota diaria. Un 400 no mejora cambiando de modelo. */
+export function isOverloaded(error: unknown): boolean {
+  const cause = unwrap(error);
+  if (cause instanceof AiUnavailableError) return true;
+  return APICallError.isInstance(cause) && (cause.statusCode === 429 || (cause.statusCode ?? 0) >= 500);
+}
+
+export function isDailyQuota(error: unknown): boolean {
+  const cause = unwrap(error);
+  return cause instanceof AiUnavailableError && cause.reason === 'daily';
+}
+
+/** Google reinicia las cuotas diarias a medianoche de la hora del Pacífico. */
+function nextPacificMidnight(): number {
+  const zone = 'America/Los_Angeles';
+  return new Date(zonedToUtcIso(`${addDays(localDate(zone), 1)}T00:00`, zone)).getTime();
+}
+
+type Rest = { until: number; daily: boolean };
+
+/**
+ * Modelos en reposo, en la memoria del proceso: uno sin cuota no se vuelve a probar hasta el reinicio y uno
+ * saturado descansa 30 s. Así una petición no paga segundos de espera por modelos que van a fallar.
+ */
+const resting = new Map<string, Rest>();
+
+function restFor(error: unknown): Rest | null {
+  if (!APICallError.isInstance(error)) return null;
+  if (error.statusCode === 429) {
+    const body = error.responseBody ?? '';
+    if (/PerDay/.test(body)) return { until: nextPacificMidnight(), daily: true };
+    const seconds = Number(/"retryDelay":\s*"(\d+)/.exec(body)?.[1] ?? 60);
+    return { until: Date.now() + seconds * 1000, daily: false };
+  }
+  if ((error.statusCode ?? 0) >= 500) return { until: Date.now() + 30_000, daily: false };
+  return null;
+}
+
+/**
+ * Prueba la cadena en orden, saltando los modelos en reposo. Un error que no es de cuota ni de saturación
+ * (un 400, una imagen ilegible) se lanza tal cual: otro modelo no lo arreglaría.
+ */
+async function throughChain<T>(chain: readonly string[], call: (modelId: string) => PromiseLike<T>): Promise<T> {
+  const now = Date.now();
+  for (const id of chain.filter((model) => (resting.get(model)?.until ?? 0) <= now)) {
+    try {
+      const result = await call(id);
+      resting.delete(id);
+      return result;
+    } catch (error) {
+      const rest = restFor(error);
+      if (!rest) throw error;
+      resting.set(id, rest);
+      // Solo el modelo, el estado y la cuota: nunca el contenido de la petición.
+      const quota = APICallError.isInstance(error) ? /"quotaId":\s*"([^"]+)"/.exec(error.responseBody ?? '')?.[1] : '';
+      console.warn(`[ia] ${id} en reposo: ${APICallError.isInstance(error) ? error.statusCode : '?'} ${quota ?? ''}`);
+    }
+  }
+  throw new AiUnavailableError(chain.every((id) => resting.get(id)?.daily) ? 'daily' : 'busy');
+}
+
+/**
+ * El envoltorio se identifica como el primero de la cadena; los metadatos de respuesta se reescriben con
+ * el modelo que respondió de verdad, para que ai_runs y el eval sepan quién contestó.
+ */
+function chainModel(chain: readonly [string, ...string[]]): LanguageModel {
+  return wrapLanguageModel({
+    model: google(chain[0]),
+    middleware: {
+      wrapGenerate: ({ params }) =>
+        throughChain(chain, async (id) => {
+          const result = await google(id).doGenerate(params);
+          return { ...result, response: { ...result.response, modelId: id } };
+        }),
+      wrapStream: ({ params }) =>
+        throughChain(chain, async (id) => {
+          const result = await google(id).doStream(params);
+          const stream = result.stream.pipeThrough(
+            new TransformStream({
+              transform(part, controller) {
+                controller.enqueue(part.type === 'response-metadata' ? { ...part, modelId: id } : part);
+              },
+            }),
+          );
+          return { ...result, stream };
+        }),
+    },
+  });
+}
+
+export const models = {
+  vision: chainModel(MODEL_CHAIN.vision),
+  structuring: chainModel(MODEL_CHAIN.structuring),
+  audio: chainModel(MODEL_CHAIN.audio),
+  chat: chainModel(MODEL_CHAIN.chat),
+  briefing: chainModel(MODEL_CHAIN.briefing),
+  embedding: google.embedding(EMBEDDING_MODEL),
+};
+
+export const embeddingOptions = { google: { outputDimensionality: EMBEDDING_DIMENSIONS } };
+
+/** gemini-embedding-2 no usa taskType: la tarea va en el propio texto (documentación de Google). */
+export const asQuery = (text: string) => `task: search result | query: ${text}`;
+export const asDocument = ({ title, content }: { title: string | null; content: string }) =>
+  `title: ${title?.trim() || 'none'} | text: ${content}`;
 ```
 
 ```ts
@@ -1471,7 +1654,7 @@ export function estimateCostUsd(
 }
 ```
 
-`claude-opus-5` es el valor por defecto en todas las rutas de Claude. La primera palanca de coste es el **esfuerzo por ruta**, no el modelo: bajar a Sonnet 5 o Haiku 4.5 en la extracción es una decisión que se toma con el eval de la Fase 4 delante ([`PROPOSAL.md`](./PROPOSAL.md) §8).
+Versión 1.3: el bloque de `pricing.ts` queda como referencia del diseño con Claude; con el nivel gratuito no hay tarifas y `ai_runs.cost_usd` se guarda a 0. El orden de cada cadena es una decisión del autor con el eval delante ([`PROPOSAL.md`](./PROPOSAL.md) §8).
 
 ### 3.3 Esquemas Zod: dos niveles
 
