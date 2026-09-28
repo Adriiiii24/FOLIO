@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { FolioMark } from '@/components/ui/FolioMark';
 
 export const LEGAL_CONTACT = 'folio.app.soporte@gmail.com';
 export const LEGAL_UPDATED = '28 de septiembre de 2026';
@@ -18,7 +19,11 @@ export function LegalPage({ title, path, children }: { title: string; path: stri
   return (
     <div data-surface="canvas" className="grid min-h-dvh grid-rows-[auto_1fr_auto]">
       <header className="flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 font-mono text-micro uppercase md:px-6 lg:px-8">
-        <Link href="/login" className="font-semibold tracking-[0.14em] underline-offset-4 hover:underline">
+        <Link
+          href="/login"
+          className="flex items-center gap-2 font-semibold tracking-[0.14em] underline-offset-4 hover:underline"
+        >
+          <FolioMark className="h-3 w-auto" />
           FOLIO
         </Link>
         <p>Sistema operativo personal</p>

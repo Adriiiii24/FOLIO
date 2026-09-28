@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/brand/folio-logo.svg" alt="" width="120" height="120">
+
 # FOLIO
 
 **Un sistema operativo personal con forma de archivador.**<br>

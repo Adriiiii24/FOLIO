@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { FolioMark } from '@/components/ui/FolioMark';
 import { SubmitButton } from '@/components/ui/FormControls';
 import { formatIndex, TABS } from '@/config/tabs';
 import { safeNextPath } from '@/lib/auth/safe-next';
@@ -32,7 +33,10 @@ export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
   return (
     <div data-surface="canvas" className="grid min-h-dvh grid-rows-[auto_1fr_auto]">
       <header className="flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 font-mono text-micro uppercase md:px-6 lg:px-8">
-        <p className="font-semibold tracking-[0.14em]">FOLIO</p>
+        <p className="flex items-center gap-2 font-semibold tracking-[0.14em]">
+          <FolioMark className="h-3 w-auto" />
+          FOLIO
+        </p>
         <p>Sistema operativo personal</p>
       </header>
 
