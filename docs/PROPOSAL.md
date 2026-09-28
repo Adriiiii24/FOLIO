@@ -95,14 +95,14 @@ Un CRUD con un chat no demuestra *seniority*. Lo demuestran las decisiones docum
 
 | # | Pestaña | Rol | Cifra protagonista | Entrada con IA | Tablas principales |
 |---|---|---|---|---|---|
-| 01 | `HOME` | Centro de mando | Fecha del día (`27‘09`) | Briefing, chat | Lee de todas; `daily_briefings` |
-| 02 | `GYM` | Entrenamiento | Volumen semanal (kg) | Voz → series | `workouts`, `workout_logs` |
-| 03 | `VAULT` | Finanzas | Gasto del mes (€) | Foto de ticket, voz | `financial_transactions` |
-| 04 | `BRAIN` | Diario y notas | Racha de escritura (días) | Nota de voz, búsqueda semántica | `notes` |
-| 05 | `NUTRITION` | Macros | Kcal restantes hoy | Foto del plato, texto | `macros` |
-| 06 | `MEDIA` | Consumo cultural | Terminados este año | Chat sobre reseñas | `media_items` |
-| 07 | `ROUTINE` | Hábitos y foco | Racha activa (días) | Voz («hecho: meditar») | `habits`, `habit_logs`, `focus_sessions` |
-| 08 | `SETTINGS` | Configuración | Gasto de IA del mes | — | `profiles`, `ai_runs` |
+| 01 | `INICIO` | Centro de mando | Fecha del día (`27‘09`) | Briefing, chat | Lee de todas; `daily_briefings` |
+| 02 | `GIMNASIO` | Entrenamiento | Volumen semanal (kg) | Voz → series | `workouts`, `workout_logs` |
+| 03 | `FINANZAS` | Finanzas | Gasto del mes (€) | Foto de ticket, voz | `financial_transactions` |
+| 04 | `DIARIO` | Diario y notas | Racha de escritura (días) | Nota de voz, búsqueda semántica | `notes` |
+| 05 | `NUTRICIÓN` | Macros | Kcal restantes hoy | Foto del plato, texto | `macros` |
+| 06 | `CULTURA` | Consumo cultural | Terminados este año | Chat sobre reseñas | `media_items` |
+| 07 | `RUTINA` | Hábitos y foco | Racha activa (días) | Voz («hecho: meditar») | `habits`, `habit_logs`, `focus_sessions` |
+| 08 | `AJUSTES` | Configuración | Gasto de IA del mes | — | `profiles`, `ai_runs` |
 
 Cómo circulan los datos entre módulos:
 
