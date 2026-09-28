@@ -7,7 +7,7 @@ const MIME_TYPES = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/mp
 export const MAX_RECORDING_SECONDS = 180;
 
 /**
- * Graba del micrófono hasta PARAR o 180 s. `seconds` avanza con un intervalo; el micrófono se apaga
+ * Graba del micrófono hasta ENVIAR (`stop`) o 180 s; CANCELAR (`cancel`) apaga el micrófono sin entregar nada. `seconds` avanza con un intervalo; el micrófono se apaga
  * al terminar (el indicador del sistema desaparece) y también si el componente se desmonta grabando.
  */
 export function useVoiceRecorder(onDone: (audio: Blob, seconds: number) => void) {
@@ -20,6 +20,17 @@ export function useVoiceRecorder(onDone: (audio: Blob, seconds: number) => void)
 
   const stop = useCallback(() => {
     if (recorder.current?.state === 'recording') recorder.current.stop();
+  }, []);
+
+  const cancel = useCallback(() => {
+    const media = recorder.current;
+    if (!media) return;
+    media.onstop = () => {
+      for (const track of media.stream.getTracks()) track.stop();
+      recorder.current = null;
+      setSeconds(null);
+    };
+    if (media.state === 'recording') media.stop();
   }, []);
 
   const start = useCallback(async () => {
@@ -65,5 +76,5 @@ export function useVoiceRecorder(onDone: (audio: Blob, seconds: number) => void)
     [],
   );
 
-  return { recording, seconds: seconds ?? 0, start, stop };
+  return { recording, seconds: seconds ?? 0, start, stop, cancel };
 }

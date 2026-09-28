@@ -94,7 +94,7 @@ export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
         >
           {TABS.map((tab) => (
             <li key={tab.slug}>
-              {formatIndex(tab.index)} <span lang="en">{tab.label}</span>
+              {formatIndex(tab.index)} {tab.label}
             </li>
           ))}
         </ol>

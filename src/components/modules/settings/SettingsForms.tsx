@@ -103,7 +103,7 @@ export function TargetsForm({ profile }: { profile: Profile }) {
             inputMode="decimal"
             defaultValue={text(profile.monthly_budget)}
             error={errors.monthlyBudget}
-            hint="Mide el ritmo de gasto en 03 // VAULT. Vacío: sin presupuesto."
+            hint="Mide el ritmo de gasto en 03 // FINANZAS. Vacío: sin presupuesto."
             className="col-span-2 @lg:col-span-4"
           />
         </>
@@ -177,8 +177,8 @@ export function ShortcutsToggle() {
       </button>
       <p className="max-w-[55ch] text-small text-ash">
         <kbd className="font-mono">1</kbd>–<kbd className="font-mono">8</kbd> cambian de pestaña y{' '}
-        <kbd className="font-mono">/</kbd> lleva a la barra de entrada. Desactívalos si usas control por voz o un lector
-        de pantalla que los active sin querer.
+        <kbd className="font-mono">/</kbd> abre REGISTRAR en la barra de entrada. Desactívalos si usas control por voz o
+        un lector de pantalla que los active sin querer.
       </p>
     </div>
   );

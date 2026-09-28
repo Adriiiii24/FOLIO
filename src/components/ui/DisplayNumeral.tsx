@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { DeltaChip } from './DeltaChip';
+import { RollingNumber } from './RollingNumber';
 
 type DisplayNumeralProps = {
   value: number;
@@ -33,7 +34,8 @@ export function DisplayNumeral({
   return (
     <figure className="@container col-span-full">
       <p className="numeral" style={{ '--chars': text.length } as CSSProperties}>
-        <span aria-hidden="true">{text}</span>
+        {/* La cifra visible rueda al cambiar; la de los lectores de pantalla ya es la final. */}
+        <span aria-hidden="true">{display ?? <RollingNumber value={value} format={format} />}</span>
         <span className="sr-only">{`${label}: ${srValue ?? text}`}</span>
       </p>
       {caption || lastSeenKey ? (

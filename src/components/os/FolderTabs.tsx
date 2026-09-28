@@ -45,10 +45,7 @@ export function FolderTabs() {
                   <span className="folder-tab__sep" aria-hidden="true">
                     {'//'}
                   </span>
-                  <span className="folder-tab__name" lang="en">
-                    {tab.label}
-                  </span>
-                  <span className="sr-only">, {tab.name}</span>
+                  <span className="folder-tab__name">{tab.label}</span>
                 </span>
               </Link>
             </li>

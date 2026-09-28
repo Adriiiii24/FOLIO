@@ -13,7 +13,7 @@ import { interpretQuickText } from '@/modules/quick/actions';
 import { discardUpload, extractPhoto, interpretVoice } from '@/modules/quick/capture';
 import type { AiDraftInfo, InterpretedDraft } from '@/modules/quick/types';
 import { DraftSheet, type Undo } from './DraftSheet';
-import { QuickInputBar, type QuickMode, type QuickStatus } from './QuickInputBar';
+import { QuickInputBar, type QuickMode, type QuickStatus, type QuickTool } from './QuickInputBar';
 
 const PHOTO_KIND: Partial<Record<TabSlug, 'receipt' | 'meal'>> = { vault: 'receipt', nutrition: 'meal' };
 
@@ -37,12 +37,14 @@ function chatErrorText(error: Error | undefined): string | null {
 }
 
 /**
- * Conecta la barra de entrada (§5.6) con el intérprete de texto, la lectura de fotos y la voz.
- * Todo acaba en un borrador que la persona revisa: nada se guarda sin confirmar.
+ * Conecta la barra de entrada (§5.6) con el intérprete de texto, la lectura de fotos y la voz. Decide qué
+ * ficha está abierta. Todo acaba en un borrador que la persona revisa: nada se guarda sin confirmar.
  */
 export function QuickInputDock() {
   const pathname = usePathname();
   const context = tabForPath(pathname)?.slug ?? 'home';
+  // La ficha abierta de la barra; null con las pestañas enterradas.
+  const [tool, setTool] = useState<QuickTool | null>(null);
   const [status, setStatus] = useState<QuickStatus>({ kind: 'idle' });
   const [draft, setDraft] = useState<InterpretedDraft | null>(null);
   // Cada borrador nuevo monta un formulario nuevo: sus campos no controlados toman los valores iniciales.
@@ -52,7 +54,7 @@ export function QuickInputDock() {
   const [retry, setRetry] = useState<(() => void) | null>(null);
   // Registros que menciona una nota de voz: se ofrecen de uno en uno después de guardarla.
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
-  // Modo PREGUNTAR: la conversación vive en el contenedor, así que sobrevive a los cambios de pestaña.
+  // PREGUNTAR: la conversación vive en el contenedor, así que sobrevive a los cambios de pestaña y a cerrar la ficha.
   const [chatOpen, setChatOpen] = useState(false);
   const chat = useChat<FolioMessage>({ transport: chatTransport });
   const undoRef = useRef<Undo | null>(null);
@@ -153,7 +155,7 @@ export function QuickInputDock() {
   async function onAudio(audio: Blob, seconds: number) {
     const again = () => void onAudio(audio, seconds);
     if (seconds < 1 || audio.size === 0) {
-      fail('La grabación es demasiado corta. Pulsa VOZ, habla y pulsa PARAR.');
+      fail('La grabación es demasiado corta. Pulsa GRABAR, habla y pulsa ENVIAR.');
       return;
     }
     begin({ kind: 'uploading' });
@@ -175,17 +177,47 @@ export function QuickInputDock() {
 
   const recorder = useVoiceRecorder((audio, seconds) => void onAudio(audio, seconds));
 
-  async function onToggleRecording() {
-    if (recorder.recording) {
-      recorder.stop();
-      return;
-    }
+  function onToggleRecording() {
+    if (recorder.recording) recorder.stop();
+    else void startRecording();
+  }
+
+  async function startRecording() {
     begin({ kind: 'idle' });
     try {
       await recorder.start();
     } catch {
       fail('No hay acceso al micrófono. Permítelo en el navegador o escribe el registro.');
     }
+  }
+
+  function reset() {
+    clearTimer();
+    setRetry(null);
+    setPendingPhoto(null);
+    setFollowUps([]);
+    setStatus({ kind: 'idle' });
+    undoRef.current = null;
+  }
+
+  const busy = status.kind === 'uploading' || status.kind === 'processing';
+  const canClose = !busy && !draft;
+
+  /** Cambiar de ficha deja atrás lo que quedaba de la anterior (avisos, una grabación a medias). */
+  function openTool(next: QuickTool) {
+    if (next === tool) return;
+    if (recorder.recording) recorder.cancel();
+    if (tool !== null) reset();
+    setTool(next);
+    // VOZ graba al pulsarla: un gesto. CANCELAR apaga el micrófono sin enviar nada.
+    if (next === 'voice') void startRecording();
+  }
+
+  function closeTool() {
+    if (!canClose) return;
+    if (recorder.recording) recorder.cancel();
+    reset();
+    setTool(null);
   }
 
   function onSaved(message: string, undo: Undo | null) {
@@ -247,10 +279,14 @@ export function QuickInputDock() {
     <QuickInputBar
       context={context}
       status={recorder.recording ? { kind: 'recording', seconds: recorder.seconds } : status}
-      draft={
+      tool={tool}
+      onOpen={openTool}
+      onClose={closeTool}
+      canClose={canClose}
+      above={
         draft ? (
           <DraftSheet key={draftKey} draft={draft} onSaved={onSaved} onDiscard={onDiscard} />
-        ) : chatOpen ? (
+        ) : chatOpen && tool === 'ask' ? (
           <ChatPanel
             messages={chat.messages}
             status={chat.status}
@@ -268,7 +304,8 @@ export function QuickInputDock() {
       }
       onText={(mode, text) => onText(mode, text)}
       onImage={onImage}
-      onToggleRecording={() => void onToggleRecording()}
+      onToggleRecording={onToggleRecording}
+      onCancelRecording={() => recorder.cancel()}
       onRetry={retry ?? undefined}
       onUndo={onUndo}
       statusActions={statusActions}

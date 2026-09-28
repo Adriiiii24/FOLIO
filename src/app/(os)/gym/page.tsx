@@ -16,7 +16,7 @@ import { number, plural, shortDate } from '@/lib/format';
 import { deleteSet, deleteWorkout, finishWorkout, repeatLastSet } from '@/modules/gym/actions';
 import { getGymSheet } from '@/modules/gym/queries';
 
-export const metadata: Metadata = { title: 'GYM · Entrenamiento' };
+export const metadata: Metadata = { title: 'Gimnasio' };
 
 const kg = (value: number) => `${number(value, 1)} kg`;
 
@@ -159,7 +159,11 @@ export default async function GymPage({ searchParams }: PageProps<'/gym'>) {
         )}
       </BrutalistCard>
 
-      <BrutalistCard title="Progresión" eyebrow={gym.exercise ?? undefined} className="col-span-full lg:col-span-7">
+      <BrutalistCard
+        title="Progresión"
+        eyebrow={gym.exercise ?? undefined}
+        className="col-span-full lg:sticky lg:top-6 lg:col-span-7"
+      >
         {gym.exercise ? (
           <div className="flex flex-col gap-5">
             <form action="/gym" className="flex flex-wrap items-end gap-3">

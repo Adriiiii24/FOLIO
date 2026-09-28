@@ -3,5 +3,5 @@
 import { TabError } from '@/components/os/TabStates';
 
 export default function Error({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
-  return <TabError error={error} retry={retry} label="08 // SETTINGS" />;
+  return <TabError error={error} retry={retry} label="08 // AJUSTES" />;
 }

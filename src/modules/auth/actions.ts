@@ -55,7 +55,7 @@ export async function signInWithGoogle(formData: FormData) {
   redirect(data.url);
 }
 
-/** Cierra la sesión de este dispositivo. Cerrar todas es una opción de 08 // SETTINGS. */
+/** Cierra la sesión de este dispositivo. Cerrar todas es una opción de 08 // AJUSTES. */
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut({ scope: 'local' });

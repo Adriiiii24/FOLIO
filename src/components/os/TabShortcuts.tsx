@@ -27,7 +27,8 @@ export function TabShortcuts() {
 
       if (event.key === '/') {
         event.preventDefault();
-        document.getElementById('quick-input')?.focus();
+        // Abre REGISTRAR en la barra de entrada y pone el foco en el campo.
+        window.dispatchEvent(new CustomEvent('folio:quick', { detail: 'log' }));
         return;
       }
 

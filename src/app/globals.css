@@ -123,7 +123,8 @@
     --duration-base: 240ms;
     --duration-exit: 200ms;
     --duration-sheet: 400ms;
-    --quick-bar-height: 96px;
+    /* Lo que asoman las pestañas de la barra de entrada, con aire: la última ficha nunca queda debajo. */
+    --quick-bar-height: 56px;
   }
 
   html {
@@ -517,5 +518,100 @@
     padding: 0.75rem 1rem;
     background: var(--color-white);
     border-top: 2px solid var(--color-black);
+  }
+}
+
+/* Barra de entrada (§5.6, FOLIO 1.4): cuatro pestañas de papel, solo con el icono, enterradas en el borde
+   inferior, con la misma silueta troquelada que las pestañas de carpeta (contorno negro y relleno desplazado 2 px).
+   Aquí el recorte es fijo: la altura la da Motion con translate, porque lo que sube es la pestaña entera. El
+   naranja (encendida: señalada o abierta) cambia sin transición, como todo color. */
+@layer components {
+  .quick-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    padding-inline: 12px;
+    pointer-events: none;
+  }
+  .quick-tab {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    flex: none;
+    width: 64px;
+    height: 48px;
+    padding-top: 12px;
+    color: var(--color-black);
+    pointer-events: auto;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .quick-tab::before,
+  .quick-tab::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 100%, 0 100%);
+  }
+  .quick-tab::before {
+    inset: 0;
+    background: var(--color-black);
+  }
+  .quick-tab::after {
+    inset: 2px 2px 0;
+    background: var(--color-white);
+  }
+  .quick-tab[data-lit]::after {
+    background: var(--color-brand-orange);
+  }
+  /* El nombre: una etiqueta de papel encima del botón, en la tipografía de las etiquetas del sistema. */
+  .quick-tab__name {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    translate: -50% 0;
+    padding: 4px 8px;
+    border: 2px solid var(--color-black);
+    background: var(--color-white);
+    color: var(--color-black);
+    font-family: var(--font-mono-face), ui-monospace, monospace;
+    font-size: var(--text-micro);
+    line-height: 1.2;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  /* Campo de la ficha: una línea de escritura sobre el papel. Al enfocarse pasa de acero a negro; el anillo
+     alrededor de toda la barra chocaba con su sombra dura y quedaba descuadrado. */
+  .quick-field {
+    border-bottom: 2px solid var(--color-steel);
+    outline: none;
+  }
+  .quick-field:focus,
+  .quick-field:focus-visible {
+    border-bottom-color: var(--color-black);
+    outline: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .quick-tab {
+    border: 2px solid ButtonText;
+    border-bottom: 0;
+  }
+  .quick-tab::before,
+  .quick-tab::after {
+    display: none;
+  }
+  .quick-tab[data-lit] {
+    border-color: Highlight;
+    color: Highlight;
+  }
+  .quick-field:focus {
+    border-bottom-color: Highlight;
   }
 }

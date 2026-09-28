@@ -16,7 +16,7 @@ import { deleteMeal } from '@/modules/nutrition/actions';
 import { atwaterWarning, MEAL_TYPE_LABEL, mealTypeForHour } from '@/modules/nutrition/form';
 import { getNutritionSheet } from '@/modules/nutrition/queries';
 
-export const metadata: Metadata = { title: 'NUTRITION · Nutrición' };
+export const metadata: Metadata = { title: 'Nutrición' };
 
 export default async function NutritionPage({ searchParams }: PageProps<'/nutrition'>) {
   const params = await searchParams;
@@ -43,7 +43,7 @@ export default async function NutritionPage({ searchParams }: PageProps<'/nutrit
           format={{ maximumFractionDigits: 0 }}
           display={`${number(today.kcal)} kcal`}
           label="Kcal de hoy"
-          caption="Comidas de hoy · define tu objetivo en 08 // SETTINGS"
+          caption="Comidas de hoy · define tu objetivo en 08 // AJUSTES"
         />
       ) : (
         <DisplayNumeral
@@ -85,7 +85,11 @@ export default async function NutritionPage({ searchParams }: PageProps<'/nutrit
         <p className="mt-4 text-small text-ash">Estimaciones orientativas, no consejo nutricional.</p>
       </BrutalistCard>
 
-      <BrutalistCard title="Últimos 7 días" eyebrow="Kcal por día" className="col-span-full lg:col-span-5">
+      <BrutalistCard
+        title="Últimos 7 días"
+        eyebrow="Kcal por día"
+        className="col-span-full lg:sticky lg:top-6 lg:col-span-5"
+      >
         <BarTable
           caption="Kcal por día, últimos siete días"
           labelHeader="Día"

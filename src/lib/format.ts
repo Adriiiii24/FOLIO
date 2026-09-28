@@ -42,7 +42,7 @@ export function monthName(isoDate: string): string {
   );
 }
 
-/** «27‘09»: la fecha protagonista de 01 // HOME (§3.4, regla 5). */
+/** «27‘09»: la fecha protagonista de 01 // INICIO (§3.4, regla 5). */
 export function posterDate(isoDate: string): string {
   return `${isoDate.slice(8, 10)}‘${isoDate.slice(5, 7)}`;
 }

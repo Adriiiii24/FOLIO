@@ -8,7 +8,7 @@ export default function NotFound() {
       <h1 className="font-display text-headline font-bold">Esta carpeta no existe.</h1>
       <p className="max-w-[48ch] text-body">La dirección no corresponde a ninguna pestaña del archivador.</p>
       <Link href="/home" className={buttonClass({ tone: 'primary', surface: 'paper', className: 'w-fit' })}>
-        Ir a 01 // HOME
+        Ir a 01 // INICIO
       </Link>
     </main>
   );

@@ -4,7 +4,7 @@ import { SheetSkeleton } from '@/components/ui/Skeleton';
 export default function Loading() {
   return (
     <Sheet>
-      <SheetSkeleton label="06 // MEDIA" />
+      <SheetSkeleton label="06 // CULTURA" />
     </Sheet>
   );
 }

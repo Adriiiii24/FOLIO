@@ -1,11 +1,14 @@
 'use client';
 
 import type { ChatStatus, InferUITools, UIDataTypes, UIMessage } from 'ai';
+import { AnimatePresence } from 'motion/react';
+import * as m from 'motion/react-m';
 import Link from 'next/link';
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { CATEGORY_LABEL } from '@/lib/ai/schemas/ticket';
 import type { FolioTools } from '@/lib/ai/tools';
 import { money, plural, shortDate } from '@/lib/format';
+import { springSheet } from '@/lib/motion/tokens';
 
 // Solo tipos: el módulo de herramientas es server-only y nunca llega al cliente.
 export type FolioMessage = UIMessage<never, UIDataTypes, InferUITools<FolioTools>>;
@@ -74,15 +77,23 @@ export function ChatPanel({ messages, status, error, onStop, onClose }: ChatPane
       </header>
 
       <ol aria-live="polite" className="grid gap-5">
-        {messages.map((message) => (
-          <li key={message.id} className="grid gap-3">
-            {message.role === 'user' ? (
-              <p className="max-w-[65ch] border-l-2 border-steel pl-3 text-body text-ash">{textOf(message)}</p>
-            ) : (
-              message.parts.map((part, index) => <Part key={index} part={part} />)
-            )}
-          </li>
-        ))}
+        <AnimatePresence initial={false}>
+          {messages.map((message) => (
+            <m.li
+              key={message.id}
+              className="grid gap-3"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={springSheet}
+            >
+              {message.role === 'user' ? (
+                <p className="max-w-[65ch] border-l-2 border-steel pl-3 text-body text-ash">{textOf(message)}</p>
+              ) : (
+                message.parts.map((part, index) => <Part key={index} part={part} />)
+              )}
+            </m.li>
+          ))}
+        </AnimatePresence>
       </ol>
 
       {status === 'submitted' ? <Pending label="Pensando" /> : null}

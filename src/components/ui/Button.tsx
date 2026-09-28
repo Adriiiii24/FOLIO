@@ -4,8 +4,10 @@ import type { ButtonHTMLAttributes, ComponentProps } from 'react';
 type Tone = 'primary' | 'secondary' | 'danger' | 'quiet';
 type Surface = 'folder' | 'paper';
 
+// No encogen junto a un campo (shrink-0) y nunca pasan del ancho de su contenedor: si la etiqueta no cabe,
+// se parte en dos líneas centradas en vez de salirse de la ficha («Cerrar sesión en todos los dispositivos»).
 const BASE =
-  'inline-flex h-11 min-w-11 items-center justify-center gap-2 border-2 px-4 font-mono text-label uppercase whitespace-nowrap select-none disabled:cursor-not-allowed';
+  'inline-flex min-h-11 max-w-full min-w-11 shrink-0 items-center justify-center gap-2 border-2 px-4 py-2 text-center font-mono text-label text-balance uppercase select-none disabled:cursor-not-allowed';
 
 // Lo pulsable principal lleva sombra dura en la tinta de la superficie y se hunde en ella al pulsar (§6.4).
 const PRESS =

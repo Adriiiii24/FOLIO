@@ -31,6 +31,8 @@ export function PrefillButton({ text, label = 'Probar' }: { text: string; label?
   return (
     <button
       type="button"
+      // Abre la ficha: la barra no debe tomar este clic por un «pulsar fuera» y cerrarse antes.
+      data-quick-keep
       onClick={() => window.dispatchEvent(new CustomEvent('folio:prefill', { detail: text }))}
       className={buttonClass({ tone: 'secondary', className: 'normal-case' })}
     >

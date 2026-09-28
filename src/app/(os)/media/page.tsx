@@ -15,7 +15,7 @@ import { deleteMediaItem, finishMediaItem } from '@/modules/media/actions';
 import { MEDIA_KIND_LABEL } from '@/modules/media/form';
 import { getMediaSheet, MEDIA_VIEWS, resolveMediaView, type MediaView } from '@/modules/media/queries';
 
-export const metadata: Metadata = { title: 'MEDIA · Consumo cultural' };
+export const metadata: Metadata = { title: 'Cultura' };
 
 const EMPTY: Record<MediaView, { text: string; example: string }> = {
   'en-curso': {

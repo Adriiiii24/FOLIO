@@ -14,7 +14,7 @@ import { minutes, plural, shortDate, weekdayShort } from '@/lib/format';
 import { archiveHabit, deleteHabit } from '@/modules/routine/actions';
 import { getRoutineSheet } from '@/modules/routine/queries';
 
-export const metadata: Metadata = { title: 'ROUTINE · Hábitos y foco' };
+export const metadata: Metadata = { title: 'Rutina' };
 
 export default async function RoutinePage({ searchParams }: PageProps<'/routine'>) {
   const params = await searchParams;

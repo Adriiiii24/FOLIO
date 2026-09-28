@@ -14,7 +14,7 @@ import { deleteNote } from '@/modules/brain/actions';
 import { MOOD_LABEL } from '@/modules/brain/form';
 import { getBrainSheet } from '@/modules/brain/queries';
 
-export const metadata: Metadata = { title: 'BRAIN · Diario' };
+export const metadata: Metadata = { title: 'Diario' };
 
 export default async function BrainPage({ searchParams }: PageProps<'/brain'>) {
   const params = await searchParams;
@@ -34,7 +34,7 @@ export default async function BrainPage({ searchParams }: PageProps<'/brain'>) {
         upIsGood
       />
 
-      <BrutalistCard title="Nueva entrada" className="col-span-full lg:col-span-6">
+      <BrutalistCard title="Nueva entrada" className="col-span-full lg:sticky lg:top-6 lg:col-span-6">
         <NoteForm defaultEntryDate={brain.today} />
       </BrutalistCard>
 
@@ -59,7 +59,7 @@ export default async function BrainPage({ searchParams }: PageProps<'/brain'>) {
             </button>
           </form>
           {brain.query ? (
-            <ButtonLink href="/brain" tone="quiet" className="mt-2 h-8 px-0">
+            <ButtonLink href="/brain" tone="quiet" className="mt-1 px-0">
               Quitar la búsqueda
             </ButtonLink>
           ) : null}

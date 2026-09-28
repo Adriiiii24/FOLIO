@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient, requireUserId } from '@/lib/supabase/server';
 import { EXPORT_TABLES, type ExportTable } from '@/modules/settings/export';
 
-// Exportación completa de los datos de la sesión (PROPOSAL §2.3, 08 // SETTINGS). Todo pasa por RLS:
+// Exportación completa de los datos de la sesión (PROPOSAL §2.3, 08 // AJUSTES). Todo pasa por RLS:
 // el cliente es el de la sesión, así que solo salen las filas propias.
 
 function csvCell(value: unknown): string {

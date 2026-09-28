@@ -15,7 +15,7 @@ import { money, monthName, plural } from '@/lib/format';
 import { getToday } from '@/modules/settings/queries';
 import { getVaultMonth } from '@/modules/vault/queries';
 
-export const metadata: Metadata = { title: 'VAULT · Finanzas' };
+export const metadata: Metadata = { title: 'Finanzas' };
 
 export default async function VaultPage({ searchParams }: PageProps<'/vault'>) {
   const params = await searchParams;

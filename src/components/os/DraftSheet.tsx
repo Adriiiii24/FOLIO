@@ -1,5 +1,6 @@
 'use client';
 
+import * as m from 'motion/react-m';
 import { useEffect, useId, useRef } from 'react';
 import { NoteForm } from '@/components/modules/brain/NoteForm';
 import { SetForm } from '@/components/modules/gym/GymForms';
@@ -17,6 +18,7 @@ import { deleteMeal } from '@/modules/nutrition/actions';
 import type { AiDraftInfo, InterpretedDraft } from '@/modules/quick/types';
 import { deleteHabitLog } from '@/modules/routine/actions';
 import { deleteTransaction } from '@/modules/vault/actions';
+import { springSheet } from '@/lib/motion/tokens';
 
 const KIND_LABEL: Record<InterpretedDraft['kind'], string> = {
   transaction: 'Movimiento',
@@ -192,8 +194,15 @@ function AiReading({ ai }: { ai: AiDraftInfo }) {
             Confianza {level.label}
             {level.label === 'baja' ? ': revisa cada campo antes de guardar.' : '.'}
           </p>
+          {/* Se llena al aparecer el borrador: se lee como «esto es lo que se fía», no como un adorno. */}
           <div aria-hidden="true" className="h-2 w-full max-w-48 border-2 border-black">
-            <div className="h-full bg-black" style={{ width: `${Math.round(ai.confidence * 100)}%` }} />
+            <m.div
+              className="h-full origin-left bg-black"
+              style={{ width: `${Math.round(ai.confidence * 100)}%` }}
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ ...springSheet, delay: 0.15 }}
+            />
           </div>
         </div>
       ) : null}

@@ -53,7 +53,7 @@ export function BriefingCard({ briefing }: { briefing: BriefingView }) {
             >
               <div className="flex flex-wrap items-center gap-2 @xl:flex-col @xl:items-start">
                 <span className="font-mono text-label text-ash uppercase">
-                  {formatIndex(tab.index)} <span aria-hidden="true">{'//'}</span> <span lang="en">{tab.label}</span>
+                  {formatIndex(tab.index)} <span aria-hidden="true">{'//'}</span> {tab.label}
                 </span>
                 <Signal tone={severity.tone} glyph={severity.glyph}>
                   {severity.label}
@@ -70,6 +70,7 @@ export function BriefingCard({ briefing }: { briefing: BriefingView }) {
           <p className="max-w-[65ch] text-body text-ash">{briefing.reflection}</p>
           <button
             type="button"
+            data-quick-keep
             className={buttonClass({ tone: 'secondary' })}
             onClick={() => prefill(`${briefing.reflection} `, false)}
           >
@@ -91,7 +92,12 @@ function InsightAction({ action }: { action: BriefingView['insights'][number]['a
     );
   }
   return (
-    <button type="button" className={className} onClick={() => prefill(action.payload, action.kind === 'ask')}>
+    <button
+      type="button"
+      data-quick-keep
+      className={className}
+      onClick={() => prefill(action.payload, action.kind === 'ask')}
+    >
       {action.label}
     </button>
   );

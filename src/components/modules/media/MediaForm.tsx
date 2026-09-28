@@ -31,7 +31,7 @@ type MediaFormProps = {
   doneHref?: string;
   onSaved?: (state: Saved) => void;
   secondaryAction?: ReactNode;
-  /** El borrador de la barra solo necesita lo esencial; el resto se completa luego en 06 // MEDIA. */
+  /** El borrador de la barra solo necesita lo esencial; el resto se completa luego en 06 // CULTURA. */
   compact?: boolean;
 };
 

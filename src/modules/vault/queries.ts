@@ -74,7 +74,7 @@ export async function getVaultMonth(requestedMonth?: string) {
   };
 }
 
-/** Resumen para el tablero de 01 // HOME. */
+/** Resumen para el tablero de 01 // INICIO. */
 export async function getVaultOverview() {
   const month = await getVaultMonth();
   return { spent: month.spent, budgetPct: month.budgetPct, currency: month.currency, count: month.transactions.length };

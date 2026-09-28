@@ -17,7 +17,7 @@ import { signOut } from '@/modules/auth/actions';
 import { EXPORT_LABEL, EXPORT_TABLES } from '@/modules/settings/export';
 import { getSettingsSheet } from '@/modules/settings/sheet';
 
-export const metadata: Metadata = { title: 'SETTINGS · Configuración' };
+export const metadata: Metadata = { title: 'Ajustes' };
 
 export default async function SettingsPage() {
   const settings = await getSettingsSheet();

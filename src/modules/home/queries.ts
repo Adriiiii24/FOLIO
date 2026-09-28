@@ -11,7 +11,7 @@ import { getRoutineOverview } from '@/modules/routine/queries';
 import { getProfile, getToday } from '@/modules/settings/queries';
 import { getVaultOverview } from '@/modules/vault/queries';
 
-// 01 // HOME es el único módulo que lee de los demás (ARCHITECTURE §4.2): el tablero y la línea del día.
+// 01 // INICIO es el único módulo que lee de los demás (ARCHITECTURE §4.2): el tablero y la línea del día.
 
 export type TimelineItem = {
   key: string;
