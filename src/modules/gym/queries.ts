@@ -1,5 +1,5 @@
 import 'server-only';
-import { addDays, localDate, localDayRangeUtc, weekStart } from '@/lib/dates';
+import { addDays, localDate, localDayRangeUtc, utcIsoToZonedInput, weekStart, zonedToUtcIso } from '@/lib/dates';
 import { createClient } from '@/lib/supabase/server';
 import { getToday } from '@/modules/settings/queries';
 import { epley } from './form';
@@ -15,29 +15,40 @@ export async function getGymOverview() {
   const { today, timeZone } = await getToday();
   const from = weekStart(today);
   const week = localDayRangeUtc(from, addDays(from, 6), timeZone);
-  const previousWeek = localDayRangeUtc(addDays(from, -7), addDays(from, -1), timeZone);
+  // Comparación justa en cualquier momento del día: se cuenta POR SERIE (created_at), no por sesión, y la
+  // semana pasada se corta a la misma hora de reloj de hace 7 días, en la zona del perfil (respeta el cambio
+  // de hora). Contar por sesión metía entera una sesión del lunes pasado que empezó antes del corte, y el
+  // chip se ponía rojo durante cada entreno.
+  const nowLocal = utcIsoToZonedInput(new Date().toISOString(), timeZone);
+  const sameInstantLastWeek = zonedToUtcIso(`${addDays(nowLocal.slice(0, 10), -7)}${nowLocal.slice(10)}`, timeZone);
+  const lastWeekFrom = localDayRangeUtc(addDays(from, -7), addDays(from, -7), timeZone).fromIso;
   const supabase = await createClient();
 
-  const [thisWeek, lastWeek] = await Promise.all([
+  const logs = (fromIso: string, toIso: string) =>
+    supabase
+      .from('workout_logs')
+      .select('reps, weight_kg, is_warmup')
+      .gte('created_at', fromIso)
+      .lt('created_at', toIso);
+
+  const [thisWeek, lastWeek, sessions] = await Promise.all([
+    logs(week.fromIso, week.toIso),
+    logs(lastWeekFrom, sameInstantLastWeek),
     supabase
       .from('workouts')
-      .select('id, workout_logs(reps, weight_kg, is_warmup)')
+      .select('id', { count: 'exact', head: true })
       .gte('started_at', week.fromIso)
       .lt('started_at', week.toIso),
-    supabase
-      .from('workouts')
-      .select('id, workout_logs(reps, weight_kg, is_warmup)')
-      .gte('started_at', previousWeek.fromIso)
-      .lt('started_at', previousWeek.toIso),
   ]);
   if (thisWeek.error) throw new Error(thisWeek.error.message);
   if (lastWeek.error) throw new Error(lastWeek.error.message);
+  if (sessions.error) throw new Error(sessions.error.message);
 
   return {
     weekFrom: from,
-    weekVolume: thisWeek.data.reduce((sum, workout) => sum + volume(workout.workout_logs), 0),
-    lastWeekVolume: lastWeek.data.reduce((sum, workout) => sum + volume(workout.workout_logs), 0),
-    sessionsThisWeek: thisWeek.data.length,
+    weekVolume: volume(thisWeek.data),
+    lastWeekVolume: volume(lastWeek.data),
+    sessionsThisWeek: sessions.count ?? 0,
   };
 }
 

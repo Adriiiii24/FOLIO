@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { EditHeading } from '@/components/ui/EditHeading';
 import { NoteForm } from '@/components/modules/brain/NoteForm';
 import { Sheet } from '@/components/os/Sheet';
 import { SheetHeader } from '@/components/os/SheetHeader';
@@ -69,6 +70,9 @@ export default async function BrainPage({ searchParams }: PageProps<'/brain'>) {
             {brain.notes.map((note) =>
               note.id === editId ? (
                 <li key={note.id} className="flex flex-col gap-4 py-4">
+                  <EditHeading className="">
+                    {note.title ?? 'Entrada'} · {shortDate(note.entry_date)}
+                  </EditHeading>
                   <NoteForm
                     defaultEntryDate={brain.today}
                     initial={{

@@ -147,7 +147,7 @@ export function DraftSheet({ draft, onSaved, onDiscard }: DraftSheetProps) {
       onKeyDown={(event) => {
         if (event.key === 'Escape') onDiscard();
       }}
-      className="@container max-h-[min(68dvh,42rem)] overflow-y-auto overscroll-contain border-2 border-black bg-white p-4 text-black shadow-hard"
+      className="draft-sheet @container max-h-[min(68dvh,42rem)] overflow-y-auto overscroll-contain border-2 border-black bg-white p-4 text-black shadow-hard"
     >
       <header className="mb-4 flex flex-wrap items-baseline justify-between gap-2 font-mono text-micro uppercase">
         <h2 id={titleId}>Borrador · revisa antes de guardar</h2>

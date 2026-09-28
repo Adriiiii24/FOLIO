@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { EditHeading } from '@/components/ui/EditHeading';
 import { FocusTimer, HabitForm, HabitToggle } from '@/components/modules/routine/RoutineControls';
 import { Sheet } from '@/components/os/Sheet';
 import { SheetHeader } from '@/components/os/SheetHeader';
@@ -141,6 +142,7 @@ export default async function RoutinePage({ searchParams }: PageProps<'/routine'
               {routine.habits.map((habit) =>
                 habit.id === editId ? (
                   <li key={habit.id} className="flex flex-col gap-4 py-4">
+                    <EditHeading className="">{habit.name}</EditHeading>
                     <HabitForm
                       initial={{
                         id: habit.id,

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { EditHeading } from '@/components/ui/EditHeading';
 import { ActionButton, RestTimer, SetForm, StartWorkoutForm, WorkoutEditForm } from '@/components/modules/gym/GymForms';
 import { Sheet } from '@/components/os/Sheet';
 import { SheetHeader } from '@/components/os/SheetHeader';
@@ -50,8 +51,8 @@ export default async function GymPage({ searchParams }: PageProps<'/gym'>) {
       {change !== null && change !== 0 ? (
         <div className="col-span-full -mt-2">
           <Signal tone={change > 0 ? 'up' : 'down'} glyph={change > 0 ? '▲' : '▼'}>
-            {change > 0 ? '+' : ''}
-            {change} % frente a la semana pasada
+            {change > 0 ? '+' : '−'}
+            {Math.abs(change)} % frente al mismo tramo de la semana pasada
           </Signal>
         </div>
       ) : null}
@@ -203,6 +204,9 @@ export default async function GymPage({ searchParams }: PageProps<'/gym'>) {
             {gym.recent.map((workout) =>
               workout.id === editId ? (
                 <li key={workout.id} className="flex flex-col gap-4 py-4">
+                  <EditHeading className="">
+                    {workout.title} · {shortDate(localDate(gym.timeZone, new Date(workout.started_at)))}
+                  </EditHeading>
                   <WorkoutEditForm
                     initial={{
                       id: workout.id,

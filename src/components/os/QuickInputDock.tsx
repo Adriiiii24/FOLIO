@@ -103,6 +103,8 @@ export function QuickInputDock() {
       onImage={() => setStatus({ kind: 'error', message: AI_LATER.photo })}
       onToggleRecording={() => setStatus({ kind: 'error', message: AI_LATER.voice })}
       onUndo={onUndo}
+      // Fase 2: solo texto (PROPOSAL §5). Preguntar, foto y voz vuelven con la IA en la Fase 3.
+      capabilities={{ ask: false, photo: false, voice: false }}
     />
   );
 }

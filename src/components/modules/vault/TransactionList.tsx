@@ -1,4 +1,5 @@
 import { ButtonLink } from '@/components/ui/Button';
+import { EditHeading } from '@/components/ui/EditHeading';
 import { DeleteForm } from '@/components/ui/RowActions';
 import { localTime, utcIsoToZonedInput } from '@/lib/dates';
 import { money, shortDate } from '@/lib/format';
@@ -41,11 +42,14 @@ export function TransactionList({
         if (tx.id === editId) {
           return (
             <li key={tx.id} className="py-5" aria-label={`Editando ${title}`}>
+              <EditHeading>
+                {title} · {shortDate(localDateIso)} {localTime(tx.occurred_at, timeZone)}
+              </EditHeading>
               <TransactionForm
                 initial={{
                   id: tx.id,
                   kind: tx.kind,
-                  amount: String(tx.amount).replace('.', ','),
+                  amount: Number(tx.amount).toFixed(2).replace('.', ','),
                   category: tx.category,
                   merchant: tx.merchant ?? '',
                   description: tx.description ?? '',

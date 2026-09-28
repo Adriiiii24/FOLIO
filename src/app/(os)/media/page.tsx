@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { EditHeading } from '@/components/ui/EditHeading';
 import Link from 'next/link';
 import { ActionButton } from '@/components/modules/gym/GymForms';
 import { MediaForm } from '@/components/modules/media/MediaForm';
@@ -78,6 +79,7 @@ export default async function MediaPage({ searchParams }: PageProps<'/media'>) {
             {media.items.map((item) =>
               item.id === editId ? (
                 <li key={item.id} className="flex flex-col gap-4 py-4">
+                  <EditHeading className="">{item.title}</EditHeading>
                   <MediaForm
                     initial={{
                       id: item.id,

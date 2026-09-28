@@ -50,7 +50,9 @@ export function FormShell({
   return (
     <form {...formProps} className={className ?? 'grid grid-cols-1 gap-4 @md:grid-cols-2'}>
       {children(errors)}
-      <div className="flex flex-wrap items-center gap-3 @md:col-span-2">
+      {/* col-span-full: en las rejillas de 2 o 4 columnas, la fila de acciones ocupa siempre todo el ancho.
+          data-form-actions: dentro de un borrador, esta fila se queda fija al pie (globals.css, .draft-sheet). */}
+      <div data-form-actions className="col-span-full flex flex-wrap items-center gap-3">
         <SubmitButton pending={pending} pendingLabel={pendingLabel} surface={surface} tone={submitTone}>
           {submitLabel}
         </SubmitButton>

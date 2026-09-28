@@ -283,9 +283,9 @@
       padding-inline: 12px;
       scroll-snap-align: start;
     }
-    .folder-tab:not([aria-current='page']) .folder-tab__name {
-      display: none;
-    }
+    /* FOLIO: DESIGN_SYSTEM §5.2 ocultaba aquí el nombre de las pestañas inactivas («05»). Con visitantes que
+       llegan sin contexto (PRODUCT.md), un número suelto no dice qué carpeta es: todas llevan su nombre y la
+       tira se desplaza con snap. */
   }
   /* El separador «//» solo cabe a partir de 1280 px. */
   @media (max-width: 79.99rem) {
@@ -302,16 +302,19 @@
   /* §5.5 DisplayNumeral: la cifra se ajusta al ancho de su contenedor según su número de caracteres. */
   .numeral {
     /* FOLIO: la cifra ocupa la línea (§5.5) con tope de 15rem. Con --text-display como tope, en móvil se
-       quedaba en 72 px y media línea vacía. --glyph-em medido en el navegador: Inter Tight Bold con −0,055em
-       ocupa 0,40–0,50 em por carácter en textos reales. Recalibrar al pasar a Helvetica Now Display. */
-    --glyph-em: 0.52;
+       quedaba en 72 px y media línea vacía.
+       El tracking y el ancho medio de glifo dependen de la cara: −0,055em es para Space Grotesk o Helvetica;
+       Inter Tight (sustituto temporal) ya es estrecha y con ese valor se tocaban las cifras («11», «17»).
+       --glyph-em medido en el navegador con −0,03em. Recalibrar los dos al pasar a Helvetica Now Display. */
+    --numeral-tracking: -0.03em;
+    --glyph-em: 0.54;
     font-family: var(--font-display-face), 'Arial Narrow', Arial, sans-serif;
     font-weight: 700;
     font-size: min(15rem, calc(100cqi / (var(--chars, 5) * var(--glyph-em))));
     /* Con interlineado 0,82, la coma, la g o la ‘ bajan fuera de la caja y pisarían el pie. */
     padding-block-end: 0.1em;
     line-height: 0.82;
-    letter-spacing: -0.055em;
+    letter-spacing: var(--numeral-tracking);
     font-variant-numeric: proportional-nums lining-nums;
     white-space: nowrap;
   }
@@ -498,5 +501,21 @@
   [data-surface='paper'] .field-error {
     color: var(--color-black);
     font-weight: 600;
+  }
+}
+
+/* Borrador (§5.7): GUARDAR y DESCARTAR siempre a la vista. Si el formulario no cabe (móvil, teclado abierto),
+   se desplaza por dentro del papel y la fila de acciones queda fija al pie, tapando el relleno inferior. */
+@layer components {
+  .draft-sheet [data-form-actions] {
+    position: sticky;
+    /* Chrome descuenta el relleno del contenedor (p-4) del área de sticky: −1rem la deja a ras del borde. */
+    bottom: -1rem;
+    z-index: 1;
+    margin-inline: -1rem;
+    margin-block-end: -1rem;
+    padding: 0.75rem 1rem;
+    background: var(--color-white);
+    border-top: 2px solid var(--color-black);
   }
 }

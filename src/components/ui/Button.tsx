@@ -19,7 +19,9 @@ const TONES: Record<Surface, Record<Tone, string>> = {
     quiet: 'border-transparent text-ash underline underline-offset-4 hover:text-white',
   },
   paper: {
-    primary: `border-black bg-black text-white disabled:border-steel disabled:bg-steel ${PRESS}`,
+    // Sin sombra: un bloque negro con sombra negra sobre papel se lee como un fallo de impresión, no como relieve.
+    primary:
+      'border-black bg-black text-white hover:bg-steel hover:border-steel active:translate-y-px disabled:border-steel disabled:bg-steel',
     secondary: 'border-black text-black disabled:border-steel disabled:text-steel',
     danger: 'border-black text-black disabled:text-steel',
     quiet: 'border-transparent text-steel underline underline-offset-4 hover:text-black',

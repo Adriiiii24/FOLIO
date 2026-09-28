@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { EditHeading } from '@/components/ui/EditHeading';
 import { MealForm } from '@/components/modules/nutrition/MealForm';
 import { Sheet } from '@/components/os/Sheet';
 import { SheetHeader } from '@/components/os/SheetHeader';
@@ -109,6 +110,9 @@ export default async function NutritionPage({ searchParams }: PageProps<'/nutrit
               if (meal.id === editId) {
                 return (
                   <li key={meal.id} className="flex flex-col gap-4 py-4">
+                    <EditHeading className="">
+                      {meal.description} · {shortDate(localDate(nutrition.timeZone, new Date(meal.eaten_at)))}
+                    </EditHeading>
                     <MealForm
                       defaultEatenAt={now}
                       defaultMealType={defaultMealType}
@@ -152,9 +156,10 @@ export default async function NutritionPage({ searchParams }: PageProps<'/nutrit
                       {number(Number(meal.carbs_g))} · G {number(Number(meal.fat_g))}
                     </p>
                     {warning ? (
-                      <p className="mt-1 text-small text-signal-warn">
+                      // Marca corta por fila; la explicación completa sale al guardar (FormMessage) y en el title.
+                      <p className="mt-1 font-mono text-label text-signal-warn uppercase" title={warning}>
                         <span aria-hidden="true">! </span>
-                        {warning}
+                        Kcal y macros no cuadran
                       </p>
                     ) : null}
                   </div>

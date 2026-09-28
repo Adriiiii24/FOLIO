@@ -30,6 +30,11 @@ type QuickInputBarProps = {
   onToggleRecording: () => void;
   onRetry?: () => void;
   onUndo?: () => void;
+  /**
+   * Qué entradas hay disponibles. Fase 2: solo texto (PROPOSAL §5), así que el contenedor apaga preguntar,
+   * foto y voz; sin voz, el botón principal es siempre ENVIAR. Fase 3: todo activo, como en §5.6.
+   */
+  capabilities?: { ask?: boolean; photo?: boolean; voice?: boolean };
 };
 
 const HINTS: Record<TabSlug, string> = {
@@ -58,7 +63,9 @@ export function QuickInputBar({
   onToggleRecording,
   onRetry,
   onUndo,
+  capabilities = {},
 }: QuickInputBarProps) {
+  const { ask: canAsk = true, photo: canPhoto = true, voice: canVoice = true } = capabilities;
   const [asking, setAsking] = useState(false);
   const [text, setText] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
@@ -111,55 +118,62 @@ export function QuickInputBar({
         aria-describedby={statusId}
         className="flex items-center gap-2 border-2 border-black p-1.5 shadow-hard focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-brand-orange"
       >
-        <button
-          type="button"
-          role="switch"
-          aria-checked={asking}
-          onClick={() => setAsking((value) => !value)}
-          className={`${BUTTON} aria-checked:bg-black aria-checked:text-white`}
-        >
-          <span aria-hidden="true" className="md:hidden">
-            ?
-          </span>
-          <span className="sr-only md:not-sr-only">Preguntar</span>
-        </button>
+        {canAsk ? (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={asking}
+            onClick={() => setAsking((value) => !value)}
+            className={`${BUTTON} aria-checked:bg-black aria-checked:text-white`}
+          >
+            Preguntar
+          </button>
+        ) : null}
 
         <label htmlFor="quick-input" className="sr-only">
-          {asking ? 'Pregunta a tu dossier' : 'Registro rápido'}
+          {asking ? 'Pregunta a tu archivador' : 'Registro rápido'}
         </label>
         <input
           id="quick-input"
           value={text}
           onChange={(event) => setText(event.target.value)}
           disabled={recording}
-          placeholder={asking ? 'Pregunta a tu dossier…' : HINTS[context]}
+          placeholder={asking ? 'Pregunta a tu archivador…' : HINTS[context]}
           enterKeyHint={asking ? 'search' : 'send'}
           autoComplete="off"
           className="h-11 min-w-0 flex-1 bg-transparent px-2 text-body outline-none placeholder:text-steel"
         />
 
-        <button
-          type="button"
-          onClick={() => fileInput.current?.click()}
-          disabled={busy || recording}
-          className={`${BUTTON} disabled:border-steel disabled:text-steel`}
-        >
-          Foto
-        </button>
-        <input
-          ref={fileInput}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            event.target.value = '';
-            if (file) onImage(file);
-          }}
-        />
+        {canPhoto ? (
+          <>
+            <button
+              type="button"
+              onClick={() => fileInput.current?.click()}
+              disabled={busy || recording}
+              className={`${BUTTON} disabled:border-steel disabled:text-steel`}
+            >
+              Foto
+            </button>
+            <input
+              ref={fileInput}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = '';
+                if (file) onImage(file);
+              }}
+            />
+          </>
+        ) : null}
 
-        {hasText && !recording ? (
-          <button type="submit" disabled={busy} className={`${BUTTON} bg-black text-white`}>
+        {(hasText || !canVoice) && !recording ? (
+          <button
+            type="submit"
+            disabled={busy || !hasText}
+            className={`${BUTTON} bg-black text-white disabled:border-steel disabled:bg-transparent disabled:text-steel`}
+          >
             Enviar
           </button>
         ) : (
@@ -186,7 +200,7 @@ export function QuickInputBar({
         <p
           id={statusId}
           role="status"
-          className="bg-black px-1 font-mono text-micro text-ash uppercase empty:bg-transparent"
+          className={`px-1 font-mono text-micro text-ash uppercase ${status.kind === 'idle' || status.kind === 'draft' ? '' : 'bg-black'}`}
         >
           {status.kind === 'recording' && `Grabando ${clock(status.seconds)}`}
           {status.kind === 'uploading' && 'Subiendo…'}
@@ -199,7 +213,8 @@ export function QuickInputBar({
             </>
           )}
           {status.kind === 'error' && status.message}
-          {status.kind === 'draft' && 'Revisa y confirma'}
+          {/* El borrador ya lo dice a la vista; aquí solo se anuncia a los lectores de pantalla. */}
+          {status.kind === 'draft' && <span className="sr-only">Borrador abierto: revisa y confirma</span>}
           {status.kind === 'saved' && <span className="text-white">{status.message}</span>}
         </p>
         {status.kind === 'saved' && status.undoable && onUndo ? (
