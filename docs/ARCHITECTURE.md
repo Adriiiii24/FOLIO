@@ -1,6 +1,6 @@
 # FOLIO — Arquitectura técnica
 
-> **Documento:** `ARCHITECTURE.md` · **Versión:** 1.3 · **Estado:** Fases 1 y 2 implementadas; Fase 3 en curso (1.0: especificación doc-first) · **Fecha:** 2026-09-28
+> **Documento:** `ARCHITECTURE.md` · **Versión:** 1.4 · **Estado:** Fases 1 y 2 implementadas; Fase 3 en curso; 1.4: catálogo de alimentos (1.0: especificación doc-first) · **Fecha:** 2026-09-29
 > **Documentos hermanos:** [`PROPOSAL.md`](./PROPOSAL.md) (producto) · [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) (UI y motion)
 
 > [!NOTE]
@@ -12,6 +12,8 @@
 > - **Versión 1.2 (Fase 2).** Las ocho pestañas y sus CRUD están construidos sobre este esquema, sin cambiar la migración. Los bloques de `ticket.ts`, `vault/schemas.ts` y la plantilla del correo son copia literal del repositorio.
 >
 > - **Versión 1.3 (Fase 3, en curso).** El autor exige IA **gratuita**: todo el pipeline pasa del diseño Claude + OpenAI al nivel gratuito de la Gemini API. El bloque de `models.ts` de §3.2 es copia del repositorio. Los demás bloques de §3 conservan el diseño previo; la tabla de §3.0 dice dónde está cada pieza real.
+>
+> - **Versión 1.4 (2026-09-29).** Catálogo de alimentos (CIQUAL 2025) y platos guardados para `05 // NUTRICIÓN`, en dos migraciones nuevas que no tocan la inicial (§1.5). La suite pgTAP pasa 103 de 103 en local (§2.3). El autocompletado está probado de extremo a extremo en Chromium. Las migraciones aún no se han aplicado al proyecto remoto.
 >
 > Falta la línea base del eval, que necesita cuota gratuita disponible; el detalle está en §6.
 
@@ -76,6 +78,9 @@ erDiagram
     AUTH_USERS ||--o{ FINANCIAL_TRANSACTIONS : posee
     AUTH_USERS ||--o{ NOTES : posee
     AUTH_USERS ||--o{ MACROS : posee
+    AUTH_USERS ||--o{ DISHES : posee
+    DISHES ||--o{ DISH_ITEMS : "FK compuesta"
+    FOODS ||--o{ DISH_ITEMS : "catálogo"
     AUTH_USERS ||--o{ MEDIA_ITEMS : posee
     AUTH_USERS ||--o{ HABITS : posee
     HABITS ||--o{ HABIT_LOGS : "FK compuesta"
@@ -123,6 +128,25 @@ erDiagram
         uuid user_id FK
         integer calories_kcal
         numeric protein_g
+        jsonb items "alimentos de la comida"
+    }
+    FOODS {
+        integer id PK "código CIQUAL"
+        text name
+        numeric kcal "por 100 g"
+        text search_name "generada"
+    }
+    DISHES {
+        uuid id PK
+        uuid user_id FK
+        text name
+        smallint servings
+    }
+    DISH_ITEMS {
+        uuid id PK
+        uuid dish_id FK
+        integer food_id FK
+        numeric grams
     }
     MEDIA_ITEMS {
         uuid id PK
@@ -170,13 +194,15 @@ erDiagram
 | `financial_transactions` | 03 | Importe positivo + `kind`; `tax_breakdown` en `jsonb`; `raw_extraction` | Un ticket español puede mezclar tipos de IVA; la extracción original se conserva para auditar |
 | `notes` | 04 | `fts` generada; `embedding vector(1536)`; trigger que invalida el vector si cambia el texto | El índice de texto nunca se desincroniza; un vector viejo no representa un texto nuevo |
 | `macros` | 05 | Totales + `items` en `jsonb` | La fila es la comida; el desglose por alimento es su detalle |
+| `foods` (1.4) | 05 | Catálogo común de CIQUAL 2025; la clave primaria es el código CIQUAL; solo lectura con sesión | La misma referencia para todas las cuentas, estable entre entornos; se carga y se corrige con migraciones |
+| `dishes` + `dish_items` (1.4) | 05 | Receta propia con raciones; FK compuesta `(dish_id, user_id)` y FK a `foods` | Los valores por ración se calculan de los ingredientes, así que nunca quedan desfasados |
 | `media_items` | 06 | `kind` + `status` como enums | Filtrado sencillo y tipos generados exactos |
 | `habits` + `habit_logs` | 07 | Registro único por hábito y día local | Las rachas se calculan en SQL (huecos e islas) |
 | `focus_sessions` | 07 | `duration_s` generada | La duración nunca contradice inicio y fin |
 | `daily_briefings` | 01 | Única por `(user_id, briefing_date)`; `metrics` guardadas junto al texto | Idempotencia del cron; las cifras del briefing salen de `metrics`, no del modelo |
 | `ai_runs` | 08 | Solo inserción para el usuario; sin `update` ni `delete` | Coste y latencia por llamada; el consumo del mes no se puede «resetear» |
 
-Además de las nueve tablas del alcance inicial, el esquema añade tres que las funciones descritas necesitan: `habit_logs` (sin ella no hay rachas), `daily_briefings` (la salida del agente programado) y `ai_runs` (presupuesto y benchmark).
+Además de las nueve tablas del alcance inicial, el esquema añade tres que las funciones descritas necesitan: `habit_logs` (sin ella no hay rachas), `daily_briefings` (la salida del agente programado) y `ai_runs` (presupuesto y benchmark). La versión 1.4 añade las tres del catálogo de alimentos (§1.5).
 
 ### 1.3 Script de migración completo
 
@@ -989,6 +1015,44 @@ create policy user_files_delete_own on storage.objects
 
 **Una nota, un vector.** En la v1, cada nota tiene un único embedding (el diario rara vez supera unos cientos de palabras). Si aparecen notas largas, el siguiente paso es una tabla `note_chunks` con un vector por fragmento.
 
+### 1.5 Catálogo de alimentos y platos guardados (versión 1.4)
+
+Autocompletado de «Qué has comido» en `05 // NUTRICIÓN`: escribes el nombre de un alimento y salen sus macros. No es un RAG: los macros son datos estructurados, así que se consultan directamente, sin modelo y sin gastar cuota de IA.
+
+| Pieza | Ruta |
+|---|---|
+| Esquema, búsqueda, `create_dish` y permisos | `supabase/migrations/20260929000000_foods.sql` |
+| Datos: 3.181 filas | `supabase/migrations/20260929000001_foods_data.sql`, **generada**: no se edita a mano |
+| Fuente de verdad de los datos, licencia y filtros | `supabase/data/ciqual-2025-es.csv` y su `README.md` |
+| Generador de la migración de datos | `node scripts/build-foods-migration.mts` |
+| Pruebas | `supabase/tests/database/foods.test.sql` (§2.3) y `tests/unit/nutrition-items.test.ts` |
+| Interfaz | `src/components/modules/nutrition/FoodPicker.tsx`, `MealForm.tsx` y `src/modules/nutrition/items.ts` |
+
+**Los datos.** CIQUAL 2025 (Anses, Licence Ouverte 2.0), traducido al español. BEDCA, la base española, se descartó: sus condiciones no permiten reutilizar ni traducir los datos fuera de un uso personal, educativo o no comercial sin autorización expresa. De los 3.484 alimentos de CIQUAL quedan los que tienen kcal, proteína, carbohidratos y grasa; no se estima ningún valor ausente. Una columna `aliases` añade términos de búsqueda que no se muestran («macarrones» en la pasta, «jamón york» en el jamón cocido), sin marcas. Para corregir datos ya aplicados se crea una migración nueva con `update`: la generada no se vuelve a ejecutar.
+
+**Las tablas.**
+
+- `foods`: `id` es el código CIQUAL; valores por 100 g; `search_name` y `search_aliases` son columnas generadas en minúsculas y sin tildes. Las calcula `private.search_text`, que fija el diccionario de `unaccent` para poder declararse `IMMUTABLE`.
+- `dishes`: una receta con `servings` (de 1 a 20). Un índice único sobre `(user_id, private.search_text(name))` impide dos platos con el mismo nombre en una cuenta, aunque cambien mayúsculas o tildes.
+- `dish_items`: alimento y gramos. FK compuesta `(dish_id, user_id)`, como `workout_logs`, y un alimento solo una vez por plato.
+
+**`search_foods(p_query, p_limit)`**, `SECURITY INVOKER` y con `search_path` vacío:
+
+1. Normaliza la consulta y la parte en palabras sin artículos ni preposiciones («pechuga de pollo» → `pechuga`, `pollo`). A las de más de tres letras les quita la `-s` o `-es` final, así que el plural cuenta como el singular. Lo que queda es un prefijo de la palabra, de modo que nunca se pierde una coincidencia.
+2. Cada palabra tiene que aparecer en el nombre o en los alias. Si tiene cuatro letras o más, también vale con una errata: `word_similarity ≥ 0,5` de `pg_trgm` («pechga» → «pechuga»: 0,57). Con menos letras, «pan» encontraría «papaya».
+3. Orden: primero los platos propios (RLS limita a los de quien llama); después lo que coincide sin erratas; lo que solo coincide gracias a un alias («espaguetis» es la pasta antes que el alga «Espagueti de mar»); lo que empieza por la primera palabra; y el nombre más parecido a la consulta entera.
+4. Devuelve como mucho 25 filas, con los valores para `grams` gramos: 100 en un alimento, una ración en un plato.
+
+La normalización de la consulta se escribe dentro de la función en vez de llamar a `private.search_text`: con la sesión de quien llama, el esquema `private` no es accesible. No hay índice de trigramas, porque recorrer 3.181 filas cuesta unos 20 ms.
+
+**`create_dish(p_name, p_servings, p_items)`** guarda el plato y sus ingredientes en una sola llamada: si un ingrediente falla (alimento inexistente, `23503`) o el nombre se repite (`23505`), no queda nada a medias.
+
+**Por qué la búsqueda va desde el navegador.** El autocompletado llama a `search_foods` con el cliente de Supabase del navegador (`lib/supabase/client.ts`), con la sesión de la persona y RLS. Una Server Action no sirve: Next las despacha una tras otra, y el autocompletado lanza una consulta por cada pausa al escribir. Guardar y borrar platos sí son Server Actions (`modules/nutrition/actions.ts`).
+
+**En `macros.items`.** Cada alimento de la comida se guarda con su nombre, gramos y macros, más `foodId` o `dishId` y `servings`. Al editar la comida, la lista se reconstruye a partir de ahí. Las comidas con alimentos del catálogo no llevan el aviso de Atwater: la energía de CIQUAL sigue el Reglamento (UE) 1169/2011, que cuenta la fibra (2 kcal/g) y el alcohol (7 kcal/g).
+
+**Permisos.** Las tablas y funciones nuevas reciben los privilegios por defecto de Supabase, también para `anon`, así que la migración los retira como la inicial. En `foods`, `authenticated` solo tiene `select`.
+
 ---
 
 ## 2. Security & Row Level Security
@@ -1014,7 +1078,8 @@ create policy user_files_delete_own on storage.objects
 | `(select auth.uid())` | Todas las políticas | Postgres evalúa la función una vez por consulta (*initPlan*), no una vez por fila |
 | `to authenticated` | Todas las políticas | Las peticiones anónimas ni siquiera evalúan la política |
 | Índices que empiezan por `user_id` | Sección 4 | Las políticas no degeneran en recorridos completos |
-| FK compuestas | `workout_logs`, `habit_logs` | Ninguna fila hija cuelga de un padre ajeno |
+| FK compuestas | `workout_logs`, `habit_logs`, `dish_items` | Ninguna fila hija cuelga de un padre ajeno |
+| Catálogo de solo lectura (1.4) | `foods` | Con sesión solo se lee; los datos cambian solo con migraciones |
 | `CHECK` sobre rutas | `receipt_path`, `photo_path`, `audio_path` | Una fila solo referencia archivos de la carpeta de su dueño |
 | Privilegios de columna | Sección 8 | El usuario solo cambia `read_at` y `feedback` de un briefing, y solo las columnas editables de su perfil |
 | `security invoker` + `search_path` fijo | Todas las funciones | Las RPC ejecutan con la sesión de quien llama; el *linter* de Supabase no marca rutas de búsqueda mutables |
@@ -1067,6 +1132,19 @@ All tests successful.
 Files=1, Tests=64
 Result: PASS
 ```
+
+**Catálogo y platos (versión 1.4).** `supabase/tests/database/foods.test.sql` añade 39 aserciones. Las de estructura de `rls.test.sql` ya cubren las tablas y funciones nuevas: si la migración olvidara un `revoke` a `anon`, fallarían.
+
+| Bloque | Qué demuestra | Aserciones |
+|---|---|---|
+| Carga | El catálogo tiene los 3.181 alimentos | 1 |
+| Catálogo | A lo lee entero, pero no puede añadir, cambiar ni borrar alimentos (`42501`) | 4 |
+| Platos de B | A no los ve, no escribe a nombre de B, la FK compuesta impide colgar ingredientes de un plato de B (`23503`) y `update` y `delete` no tocan ninguna fila | 9 |
+| Platos propios | A crea platos sin enviar `user_id`; no repite nombre, ni cambiando mayúsculas o tildes, ni ingrediente (`23505`) | 4 |
+| `create_dish` | Guarda plato e ingredientes; sin ingredientes no guarda (`23514`); si un ingrediente falla, el plato no queda a medias | 5 |
+| `search_foods` | El plato propio sale primero con los valores de una ración; nunca devuelve platos de B; plurales, tildes, mayúsculas, erratas, preposiciones y alias; orden por prefijo; como mucho 25 resultados | 16 |
+
+En local: `Files=2, Tests=103, Result: PASS`. El remoto sigue en 64 de 64 hasta que se le apliquen las migraciones de la 1.4.
 
 ### 2.4 Clientes de Supabase y sesión
 
@@ -3338,17 +3416,22 @@ dossier-os/                               ← paquete «dossier-os»; en disco, 
 │   ├── config.toml                       ← Auth local: URLs, plantillas de correo, Google
 │   ├── .env                              ← credenciales de Google en local (no se versiona)
 │   ├── migrations/
-│   │   └── 20260928000000_init.sql       ← §1.3
+│   │   ├── 20260928000000_init.sql       ← §1.3
+│   │   ├── 20260929000000_foods.sql      ← §1.5: catálogo, platos, búsqueda
+│   │   └── 20260929000001_foods_data.sql ← §1.5: GENERADA desde data/
+│   ├── data/ciqual-2025-es.csv           ← §1.5: fuente de verdad del catálogo (con README)
 │   ├── templates/magic_link.html         ← §2.4
 │   ├── seed.sql                          ← datos SINTÉTICOS de demostración
 │   └── tests/database/
-│       └── rls.test.sql                  ← §2.3
+│       ├── rls.test.sql                  ← §2.3
+│       └── foods.test.sql                ← §2.3 (1.4)
 ├── evals/                                ← PROPOSAL §3.8
 │   ├── fixtures/                         ← tickets y platos (fuera de git si son reales)
 │   ├── golden/                           ← respuestas de referencia versionadas
 │   └── run.ts
 ├── scripts/
-│   └── spring-to-linear.ts               ← DESIGN_SYSTEM §6.2
+│   ├── spring-to-linear.ts               ← DESIGN_SYSTEM §6.2
+│   └── build-foods-migration.mts         ← §1.5
 ├── public/
 ├── src/
 │   ├── app/
@@ -3386,7 +3469,7 @@ dossier-os/                               ← paquete «dossier-os»; en disco, 
 │   │   ├── gym/{actions,queries,schemas}.ts
 │   │   ├── vault/{actions,queries,schemas,receipt-rules}.ts
 │   │   ├── brain/{actions,queries,embeddings}.ts
-│   │   ├── nutrition/{actions,queries,meal-rules}.ts
+│   │   ├── nutrition/{actions,queries,form,items,meal-rules}.ts
 │   │   ├── media/{actions,queries}.ts
 │   │   ├── routine/{actions,queries}.ts
 │   │   └── settings/{actions,export}.ts  ← perfil, exportación, borrado de cuenta
@@ -3528,6 +3611,8 @@ Para publicar el acceso con Google (pantalla de consentimiento «En producción�
 | TypeScript | `tsc --strict` con `noUncheckedIndexedAccess` sobre todo el código de este documento y de `DESIGN_SYSTEM.md`, contra las versiones de §0 | Sin errores |
 | Interfaz de las 8 pestañas (1.2) | Build de producción en Chromium con Playwright, en móvil (390 px, CPU ×4) y escritorio, con datos sintéticos y con un usuario vacío | CLS 0 en las 8 pestañas; INP máximo 64 ms; axe sin infracciones en 26 pantallas; sin desbordamiento horizontal; teclado completo (enlace de salto, atajos 1–8 y `/`) |
 | Lógica de la Fase 2 (1.2) | Vitest: analizador de la barra de entrada, fechas con cambio de hora y `safeNextPath` | 42 de 42 |
+| Catálogo y platos (1.4) | pgTAP de §2.3 en local (`foods.test.sql` más `rls.test.sql`) y Vitest de `nutrition-items.test.ts` | 103 de 103 y 74 de 74 |
+| Autocompletado (1.4) | Playwright contra `next dev` y el Supabase local, en escritorio, en móvil (390 px, táctil) y dentro de un borrador sobre papel | Erratas y teclado completo, Intro antes de que lleguen los resultados, plato para dos raciones, nombre repetido, edición que recupera los alimentos y borrado; sin errores de consola |
 
 Cubierto en la Fase 1: el proyecto real de Supabase, en local y alojado, y los tipos generados, que sustituyen a los escritos a mano.
 
@@ -3538,3 +3623,4 @@ Cubierto en la Fase 2: el diseño renderizado de las ocho pestañas, con los cri
 - Llamadas reales a los modelos, que requieren claves: la calidad de extracción, las latencias y el coste real. Los mide el eval de la Fase 4.
 - El último paso del login con Google, elegir la cuenta y volver a la app, necesita una persona con una cuenta de prueba de la app de Google.
 - La configuración de Auth del proyecto remoto (§5), que se hace al desplegar.
+- Las migraciones de la versión 1.4 en el proyecto remoto: se aplican con `npx supabase db push` y después `npx supabase test db --linked`.

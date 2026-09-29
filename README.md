@@ -62,6 +62,7 @@ Cada visitante tiene su propia cuenta, con enlace mágico o con Google, y sus da
 En el borde inferior de la pantalla esperan cuatro pestañas medio enterradas: **Registrar**, **Preguntar**, **Foto** y **Voz**. Cada una saca una ficha con una sola función.
 
 - **Registrar:** «12,40 Mercadona» en Finanzas es un gasto; «press banca, 4 series de 8 a 80» en Gimnasio son cuatro series. La pestaña activa da el contexto y el texto se interpreta sin IA.
+- **Buscar el alimento:** en Nutrición, escribes «pechuga de pollo» y salen sus kcal y macros, de 3.181 alimentos genéricos de CIQUAL. Tolera tildes, erratas y plurales, suma los gramos de cada alimento y guarda la lista como plato propio. Sin IA.
 - **Foto:** el ticket o el plato se comprimen en el navegador, sin metadatos EXIF, y suben directos a Storage. El modelo devuelve un borrador con su confianza y sus avisos.
 - **Voz:** transcripción literal y un borrador de diario, de series o de hábito. Si la nota menciona un gasto, FOLIO ofrece registrarlo después, de uno en uno.
 - **Preguntar:** chat de solo lectura sobre tus propios datos, con la evidencia de cada cifra.
@@ -123,7 +124,7 @@ flowchart TB
 
 ## Seguridad y privacidad
 
-- **Row Level Security en todas las tablas**, con 64 pruebas de aislamiento en pgTAP que la CI ejecuta en cada _push_. Las claves foráneas compuestas impiden referencias entre cuentas.
+- **Row Level Security en todas las tablas**, con 103 pruebas en pgTAP (aislamiento entre cuentas, catálogo de alimentos y platos) que la CI ejecuta en cada _push_. Las claves foráneas compuestas impiden referencias entre cuentas.
 - **Buckets privados** para tickets, platos y notas de voz. Las fotos pierden sus metadatos EXIF antes de salir del navegador.
 - **Secretos solo en el servidor.** La clave de servicio nunca lleva el prefijo `NEXT_PUBLIC_`, y el cron exige un `CRON_SECRET`.
 - **Tus datos son tuyos:** exportación completa en JSON o en CSV por área, borrado de la cuenta en cascada y cierre de sesión en todos los dispositivos.
@@ -173,7 +174,7 @@ npm ci
 
 # 2 · Supabase local: Postgres, Auth, Storage y Mailpit, con la migración aplicada
 npm run db:start
-npm run db:test        # 64 pruebas de aislamiento RLS
+npm run db:test        # 103 pruebas pgTAP: aislamiento RLS, catálogo y platos
 
 # 3 · Variables de entorno (ver más abajo) y servidor de desarrollo
 npm run dev            # http://localhost:3000
@@ -234,8 +235,9 @@ src/
 ├── config/         Registro de pestañas
 └── hooks/          Grabadora de voz
 supabase/
-├── migrations/     Esquema, RLS, búsqueda híbrida y funciones de agregado
-├── tests/          Suite pgTAP de aislamiento entre cuentas
+├── migrations/     Esquema, RLS, búsqueda híbrida, funciones de agregado y catálogo de alimentos
+├── data/           Catálogo CIQUAL traducido (CSV), del que se genera su migración
+├── tests/          Suites pgTAP: aislamiento entre cuentas, catálogo y platos
 └── templates/      Correo del enlace mágico
 evals/              Eval de extracción: tickets sintéticos, platos y notas de voz con su verdad de referencia
 docs/               Propuesta, arquitectura y sistema de diseño
@@ -248,7 +250,7 @@ docs/               Propuesta, arquitectura y sistema de diseño
 Cada _push_ a `main` pasa por la CI de GitHub Actions:
 
 - **Aplicación:** formato con Prettier, ESLint, tipos estrictos y pruebas unitarias con Vitest (el intérprete de la barra de entrada, las reglas que validan tickets y platos, fechas con cambio de hora, altas de formularios y redirecciones seguras).
-- **Base de datos:** Supabase levantado en el _runner_, las 64 pruebas pgTAP de aislamiento y la comprobación de que los tipos generados coinciden con el esquema.
+- **Base de datos:** Supabase levantado en el _runner_, las 103 pruebas pgTAP y la comprobación de que los tipos generados coinciden con el esquema.
 
 La IA se trata como cualquier dependencia no determinista: con evals versionados en `evals/`, que se lanzan a mano porque gastan cuota. Los resultados completos se publicarán en `docs/BENCHMARK.md` al cerrar la Fase 4.
 
@@ -273,6 +275,10 @@ FOLIO se diseñó antes de escribir código: la documentación es la fuente de v
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)        | Migración SQL, políticas RLS, pipeline de IA, estructura de carpetas y puesta en marcha              |
 | [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md)      | Identidad visual, tokens de Tailwind v4, componentes, movimiento y accesibilidad                     |
 | [`DESIGN.md`](DESIGN.md) · [`PRODUCT.md`](PRODUCT.md) | El sistema visual tal como se construyó y el contexto de producto                                    |
+
+## Datos de terceros
+
+Los valores nutricionales proceden de Anses, 2025, _Table de composition nutritionnelle des aliments Ciqual_ (versión del 2025-11-03), con la [Licence Ouverte 2.0](https://www.etalab.gouv.fr/licence-ouverte-open-licence/). FOLIO ha traducido los nombres y filtrado la tabla; el detalle está en [`supabase/data/README.md`](supabase/data/README.md).
 
 ---
 

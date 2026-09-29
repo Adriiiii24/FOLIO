@@ -1,6 +1,6 @@
 # FOLIO — Design System
 
-> **Documento:** `DESIGN_SYSTEM.md` · **Versión:** 1.4 · **Estado:** Fase 2 implementada; Fase 3 en curso; 1.4: refinado de la interfaz (1.0 y 1.1: especificación doc-first) · **Fecha:** 2026-09-28
+> **Documento:** `DESIGN_SYSTEM.md` · **Versión:** 1.5 · **Estado:** Fase 2 implementada; Fase 3 en curso; 1.4: refinado de la interfaz; 1.5: autocompletado de alimentos (1.0 y 1.1: especificación doc-first) · **Fecha:** 2026-09-29
 > **Documentos hermanos:** [`PROPOSAL.md`](./PROPOSAL.md) (producto) · [`ARCHITECTURE.md`](./ARCHITECTURE.md) (datos, IA, carpetas)
 > **Stack de UI:** Next.js 16 · React 19.3 · Tailwind CSS 4.3 · Motion 13 (`motion/react`) · `next/font`
 
@@ -61,6 +61,14 @@
 > - **Botones (§5.4):** `min-h-11`, `max-w-full` y `shrink-0` en lugar de altura fija y `whitespace-nowrap`. Si la etiqueta no cabe en su contenedor, se parte en dos líneas centradas en vez de salirse («Cerrar sesión en todos los dispositivos» en móvil).
 > - **Desarrollo:** `devIndicators: false` en `next.config.ts`. La «N» de Next.js tapaba la barra de entrada; los errores se siguen mostrando.
 > - **Movimiento (§6.4):** hay filas nuevas para las pestañas de la barra y su nombre, su ficha, el estado de presencia, la marca de guardado, la barra de confianza y los mensajes del chat. La cifra protagonista rueda hasta su valor nuevo cuando cambia con la lámina abierta, es decir, al guardar. Al entrar en una pestaña sigue sin animarse (§5.5).
+>
+> **Versión 1.5 (2026-09-29): autocompletado de alimentos en `05 // NUTRICIÓN`.** Verificado en el navegador a 1280 y 390 px (táctil), en la carpeta y dentro de un borrador sobre papel. Aún no ha pasado la revisión de Impeccable.
+>
+> - **«Añadir alimento» (`FoodPicker`):** un *combobox* ARIA 1.2 encima de «Qué has comido». La lista de resultados cuelga del campo (`absolute`, capa 20, sombra dura) en vez de empujar el formulario, y muestra como mucho 8 opciones de 44 px: nombre en body y, debajo, categoría y kcal en label mono. El papel sigue siendo solo de la barra y los borradores: en la carpeta, la lista es negra con borde blanco.
+> - **Opción activa:** en la carpeta se enciende en naranja con texto negro (5,88:1), que es el estado «activo» del sistema; sobre papel, negro con texto blanco. El color cambia sin transición. Flechas, Intro (la activa o la primera, aunque los resultados no hayan llegado) y Escape, que cierra la lista sin descartar el borrador. Nunca se muestran resultados de una consulta anterior.
+> - **Filas de la comida:** divisores de 2 px (`line` en la carpeta, negro en el papel), cantidad a la derecha en un control de 80 px con su unidad (G o RAC.) y ✕ para quitar. En una ficha estrecha, la línea de valores baja a su propia fila a todo el ancho. Intro en la cantidad vuelve a la búsqueda; nunca envía la comida.
+> - **«Guardar como plato»:** botón secundario que abre un `fieldset` con borde acero y leyenda en label (nombre y raciones). Intro guarda el plato, no la comida.
+> - **Lámina de NUTRICIÓN:** «Nueva comida» ocupa dos filas en escritorio y «Platos guardados» va en la columna derecha, bajo «Macros de hoy», junto al formulario que la alimenta.
 
 ---
 
@@ -259,7 +267,7 @@ El color de un cambio depende de **la dirección y de si subir es bueno** en esa
 | Bordes | `border-0` · `border-2` | Ningún otro grosor |
 | Radios | Ninguno | La escala de radios se elimina; solo `rounded-full` para el punto de estado |
 | Sombras | `shadow-hard-sm` 2 px · `shadow-hard` 4 px · `shadow-hard-lg` 6 px · `shadow-none` | Siempre en `--shadow-ink`; la escala suave de Tailwind se elimina |
-| Capas (`z-index`) | 0 lámina · 1 pestaña activa · 30 barra de entrada · 50 avisos (*toasts*) · 60 diálogos | — |
+| Capas (`z-index`) | 0 lámina · 1 pestaña activa · 20 listas de sugerencias (1.5) · 30 barra de entrada · 50 avisos (*toasts*) · 60 diálogos | — |
 
 ### 2.7 `globals.css` completo
 

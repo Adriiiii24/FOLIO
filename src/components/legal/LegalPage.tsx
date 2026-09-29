@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { FolioMark } from '@/components/ui/FolioMark';
 
 export const LEGAL_CONTACT = 'folio.app.soporte@gmail.com';
-export const LEGAL_UPDATED = '28 de septiembre de 2026';
+export const LEGAL_UPDATED = '29 de septiembre de 2026';
 
 const LINKS = [
   { href: '/login', label: 'Entrar' },

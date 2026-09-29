@@ -17,10 +17,11 @@ Proyecto doc-first: el diseño completo está en `docs/`. «DOSSIER_OS» fue el 
 - La IA propone y el usuario confirma: ninguna salida de un modelo escribe en tablas de dominio sin un borrador confirmado. Esto incluye la voz, que en el diseño previo guardaba la nota sin confirmar.
 - Textos y documentación en español, también las etiquetas de módulo (`03 // FINANZAS`; decisión del usuario del 2026-09-28). Las rutas conservan el slug en inglés (`/vault`).
 - Al editar archivos con scripts de Python, usa cadenas crudas (`r'...'`) para las expresiones regulares: `\b` se convierte en un retroceso y rompe la regex sin error visible.
+- Catálogo de alimentos (ARCHITECTURE §1.5): la fuente es `supabase/data/ciqual-2025-es.csv`. La migración de datos se genera con `node scripts/build-foods-migration.mts` y no se edita a mano. Una vez aplicada en el remoto, las correcciones (traducciones, alias) van en una migración nueva con `update`. Sin marcas en los alias: el usuario pidió solo alimentos genéricos.
 
 ## Estado y siguiente paso
 
-Fase 1 (Setup & Auth) terminada a 2026-09-27, salvo la *preview*, que el usuario aplazó (ver abajo). Fase 2 (UI y CRUD de las 8 pestañas) terminada a 2026-09-28 con sus criterios cumplidos. Fase 3 (IA) construida a 2026-09-28 (PROPOSAL §5, ARCHITECTURE §3.0). Refinado de la interfaz a 2026-09-28 (DESIGN_SYSTEM 1.4): etiquetas en español, hora con segundos, estado «Ausente» y barra de entrada en cuatro pestañas troqueladas enterradas, solo con el icono, que al señalarlas suben, se encienden y dicen su nombre (REGISTRAR, PREGUNTAR, FOTO, VOZ). El usuario probó botones circulares y los descartó: nada de curvas salvo el punto de estado. Después, repaso de Impeccable: fichas a su altura natural (con la corta fija junto a las listas largas), INICIO más compacto (fecha e índice en la primera pantalla), botones que parten su texto en vez de salirse y `devIndicators: false`.
+Fase 1 (Setup & Auth) terminada a 2026-09-27, salvo la *preview*, que el usuario aplazó (ver abajo). Fase 2 (UI y CRUD de las 8 pestañas) terminada a 2026-09-28 con sus criterios cumplidos. Fase 3 (IA) construida a 2026-09-28 (PROPOSAL §5, ARCHITECTURE §3.0). Refinado de la interfaz a 2026-09-28 (DESIGN_SYSTEM 1.4): etiquetas en español, hora con segundos, estado «Ausente» y barra de entrada en cuatro pestañas troqueladas enterradas, solo con el icono, que al señalarlas suben, se encienden y dicen su nombre (REGISTRAR, PREGUNTAR, FOTO, VOZ). El usuario probó botones circulares y los descartó: nada de curvas salvo el punto de estado. Después, repaso de Impeccable: fichas a su altura natural (con la corta fija junto a las listas largas), INICIO más compacto (fecha e índice en la primera pantalla), botones que parten su texto en vez de salirse y `devIndicators: false`. El 2026-09-29, catálogo de alimentos (CIQUAL 2025: 3.181 genéricos traducidos, con alias), autocompletado en «Nueva comida» y platos guardados con raciones (ARCHITECTURE §1.5, PROPOSAL ADR 008, DESIGN_SYSTEM 1.5). BEDCA se descartó por su licencia.
 
 Repo y entorno:
 
@@ -31,7 +32,8 @@ Repo y entorno:
 - Supabase local con Docker: `npm run db:start`, `db:test`, `db:types` (tras cada migración) y `npm run dev`. Los correos locales llegan a Mailpit, en http://127.0.0.1:54324. Si cambias plantillas o asuntos en `config.toml`, haz `supabase stop` y `supabase start`.
 - Datos de prueba locales: `demo@folio.test` con datos sintéticos y `vacia@folio.test` sin datos. Se entra por enlace mágico con Mailpit.
 - `.env.local` apunta al Supabase local y lleva `GOOGLE_GENERATIVE_AI_API_KEY`; `supabase/.env` guarda las credenciales de Google OAuth. Ninguno de los dos se versiona. No edites `.env.local`: para pruebas, pasa variables al arrancar (`AI_DAILY_LIMIT=500 CRON_SECRET=... npm run dev`).
-- Supabase remoto: proyecto `FOLIO`, ref `chlxyzjrmjwtdnalffme`, eu-west-1, enlazado y con la migración aplicada. `npx supabase test db --linked` pasa 64/64.
+- Supabase remoto: proyecto `FOLIO`, ref `chlxyzjrmjwtdnalffme`, eu-west-1, enlazado y con la migración inicial aplicada. `npx supabase test db --linked` pasa 64/64. Las dos migraciones del catálogo (`20260929…`) están solo en local: se aplican con `npx supabase db push` y se comprueban con `test db --linked` (103), con permiso del usuario.
+- En local, `supabase db reset` borra los datos de prueba. Para rehacer una migración que aún no está en el remoto, deshaz sus objetos a mano, borra su fila de `supabase_migrations.schema_migrations` y aplícala con `npx supabase migration up --local`.
 - El login interactivo de la CLI no funciona en la terminal del usuario. Usa `supabase login --no-browser` y copia la URL a mano.
 - Google OAuth: cliente web del proyecto de Google Cloud `folio-509918`, en modo prueba con el usuario como tester. Está activo en el Supabase local; la CI usa valores ficticios. El usuario pegó el secreto en un chat, así que hay que rotarlo antes de publicar la app.
 
@@ -56,8 +58,9 @@ Siguiente:
 
 1. **Línea base del eval** (criterio de salida de la Fase 3), con la cuota recién reiniciada: `EVAL_MODELS=gemini-3.8-flash,gemini-3.5-flash-lite npm run eval`. Guarda `evals/results/<fecha>.json`; versiónalo y resúmelo en PROPOSAL §5.
 2. **Decisiones del usuario** (PROPOSAL §8), con el eval y los límites reales delante: el tope diario por cuenta y el orden de modelos.
-3. **Revisión de Impeccable** de las superficies nuevas (chat, briefing, borrador con confianza, barra de entrada en pestañas) y documentador (`DESIGN.md`, ya puesto al día a mano con la 1.4).
+3. **Revisión de Impeccable** de las superficies nuevas (chat, briefing, borrador con confianza, barra de entrada en pestañas, autocompletado de alimentos) y documentador (`DESIGN.md` y `.impeccable/design.json`; `DESIGN.md` ya está puesto al día a mano con la 1.4 y el autocompletado).
 4. **Pendientes técnicos:**
+   - Aplicar al remoto las migraciones del catálogo (ver «Repo y entorno»).
    - Sustituir los bloques del §3 de ARCHITECTURE por el código real (`check-blocks` da 23 distintos, todos del diseño previo).
    - Opcional: botón «Generar el briefing de hoy» en HOME. Hoy solo lo genera el cron, y los visitantes no lo verían hasta el día siguiente. Necesitaría el cliente administrativo, porque `daily_briefings` no admite INSERT con sesión.
 5. El usuario tiene que probar a mano el último paso de Google: en `/login`, «Entrar con Google», elegir su cuenta y comprobar que llega a `/home`.

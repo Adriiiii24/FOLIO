@@ -521,6 +521,51 @@
   }
 }
 
+/* «Añadir alimento» (05 // NUTRICIÓN): opciones bajo el campo, filas de la comida y el bloque de guardar plato.
+   En la carpeta, la opción activa se enciende en naranja con texto negro (5,88:1): es el estado «activo» del
+   sistema. Sobre papel (borradores), negro con texto blanco. Sin transición, como todo color. */
+@layer components {
+  .food-options {
+    border: 2px solid var(--color-white);
+    background: var(--color-black);
+    color: var(--color-white);
+  }
+  .food-option[aria-selected='true'] {
+    background: var(--color-brand-orange);
+    color: var(--color-black);
+  }
+  .food-option[aria-selected='true'] .field-hint {
+    color: var(--color-black);
+  }
+  .food-rows {
+    border-block: 2px solid var(--color-line);
+  }
+  .food-rows > * + * {
+    border-top: 2px solid var(--color-line);
+  }
+  .food-dish {
+    border: 2px solid var(--color-steel);
+  }
+
+  [data-surface='paper'] .food-options {
+    border-color: var(--color-black);
+    background: var(--color-white);
+    color: var(--color-black);
+  }
+  [data-surface='paper'] .food-option[aria-selected='true'] {
+    background: var(--color-black);
+    color: var(--color-white);
+  }
+  [data-surface='paper'] .food-option[aria-selected='true'] .field-hint {
+    color: var(--color-white);
+  }
+  [data-surface='paper'] .food-rows,
+  [data-surface='paper'] .food-rows > * + *,
+  [data-surface='paper'] .food-dish {
+    border-color: var(--color-black);
+  }
+}
+
 /* Barra de entrada (§5.6, FOLIO 1.4): cuatro pestañas de papel, solo con el icono, enterradas en el borde
    inferior, con la misma silueta troquelada que las pestañas de carpeta (contorno negro y relleno desplazado 2 px).
    Aquí el recorte es fijo: la altura la da Motion con translate, porque lo que sube es la pestaña entera. El

@@ -48,6 +48,28 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
+      <LegalSection title="Datos nutricionales">
+        <p>
+          Las kcal y los macros de los alimentos que buscas en 05 // NUTRICIÓN proceden de la tabla CIQUAL de la Anses
+          (la agencia nacional francesa de seguridad sanitaria): Anses, 2025,{' '}
+          <em>Table de composition nutritionnelle des aliments Ciqual</em>, versión del 3 de noviembre de 2025,
+          publicada en{' '}
+          <a href="https://ciqual.anses.fr" rel="noreferrer">
+            ciqual.anses.fr
+          </a>{' '}
+          con la{' '}
+          <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" rel="noreferrer">
+            Licence Ouverte 2.0
+          </a>
+          .
+        </p>
+        <p>
+          FOLIO ha traducido los nombres al español y solo incluye los alimentos con los cuatro valores completos. La
+          Anses no participa en FOLIO ni lo respalda. Son valores medios de referencia por 100 g: los de un producto
+          concreto pueden ser distintos.
+        </p>
+      </LegalSection>
+
       <LegalSection title="Tus datos">
         <p>
           Lo que registras es tuyo. Puedes descargarlo y borrarlo cuando quieras desde 08 // AJUSTES. Cómo se tratan tus

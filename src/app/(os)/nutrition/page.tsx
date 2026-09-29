@@ -12,8 +12,9 @@ import { DeleteForm, PrefillButton } from '@/components/ui/RowActions';
 import { Signal } from '@/components/ui/Signal';
 import { localDate, localTime, utcIsoToZonedInput } from '@/lib/dates';
 import { number, shortDate, weekdayShort } from '@/lib/format';
-import { deleteMeal } from '@/modules/nutrition/actions';
+import { deleteDish, deleteMeal } from '@/modules/nutrition/actions';
 import { atwaterWarning, MEAL_TYPE_LABEL, mealTypeForHour } from '@/modules/nutrition/form';
+import { fromMealItems, hasCatalogItems, MealItemsSchema } from '@/modules/nutrition/items';
 import { getNutritionSheet } from '@/modules/nutrition/queries';
 
 export const metadata: Metadata = { title: 'Nutrición' };
@@ -60,7 +61,7 @@ export default async function NutritionPage({ searchParams }: PageProps<'/nutrit
         </div>
       ) : null}
 
-      <BrutalistCard title="Nueva comida" className="col-span-full lg:col-span-7">
+      <BrutalistCard title="Nueva comida" className="col-span-full lg:col-span-7 lg:row-span-2">
         <MealForm defaultEatenAt={now} defaultMealType={defaultMealType} />
       </BrutalistCard>
 
@@ -83,6 +84,31 @@ export default async function NutritionPage({ searchParams }: PageProps<'/nutrit
           }))}
         />
         <p className="mt-4 text-small text-ash">Estimaciones orientativas, no consejo nutricional.</p>
+      </BrutalistCard>
+
+      <BrutalistCard title="Platos guardados" eyebrow="Por ración" className="col-span-full lg:col-span-5">
+        {nutrition.dishes.length > 0 ? (
+          <ul className="divide-y-2 divide-line border-y-2 border-line">
+            {nutrition.dishes.map((dish) => (
+              <li key={dish.dishId} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 py-3">
+                <div className="min-w-0">
+                  <p className="truncate text-body">{dish.name}</p>
+                  <p className="font-mono text-label text-ash uppercase">
+                    {number(dish.per.kcal)} kcal · P {number(dish.per.proteinG, 1)} · C {number(dish.per.carbsG, 1)} · G{' '}
+                    {number(dish.per.fatG, 1)} · {number(dish.servingGrams)} g
+                    {dish.servings > 1 ? ` · receta para ${dish.servings}` : ''}
+                  </p>
+                </div>
+                <DeleteForm action={deleteDish.bind(null, dish.dishId)} label="Borrar" quiet />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <EmptyState>
+            Aún no tienes platos. Añade alimentos a una comida y pulsa «Guardar como plato»: la próxima vez lo
+            encontrarás al buscar.
+          </EmptyState>
+        )}
       </BrutalistCard>
 
       <BrutalistCard
@@ -129,7 +155,9 @@ export default async function NutritionPage({ searchParams }: PageProps<'/nutrit
                         carbsG: String(meal.carbs_g).replace('.', ','),
                         fatG: String(meal.fat_g).replace('.', ','),
                         eatenAt: utcIsoToZonedInput(meal.eaten_at, nutrition.timeZone),
+                        items: fromMealItems(meal.items),
                       }}
+                      picker={!hasEstimatedItems(meal.items)}
                       doneHref="/nutrition"
                       secondaryAction={
                         <ButtonLink href="/nutrition" scroll={false} tone="quiet">
@@ -141,12 +169,10 @@ export default async function NutritionPage({ searchParams }: PageProps<'/nutrit
                   </li>
                 );
               }
-              const warning = atwaterWarning(
-                meal.calories_kcal,
-                Number(meal.protein_g),
-                Number(meal.carbs_g),
-                Number(meal.fat_g),
-              );
+              // Con alimentos del catálogo no se avisa: sus kcal siguen la norma europea (fibra y alcohol incluidos).
+              const warning = hasCatalogItems(meal.items)
+                ? null
+                : atwaterWarning(meal.calories_kcal, Number(meal.protein_g), Number(meal.carbs_g), Number(meal.fat_g));
               return (
                 <li key={meal.id} className="grid grid-cols-[4.5rem_1fr_auto] items-baseline gap-x-4 gap-y-1 py-3">
                   <p className="font-mono text-label text-ash uppercase">
@@ -192,4 +218,10 @@ export default async function NutritionPage({ searchParams }: PageProps<'/nutrit
       </BrutalistCard>
     </Sheet>
   );
+}
+
+/** Alimentos que estimó la IA a partir de una foto: sin valores del catálogo, la lista no los puede editar. */
+function hasEstimatedItems(stored: unknown): boolean {
+  const parsed = MealItemsSchema.safeParse(stored);
+  return !parsed.success || (parsed.data.length > 0 && !hasCatalogItems(stored));
 }

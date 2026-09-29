@@ -263,7 +263,7 @@ La barra de entrada son cuatro pestañas de papel, solo con el icono, centradas 
 
 **Pestañas en móvil.** Por debajo de 1024 px la tira se desplaza en horizontal con snap y **todas las pestañas muestran su nombre**, no solo el índice. Es una desviación deliberada de la especificación, pensada para visitantes que llegan sin contexto. El separador `//` solo aparece desde 1280 px.
 
-Capas: 0 lámina, 1 pestaña activa, 30 barra de entrada, 50 avisos, 60 diálogos y enlace de salto.
+Capas: 0 lámina, 1 pestaña activa, 20 listas de sugerencias, 30 barra de entrada, 50 avisos, 60 diálogos y enlace de salto.
 
 ## Elevation & Depth
 
@@ -318,6 +318,12 @@ Bloques mono en mayúsculas que se hunden al pulsar.
 - **Focus:** anillo global de 3 px en la tinta de la superficie. *Hover*: el borde se aclara a ceniza sobre la carpeta y a acero sobre papel.
 - **Error:** borde rosa y mensaje rosa sobre la carpeta; sobre papel, borde negro discontinuo y mensaje negro en seminegrita.
 - **Nativo:** `color-scheme`, `caret-color` y `accent-color` siguen la superficie (naranja en la carpeta, negro en el papel). Los *placeholders* son ceniza sobre oscuro y acero sobre papel.
+
+### Autocompletado (FoodPicker)
+- **Campo y lista:** «Añadir alimento» en NUTRICIÓN es un *combobox*. La lista cuelga del campo, 4 px por debajo, en capa 20 y con sombra dura. En la carpeta es negra con borde blanco; sobre papel (borradores), blanca con borde negro. Como mucho 8 opciones de 44 px: nombre en body y, debajo, categoría y kcal en label mono ceniza.
+- **Opción activa:** naranja con texto negro en la carpeta; negro con texto blanco sobre papel. Sin transición. La marca el teclado (flechas) o el puntero.
+- **Filas:** divisores de 2 px (hollín en la carpeta, negro en el papel). Nombre en body; valores en label mono ceniza; cantidad en un control de 80 px alineado a la derecha, con su unidad; ✕ en botón discreto de 44 px. En una ficha estrecha, los valores bajan a su propia fila.
+- **Guardar como plato:** botón secundario que abre un grupo con borde acero y leyenda en label mono.
 
 ### Navigation
 - **Pestañas de carpeta:** ocho pestañas troqueladas de 48 px de alto con etiqueta label (`01 // INICIO`). Las inactivas son naranjas con contorno negro; en *hover* (solo con puntero fino) se izan 4 px y al pulsar, 2 px. La activa es negra, se iza 8 px y se funde con la carpeta. La transición es de 160 ms en `clip-path` y `translate`, sin animar el color.

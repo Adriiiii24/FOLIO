@@ -1,6 +1,6 @@
 # FOLIO — Propuesta de producto
 
-> **Documento:** `PROPOSAL.md` · **Versión:** 1.3 · **Estado:** Fases 1 y 2 implementadas; Fase 3 en curso (1.0 y 1.1: propuesta doc-first) · **Fecha:** 2026-09-28
+> **Documento:** `PROPOSAL.md` · **Versión:** 1.4 · **Estado:** Fases 1 y 2 implementadas; Fase 3 en curso; 1.4: catálogo de alimentos (1.0 y 1.1: propuesta doc-first) · **Fecha:** 2026-09-29
 > **Documentos hermanos:** [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) (identidad, tokens, componentes, motion) · [`ARCHITECTURE.md`](./ARCHITECTURE.md) (esquema SQL, RLS, pipeline de IA, estructura de carpetas)
 
 ---
@@ -99,7 +99,7 @@ Un CRUD con un chat no demuestra *seniority*. Lo demuestran las decisiones docum
 | 02 | `GIMNASIO` | Entrenamiento | Volumen semanal (kg) | Voz → series | `workouts`, `workout_logs` |
 | 03 | `FINANZAS` | Finanzas | Gasto del mes (€) | Foto de ticket, voz | `financial_transactions` |
 | 04 | `DIARIO` | Diario y notas | Racha de escritura (días) | Nota de voz, búsqueda semántica | `notes` |
-| 05 | `NUTRICIÓN` | Macros | Kcal restantes hoy | Foto del plato, texto | `macros` |
+| 05 | `NUTRICIÓN` | Macros | Kcal restantes hoy | Foto del plato, texto | `macros`, `foods`, `dishes` |
 | 06 | `CULTURA` | Consumo cultural | Terminados este año | Chat sobre reseñas | `media_items` |
 | 07 | `RUTINA` | Hábitos y foco | Racha activa (días) | Voz («hecho: meditar») | `habits`, `habit_logs`, `focus_sessions` |
 | 08 | `AJUSTES` | Configuración | Gasto de IA del mes | — | `profiles`, `ai_runs` |
@@ -202,8 +202,10 @@ Es el mecanismo que diferencia a FOLIO de ocho apps pegadas: una barra flotante,
 
 - **Comida por foto:** alimentos identificados, porción estimada y macros por elemento → borrador con porciones ajustables.
 - **Comida por texto:** «200 g de pechuga con arroz».
+- **Catálogo de alimentos (1.4):** al escribir el nombre de un alimento salen sus kcal y macros por 100 g. Son 3.181 alimentos genéricos de CIQUAL 2025 (Anses), traducidos al español. La búsqueda tolera tildes, erratas y plurales, y no usa IA, así que no gasta cuota. Eliges el alimento, pones los gramos y los totales se suman solos.
+- **Platos guardados (1.4):** una lista de alimentos se guarda como plato propio, con sus raciones, y sale la primera al buscar. Si la receta es para varias raciones, la comida pasa a ser una.
 - **Objetivos diarios** (kcal, proteína, carbohidratos, grasa) definidos en `SETTINGS`; progreso del día.
-- **Coherencia energética:** las kcal se recalculan con los factores de Atwater (4 / 4 / 9 kcal por gramo) y se avisa si la discrepancia con la estimación supera el 15 %.
+- **Coherencia energética:** las kcal se recalculan con los factores de Atwater (4 / 4 / 9 kcal por gramo) y se avisa si la discrepancia con la estimación supera el 15 %. No se avisa en las comidas hechas con el catálogo: su energía sigue el reglamento europeo, que cuenta también la fibra y el alcohol.
 
 > [!WARNING]
 > **Límite honesto:** una foto no muestra el aceite, las salsas ni el peso real. La estimación se presenta con su confianza visible y se confirma siempre. El benchmark (§7) mide el error real en lugar de prometer una cifra.
@@ -463,6 +465,7 @@ Las versiones exactas se fijan en `package.json` al crear el proyecto y se docum
 | 005 | Briefing como flujo determinista + un paso de LLM | Coste, testabilidad y cifras que no se pueden inventar |
 | 006 | Subida directa a Storage, no a través de funciones | Límites de tamaño del cuerpo de las peticiones; menos latencia y menos coste de cómputo |
 | 007 | Modos `REGISTRAR` / `PREGUNTAR` explícitos | Predecible, sin coste ni latencia de un clasificador |
+| 008 | Catálogo nutricional: CIQUAL 2025 en una tabla propia, no un RAG ni BEDCA (1.4) | Los macros son datos estructurados: se consultan, no se generan, y así no gastan cuota de IA. BEDCA no permite reutilizar ni traducir sus datos sin autorización; CIQUAL tiene licencia abierta (Etalab 2.0) y es una dieta europea. Detalle en `ARCHITECTURE.md` §1.5 |
 
 ---
 
@@ -540,6 +543,9 @@ Supuesto de planificación: **dedicación parcial, unas 15 h/semana**. Las fecha
 >
 > **Hallazgo que cambia la escala:** el nivel gratuito da unas **20 peticiones al día por modelo y por proyecto**, compartidas por todas las cuentas, y responde 503 a menudo. Encadenar los seis modelos Gemini 3 suma su cuota. Si los seis tienen el límite medido en dos de ellos, la capacidad total ronda los 120 usos al día; es una estimación hasta ver los límites reales en aistudio.google.com/rate-limit.
 
+> [!NOTE]
+> **Mejora del 2026-09-29, fuera de fase:** catálogo de alimentos y platos guardados en `05 // NUTRICIÓN` (§2.3 y `ARCHITECTURE.md` §1.5). Está probado en local; las dos migraciones nuevas aún no se han aplicado al proyecto remoto.
+
 ### Fase 4 — Polishing & Benchmark
 
 **Objetivo:** demostrar con números lo que la propuesta afirma.
@@ -597,6 +603,7 @@ gantt
 | Fuga de datos entre usuarios | Baja | Crítico | RLS en todas las tablas + tests pgTAP en CI + FKs compuestas |
 | Cambios de API en Next.js, el AI SDK o Supabase | Media | Medio | Versiones fijadas; IA aislada en `lib/ai/`; actualizaciones en ventanas planificadas |
 | Estimación de macros por foto poco precisa | Alta | Medio | Presentada como estimación; porción editable; error medido y publicado |
+| Nombres de alimentos que el catálogo no recoge («macarrones») (1.4) | Media | Bajo | Alias elegidos a mano en el CSV del catálogo; si no hay coincidencia, las kcal se escriben a mano |
 | Dependencia de un proveedor de IA | Media | Medio | AI SDK + registro de modelos: cambiar de proveedor es una línea y una ejecución del eval |
 
 ---

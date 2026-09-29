@@ -31,7 +31,9 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong className="font-semibold">Lo que registras.</strong> Movimientos de dinero, entrenos, entradas del
-            diario, comidas, fichas de libros, series o películas, hábitos, sesiones de foco y tus objetivos.
+            diario, comidas y los platos que guardas, fichas de libros, series o películas, hábitos, sesiones de foco y
+            tus objetivos. Cuando buscas un alimento, la búsqueda se hace en la base de datos de FOLIO y no se envía a
+            nadie más.
           </li>
           <li>
             <strong className="font-semibold">Archivos.</strong> Las fotos de tickets y platos y las notas de voz que
