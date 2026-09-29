@@ -544,7 +544,7 @@ Supuesto de planificación: **dedicación parcial, unas 15 h/semana**. Las fecha
 > **Hallazgo que cambia la escala:** el nivel gratuito da unas **20 peticiones al día por modelo y por proyecto**, compartidas por todas las cuentas, y responde 503 a menudo. Encadenar los seis modelos Gemini 3 suma su cuota. Si los seis tienen el límite medido en dos de ellos, la capacidad total ronda los 120 usos al día; es una estimación hasta ver los límites reales en aistudio.google.com/rate-limit.
 
 > [!NOTE]
-> **Mejora del 2026-09-29, fuera de fase:** catálogo de alimentos y platos guardados en `05 // NUTRICIÓN` (§2.3 y `ARCHITECTURE.md` §1.5). Está probado en local; las dos migraciones nuevas aún no se han aplicado al proyecto remoto.
+> **Mejora del 2026-09-29, fuera de fase:** catálogo de alimentos y platos guardados en `05 // NUTRICIÓN` (§2.3 y `ARCHITECTURE.md` §1.5). Las dos migraciones nuevas están aplicadas en el proyecto remoto y sus pruebas pasan allí.
 
 ### Fase 4 — Polishing & Benchmark
 

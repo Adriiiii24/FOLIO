@@ -13,7 +13,7 @@
 >
 > - **Versión 1.3 (Fase 3, en curso).** El autor exige IA **gratuita**: todo el pipeline pasa del diseño Claude + OpenAI al nivel gratuito de la Gemini API. El bloque de `models.ts` de §3.2 es copia del repositorio. Los demás bloques de §3 conservan el diseño previo; la tabla de §3.0 dice dónde está cada pieza real.
 >
-> - **Versión 1.4 (2026-09-29).** Catálogo de alimentos (CIQUAL 2025) y platos guardados para `05 // NUTRICIÓN`, en dos migraciones nuevas que no tocan la inicial (§1.5). La suite pgTAP pasa 103 de 103 en local (§2.3). El autocompletado está probado de extremo a extremo en Chromium. Las migraciones aún no se han aplicado al proyecto remoto.
+> - **Versión 1.4 (2026-09-29).** Catálogo de alimentos (CIQUAL 2025) y platos guardados para `05 // NUTRICIÓN`, en dos migraciones nuevas que no tocan la inicial (§1.5). Las migraciones están aplicadas en local y en el proyecto remoto, y la suite pgTAP pasa 103 de 103 en los dos (§2.3). El autocompletado está probado de extremo a extremo en Chromium.
 >
 > Falta la línea base del eval, que necesita cuota gratuita disponible; el detalle está en §6.
 
@@ -1144,7 +1144,7 @@ Result: PASS
 | `create_dish` | Guarda plato e ingredientes; sin ingredientes no guarda (`23514`); si un ingrediente falla, el plato no queda a medias | 5 |
 | `search_foods` | El plato propio sale primero con los valores de una ración; nunca devuelve platos de B; plurales, tildes, mayúsculas, erratas, preposiciones y alias; orden por prefijo; como mucho 25 resultados | 16 |
 
-En local: `Files=2, Tests=103, Result: PASS`. El remoto sigue en 64 de 64 hasta que se le apliquen las migraciones de la 1.4.
+Resultado, igual en local y contra el proyecto remoto (`--linked`): `Files=2, Tests=103, Result: PASS`.
 
 ### 2.4 Clientes de Supabase y sesión
 
@@ -3611,7 +3611,7 @@ Para publicar el acceso con Google (pantalla de consentimiento «En producción�
 | TypeScript | `tsc --strict` con `noUncheckedIndexedAccess` sobre todo el código de este documento y de `DESIGN_SYSTEM.md`, contra las versiones de §0 | Sin errores |
 | Interfaz de las 8 pestañas (1.2) | Build de producción en Chromium con Playwright, en móvil (390 px, CPU ×4) y escritorio, con datos sintéticos y con un usuario vacío | CLS 0 en las 8 pestañas; INP máximo 64 ms; axe sin infracciones en 26 pantallas; sin desbordamiento horizontal; teclado completo (enlace de salto, atajos 1–8 y `/`) |
 | Lógica de la Fase 2 (1.2) | Vitest: analizador de la barra de entrada, fechas con cambio de hora y `safeNextPath` | 42 de 42 |
-| Catálogo y platos (1.4) | pgTAP de §2.3 en local (`foods.test.sql` más `rls.test.sql`) y Vitest de `nutrition-items.test.ts` | 103 de 103 y 74 de 74 |
+| Catálogo y platos (1.4) | pgTAP de §2.3 (`foods.test.sql` más `rls.test.sql`) en local y con `--linked` tras `db push`, y Vitest de `nutrition-items.test.ts` | 103 de 103 en los dos y 74 de 74 |
 | Autocompletado (1.4) | Playwright contra `next dev` y el Supabase local, en escritorio, en móvil (390 px, táctil) y dentro de un borrador sobre papel | Erratas y teclado completo, Intro antes de que lleguen los resultados, plato para dos raciones, nombre repetido, edición que recupera los alimentos y borrado; sin errores de consola |
 
 Cubierto en la Fase 1: el proyecto real de Supabase, en local y alojado, y los tipos generados, que sustituyen a los escritos a mano.
@@ -3623,4 +3623,3 @@ Cubierto en la Fase 2: el diseño renderizado de las ocho pestañas, con los cri
 - Llamadas reales a los modelos, que requieren claves: la calidad de extracción, las latencias y el coste real. Los mide el eval de la Fase 4.
 - El último paso del login con Google, elegir la cuenta y volver a la app, necesita una persona con una cuenta de prueba de la app de Google.
 - La configuración de Auth del proyecto remoto (§5), que se hace al desplegar.
-- Las migraciones de la versión 1.4 en el proyecto remoto: se aplican con `npx supabase db push` y después `npx supabase test db --linked`.
