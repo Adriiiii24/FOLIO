@@ -4,9 +4,9 @@
  */
 export function FolioMark({ className = 'h-3 w-auto' }: { className?: string }) {
   return (
-    <svg aria-hidden="true" viewBox="327 390 624 453" className={className} fill="currentColor">
-      <path d="M357 390H560L601 443.5H890V489.5H400L357 635Z" />
-      <path d="M421 517H951L860 843H327Z" />
+    <svg aria-hidden="true" viewBox="340 422 575 373" className={className} fill="currentColor">
+      <path d="M374 422H565L607 463H873L837 506H453L374 625Z" />
+      <path d="M467 538H915L788 795H340Z" />
     </svg>
   );
 }

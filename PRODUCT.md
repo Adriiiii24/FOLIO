@@ -52,7 +52,7 @@ Una sola entrada para ocho dominios, con un solo modelo de datos. La pestaña ac
 
 - Todavía no hay datos reales, testimonios ni benchmark: el benchmark se publica en `docs/BENCHMARK.md` en la Fase 4.
 - Los datos de demostración se marcan siempre como sintéticos. No se inventan cifras de rendimiento, clientes ni opiniones.
-- **Logotipo** (del autor, 2026-09-28): una carpeta negra abierta sobre naranja `#FD6E01`. La fuente vectorial es `docs/brand/folio-logo.svg`; los iconos de la app están en `src/app` (`icon.svg`, `favicon.ico` y `apple-icon.png`). Dentro de la interfaz, la carpeta va sola en `currentColor` junto a la palabra FOLIO (`FolioMark`).
+- **Logotipo** (del autor, 2026-09-28; redibujado el 2026-09-29): una carpeta negra abierta sobre un cuadrado naranja `#FF3B00` con las esquinas redondeadas. La fuente vectorial es `docs/brand/folio-logo.svg`; los iconos de la app están en `src/app` (`icon.svg`, `favicon.ico` y `apple-icon.png`). Dentro de la interfaz, la carpeta va sola en `currentColor` junto a la palabra FOLIO (`FolioMark`).
 - La imagen de referencia (`docs/reference/`) es un mockup comercial ajeno. Es solo referencia y nunca se publica.
 
 ## Product Principles
