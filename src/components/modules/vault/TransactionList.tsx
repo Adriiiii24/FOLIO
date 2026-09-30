@@ -90,10 +90,10 @@ export function TransactionList({
                 {tx.merchant && tx.description ? ` · ${tx.description}` : ''}
               </p>
             </div>
-            <p className={`text-right font-mono text-label ${income ? 'text-signal-up' : 'text-white'}`}>
+            <p className={`text-right font-mono text-label ${income ? 'text-signal-up' : 'text-signal-down'}`}>
               {income ? '+' : '−'}
               {money(Number(tx.amount), tx.currency)}
-              {income ? <span className="sr-only"> (ingreso)</span> : null}
+              <span className="sr-only">{income ? ' (ingreso)' : ' (gasto)'}</span>
             </p>
             <div className="col-start-2 @md:col-start-auto">
               <ButtonLink
