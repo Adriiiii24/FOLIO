@@ -87,6 +87,7 @@ export function MediaForm({
             options={RATING_OPTIONS}
             defaultValue={initial?.rating ?? ''}
             error={errors.rating}
+            optional
           />
           <TextField
             label="Autoría"
@@ -95,6 +96,7 @@ export function MediaForm({
             placeholder="Autor, directora, estudio…"
             defaultValue={initial?.creator ?? ''}
             error={errors.creator}
+            optional
           />
           {compact ? null : (
             <>
@@ -105,6 +107,7 @@ export function MediaForm({
                 autoComplete="off"
                 defaultValue={initial?.progressPct ?? ''}
                 error={errors.progressPct}
+                optional
               />
               <TextField
                 label="Empezado"
@@ -112,6 +115,7 @@ export function MediaForm({
                 type="date"
                 defaultValue={initial?.startedOn ?? ''}
                 error={errors.startedOn}
+                optional
               />
               <TextField
                 label="Terminado"
@@ -120,6 +124,7 @@ export function MediaForm({
                 defaultValue={initial?.finishedOn ?? ''}
                 error={errors.finishedOn}
                 hint="Si lo marcas terminado sin fecha, cuenta hoy."
+                optional
               />
               <TextAreaField
                 label="Reseña"
@@ -128,6 +133,7 @@ export function MediaForm({
                 error={errors.review}
                 rows={4}
                 className="@md:col-span-2"
+                optional
               />
             </>
           )}

@@ -16,6 +16,7 @@ import { flushSync } from 'react-dom';
 import type { TabSlug } from '@/config/tabs';
 import { Button } from '@/components/ui/Button';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { MAX_RECORDING_SECONDS } from '@/hooks/useVoiceRecorder';
 import { easeOutStrong, exitFast, springSheet, springSnap, springTab } from '@/lib/motion/tokens';
 
 export type QuickMode = 'log' | 'ask';
@@ -58,12 +59,16 @@ type QuickInputBarProps = {
   capabilities?: { ask?: boolean; photo?: boolean; voice?: boolean };
 };
 
-const TOOLS: { id: QuickTool; label: string; icon: IconName }[] = [
+// `description`: lo que pasa al pulsarla, si no es solo abrir su ficha (VOZ empieza a grabar en el mismo gesto).
+const TOOLS: { id: QuickTool; label: string; icon: IconName; description?: string }[] = [
   { id: 'log', label: 'Registrar', icon: 'pencil' },
   { id: 'ask', label: 'Preguntar', icon: 'ask' },
-  { id: 'photo', label: 'Foto', icon: 'camera' },
-  { id: 'voice', label: 'Voz', icon: 'mic' },
+  { id: 'photo', label: 'Foto', icon: 'camera', description: 'Abre el selector de fotos.' },
+  { id: 'voice', label: 'Voz', icon: 'mic', description: 'Empieza a grabar en cuanto la pulsas.' },
 ];
+
+/** Aviso antes del corte de la grabación, que se envía sola al llegar al máximo. */
+const RECORDING_WARNING_S = 10;
 
 const HINTS: Record<TabSlug, string> = {
   home: '«12,40 Mercadona», «sentadilla 5×5 a 100»…',
@@ -89,6 +94,8 @@ const clock = (seconds: number) =>
 // salen (la pantalla o, con la ficha abierta, el borde superior de la ficha, tras el que se entierran las demás).
 const FINE_POINTER = '(hover: hover) and (pointer: fine)';
 const TAB_HIDDEN = 56;
+/** Reserva mínima bajo la carpeta: el --quick-bar-height de globals.css, lo que asoman las pestañas con aire. */
+const BAR_RESERVE = 56;
 
 function tabY({ open, active, lifted, fine }: { open: boolean; active: boolean; lifted: boolean; fine: boolean }) {
   if (lifted || (open && active)) return 0;
@@ -140,17 +147,21 @@ export function QuickInputBar({
     () => false,
   );
   const root = useRef<HTMLDivElement>(null);
+  const strip = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const tabs = useRef<Partial<Record<QuickTool, HTMLButtonElement | null>>>({});
   const cardId = useId();
   const statusId = useId();
+  const descriptionId = useId();
 
   const recording = status.kind === 'recording';
   const busy = status.kind === 'uploading' || status.kind === 'processing';
   const mode: QuickMode | null = tool === 'log' || tool === 'ask' ? tool : null;
   const text = mode ? texts[mode] : '';
   const hasText = text.trim().length > 0;
+  // Segundos que quedan hasta que la grabación se corta y se envía sola.
+  const recordingLeft = status.kind === 'recording' ? MAX_RECORDING_SECONDS - status.seconds : null;
 
   // Las pestañas salen del borde una tras otra al cargar; después, cada cambio va sin retardo.
   useEffect(() => {
@@ -209,12 +220,62 @@ export function QuickInputBar({
     return () => document.removeEventListener('pointerdown', onOutside);
   }, [tool]);
 
+  // El nombre que sale al señalar una pestaña se descarta con Escape sin mover el puntero ni el foco (WCAG 1.4.13).
+  // Va antes que los demás Escapes (cerrar la ficha, descartar el borrador): primero se va lo más efímero. El de la
+  // ficha abierta no sale al señalarla, así que no se toca.
+  const onEscapeName = useEffectEvent((event: KeyboardEvent) => {
+    if (event.key !== 'Escape' || lifted === null || lifted === tool) return;
+    event.stopPropagation();
+    setLifted(null);
+  });
+  useEffect(() => {
+    if (lifted === null) return;
+    window.addEventListener('keydown', onEscapeName, true);
+    return () => window.removeEventListener('keydown', onEscapeName, true);
+  }, [lifted]);
+
+  // Lo que tapa la barra es la reserva de la carpeta y su scroll-padding: con una ficha, un borrador (hasta el 68 %
+  // del alto) o la conversación abiertos, el foco nunca queda debajo (WCAG 2.4.11). Sin la franja de la zona segura,
+  // que el CSS ya suma, y con 8 px de aire; nunca menos que lo que asoman las pestañas.
+  useEffect(() => {
+    const element = root.current;
+    if (!element) return;
+    const html = document.documentElement.style;
+    const observer = new ResizeObserver(() => {
+      const covered = element.offsetHeight - (strip.current?.offsetHeight ?? 0);
+      html.setProperty('--quick-bar-height', `${Math.max(BAR_RESERVE, Math.ceil(covered + 8))}px`);
+    });
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      html.removeProperty('--quick-bar-height');
+    };
+  }, []);
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!mode || !hasText || busy) return;
     // Nunca se pierde lo escrito (§5.6, estado `error`): solo se vacía si el texto se ha podido usar.
     if (await onText(mode, text.trim())) setTexts((current) => ({ ...current, [mode]: '' }));
   }
+
+  /** Lo principal de la ficha abierta: el campo, ELEGIR FOTO, GRABAR o, grabando, ENVIAR. */
+  const focusPrimary = () => root.current?.querySelector<HTMLElement>('[data-quick-primary]')?.focus();
+
+  // Las acciones de la fila de estado (DESHACER, REINTENTAR, «¿Ticket o plato?») desaparecen al pulsarlas: antes,
+  // el foco pasa a lo principal de la ficha.
+  function act(action: () => void) {
+    focusPrimary();
+    action();
+  }
+
+  // GRABAR, CANCELAR y ENVIAR cambian la ficha de VOZ entera y el botón pulsado desaparece: si el foco se ha
+  // quedado sin sitio, pasa a lo principal de la ficha nueva.
+  useEffect(() => {
+    const active = document.activeElement;
+    if (tool !== 'voice' || (active && active !== document.body)) return;
+    root.current?.querySelector<HTMLElement>('[data-quick-primary]')?.focus();
+  }, [recording, tool]);
 
   const closeButton =
     canClose && !recording ? (
@@ -243,9 +304,12 @@ export function QuickInputBar({
           placeholder={mode === 'ask' ? 'Pregunta a tu archivador…' : HINTS[context]}
           enterKeyHint={mode === 'ask' ? 'search' : 'send'}
           autoComplete="off"
+          data-quick-primary
           className="quick-field h-11 min-w-0 flex-1 bg-transparent px-2 text-body"
         />
-        <Button type="submit" tone="primary" surface="paper" disabled={busy || !hasText}>
+        {/* aria-disabled y no disabled: tras pulsarlo, ENVIAR sigue con el foco mientras se interpreta (submit no
+            envía nada vacío ni repetido). */}
+        <Button type="submit" tone="primary" surface="paper" aria-disabled={busy || !hasText}>
           Enviar
         </Button>
         {closeButton}
@@ -261,8 +325,11 @@ export function QuickInputBar({
         <Button
           tone="primary"
           surface="paper"
-          onClick={() => fileInput.current?.click()}
-          disabled={busy}
+          onClick={() => {
+            if (!busy) fileInput.current?.click();
+          }}
+          aria-disabled={busy}
+          data-quick-primary
           className="max-md:flex-1"
         >
           <Icon name="camera" className="size-4" />
@@ -280,11 +347,14 @@ export function QuickInputBar({
             className="size-2.5 shrink-0 rounded-full bg-brand-orange motion-safe:animate-rec-pulse"
           />
           Grabando <span className="tabular-nums">{clock(status.seconds)}</span>
+          {recordingLeft !== null && recordingLeft <= RECORDING_WARNING_S ? (
+            <span className="font-semibold">· Quedan {recordingLeft} s</span>
+          ) : null}
         </p>
         <Button tone="secondary" surface="paper" onClick={onCancelRecording}>
           Cancelar
         </Button>
-        <Button tone="primary" surface="paper" onClick={onToggleRecording}>
+        <Button tone="primary" surface="paper" onClick={onToggleRecording} data-quick-primary>
           Enviar
         </Button>
       </div>
@@ -293,7 +363,16 @@ export function QuickInputBar({
         <p className="hidden min-w-0 flex-1 px-2 text-small text-steel md:block">
           Di un gasto, una comida o una nota. Revisarás el borrador antes de guardarlo.
         </p>
-        <Button tone="primary" surface="paper" onClick={onToggleRecording} disabled={busy} className="max-md:flex-1">
+        <Button
+          tone="primary"
+          surface="paper"
+          onClick={() => {
+            if (!busy) onToggleRecording();
+          }}
+          aria-disabled={busy}
+          data-quick-primary
+          className="max-md:flex-1"
+        >
           <Icon name="mic" className="size-4" />
           Grabar
         </Button>
@@ -347,6 +426,7 @@ export function QuickInputBar({
               }}
               type="button"
               aria-label={entry.label}
+              aria-describedby={entry.description ? `${descriptionId}-${entry.id}` : undefined}
               aria-expanded={active}
               aria-controls={active ? cardId : undefined}
               data-lit={active || isLifted || undefined}
@@ -370,6 +450,8 @@ export function QuickInputBar({
                   <m.span
                     key="name"
                     aria-hidden="true"
+                    // Sale al señalarla: se puede recorrer con el puntero (globals.css) y se descarta con Escape.
+                    data-hover={isLifted || undefined}
                     className="quick-tab__name"
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -383,6 +465,13 @@ export function QuickInputBar({
             </m.button>
           );
         })}
+        {tools.map((entry) =>
+          entry.description ? (
+            <span key={entry.id} id={`${descriptionId}-${entry.id}`} hidden>
+              {entry.description}
+            </span>
+          ) : null,
+        )}
       </div>
 
       <AnimatePresence initial={false}>
@@ -435,7 +524,13 @@ export function QuickInputBar({
                         exit={{ opacity: 0, y: -4, transition: exitFast }}
                         transition={springSnap}
                       >
-                        {status.kind === 'recording' && <span className="sr-only">Grabando</span>}
+                        {status.kind === 'recording' && (
+                          <span className="sr-only">
+                            {recordingLeft !== null && recordingLeft <= RECORDING_WARNING_S
+                              ? `Quedan ${RECORDING_WARNING_S} segundos: al llegar a ${clock(MAX_RECORDING_SECONDS)} se envía sola.`
+                              : 'Grabando'}
+                          </span>
+                        )}
                         {status.kind === 'uploading' && 'Subiendo…'}
                         {status.kind === 'processing' && (
                           <>
@@ -466,17 +561,22 @@ export function QuickInputBar({
                     </AnimatePresence>
                   </p>
                   {status.kind === 'saved' && status.undoable && onUndo ? (
-                    <button type="button" onClick={onUndo} className={STATUS_ACTION}>
+                    <button type="button" onClick={() => act(onUndo)} className={STATUS_ACTION}>
                       Deshacer
                     </button>
                   ) : null}
                   {statusActions.map((action) => (
-                    <button key={action.label} type="button" onClick={action.onClick} className={STATUS_ACTION}>
+                    <button
+                      key={action.label}
+                      type="button"
+                      onClick={() => act(action.onClick)}
+                      className={STATUS_ACTION}
+                    >
                       {action.label}
                     </button>
                   ))}
                   {status.kind === 'error' && onRetry ? (
-                    <button type="button" onClick={onRetry} className={STATUS_ACTION}>
+                    <button type="button" onClick={() => act(onRetry)} className={STATUS_ACTION}>
                       Reintentar
                     </button>
                   ) : null}
@@ -488,7 +588,7 @@ export function QuickInputBar({
       </AnimatePresence>
 
       {/* En móviles con barra de inicio, las pestañas se entierran bajo esta franja y no bajo el gesto del sistema. */}
-      <div aria-hidden="true" className="relative z-20 h-[env(safe-area-inset-bottom)] bg-black" />
+      <div ref={strip} aria-hidden="true" className="relative z-20 h-[env(safe-area-inset-bottom)] bg-black" />
 
       <input
         ref={fileInput}

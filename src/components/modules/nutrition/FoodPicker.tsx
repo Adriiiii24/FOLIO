@@ -244,6 +244,8 @@ export function FoodPicker({ items, onChange, suggestedName, surface = 'folder' 
           suggestedName={suggestedName}
           surface={surface}
           onSaved={(dish, message) => {
+            // El bloque de guardar plato desaparece con el foco dentro: vuelve a la búsqueda.
+            searchRef.current?.focus();
             onChange([{ ...dish, key: `dish-${dish.dishId}`, amount: '1' }]);
             setNotice({ status: 'success', message });
           }}
@@ -336,8 +338,17 @@ function SaveAsDish({
   const [pending, startTransition] = useTransition();
   const nameId = useId();
   const servingsId = useId();
+  const errorId = useId();
+  // Al cancelar, el foco vuelve a GUARDAR COMO PLATO: el bloque que lo tenía desaparece.
+  const restoreFocus = useRef(false);
+
+  function cancel() {
+    restoreFocus.current = true;
+    setEditing(false);
+  }
 
   function save() {
+    if (pending) return;
     startTransition(async () => {
       const state = await saveDish({
         name,
@@ -358,6 +369,12 @@ function SaveAsDish({
     return (
       <div>
         <Button
+          ref={(element) => {
+            if (element && restoreFocus.current) {
+              restoreFocus.current = false;
+              element.focus();
+            }
+          }}
           tone="secondary"
           surface={surface}
           onClick={() => {
@@ -379,7 +396,7 @@ function SaveAsDish({
       save();
     } else if (event.key === 'Escape') {
       event.stopPropagation();
-      setEditing(false);
+      cancel();
     }
   };
 
@@ -400,6 +417,7 @@ function SaveAsDish({
           onChange={(event) => setName(event.target.value)}
           onKeyDown={onEnter}
           aria-invalid={error.status === 'error' ? true : undefined}
+          aria-describedby={error.status === 'error' ? errorId : undefined}
           className={`${CONTROL} h-11`}
         />
       </div>
@@ -421,13 +439,13 @@ function SaveAsDish({
         Si la lista es para varias raciones, la comida pasa a ser una ración del plato.
       </p>
       <div className="col-span-full flex flex-wrap items-center gap-3">
-        <Button tone="secondary" surface={surface} onClick={save} disabled={pending}>
+        <Button tone="secondary" surface={surface} onClick={save} aria-disabled={pending}>
           {pending ? 'Guardando…' : 'Guardar plato'}
         </Button>
-        <Button tone="quiet" surface={surface} onClick={() => setEditing(false)}>
+        <Button tone="quiet" surface={surface} onClick={cancel}>
           Cancelar
         </Button>
-        <FormMessage state={error} />
+        <FormMessage state={error} id={errorId} />
       </div>
     </fieldset>
   );

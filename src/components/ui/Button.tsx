@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { ButtonHTMLAttributes, ComponentProps } from 'react';
+import type { ComponentProps } from 'react';
 
 type Tone = 'primary' | 'secondary' | 'danger' | 'quiet';
 type Surface = 'folder' | 'paper';
@@ -38,7 +38,8 @@ export function buttonClass({
   return `${BASE} ${TONES[surface][tone]} ${className}`;
 }
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { tone?: Tone; surface?: Surface };
+// Con `ref` (React 19 lo pasa como una prop más): quien pinta el botón puede devolverle el foco.
+type ButtonProps = ComponentProps<'button'> & { tone?: Tone; surface?: Surface };
 
 export function Button({ tone, surface, className, type = 'button', ...props }: ButtonProps) {
   return <button type={type} className={buttonClass({ tone, surface, className })} {...props} />;

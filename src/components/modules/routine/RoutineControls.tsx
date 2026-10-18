@@ -3,9 +3,11 @@
 import { startTransition, useActionState, useEffect, useOptimistic, useState, type ReactNode } from 'react';
 import { buttonClass } from '@/components/ui/Button';
 import { SelectField, TextField } from '@/components/ui/Field';
+import { keepFocus, rowTargets } from '@/components/ui/focus';
 import { FormMessage } from '@/components/ui/FormControls';
 import { FormShell, type Saved } from '@/components/ui/FormShell';
 import { Icon } from '@/components/ui/Icon';
+import { DeleteForm } from '@/components/ui/RowActions';
 import { IDLE, type FormState } from '@/lib/action-result';
 import {
   addInterruption,
@@ -127,6 +129,7 @@ export function HabitForm({
             autoComplete="off"
             defaultValue={initial?.targetPerPeriod ?? '1'}
             error={errors.targetPerPeriod}
+            required
           />
         </>
       )}
@@ -194,6 +197,10 @@ function useNow(active: boolean) {
   return now;
 }
 
+/**
+ * Botón de una acción del foco. Mientras va, no se repite pero conserva el foco (aria-disabled); si se lleva el
+ * temporizador (terminar), el foco pasa al título de la ficha.
+ */
 function ServerButton({
   action,
   children,
@@ -202,13 +209,24 @@ function ServerButton({
 }: {
   action: () => Promise<FormState>;
   children: ReactNode;
-  tone?: 'primary' | 'secondary' | 'danger';
+  tone?: 'primary' | 'secondary';
   pendingLabel: string;
 }) {
   const [state, dispatch, pending] = useActionState(async () => action(), IDLE);
   return (
-    <form action={dispatch} className="contents">
-      <button type="submit" disabled={pending} className={buttonClass({ tone })}>
+    <form
+      action={dispatch}
+      onSubmit={(event) => keepFocus(event.currentTarget, rowTargets(event.currentTarget))}
+      className="contents"
+    >
+      <button
+        type="submit"
+        aria-disabled={pending}
+        onClick={(event) => {
+          if (pending) event.preventDefault();
+        }}
+        className={buttonClass({ tone })}
+      >
         {pending ? pendingLabel : children}
       </button>
       {state.status === 'error' ? <FormMessage state={state} /> : null}
@@ -234,12 +252,13 @@ export function FocusTimer({ active }: { active: ActiveFocus | null }) {
         {(errors) => (
           <>
             <TextField
-              label="En qué (opcional)"
+              label="En qué"
               name="label"
               autoComplete="off"
               placeholder="Informe trimestral"
               error={errors.label}
               className="col-span-2 @lg:col-span-1"
+              optional
             />
             <TextField
               label="Minutos"
@@ -248,6 +267,7 @@ export function FocusTimer({ active }: { active: ActiveFocus | null }) {
               autoComplete="off"
               defaultValue="25"
               error={errors.plannedMinutes}
+              required
             />
           </>
         )}
@@ -265,10 +285,12 @@ export function FocusTimer({ active }: { active: ActiveFocus | null }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+        {/* Temporizador: se lee al llegar a él y no interrumpe cada segundo. El final se anuncia una vez, abajo. */}
         <p
+          role="timer"
           className={`font-display text-headline font-bold tabular-nums ${overtime ? 'text-brand-orange' : ''}`}
-          aria-hidden="true"
         >
+          <span className="sr-only">{overtime ? 'Tiempo extra: ' : 'Quedan '}</span>
           {clock}
         </p>
         <p className="font-mono text-label text-ash uppercase">
@@ -277,7 +299,7 @@ export function FocusTimer({ active }: { active: ActiveFocus | null }) {
         </p>
       </div>
       <p className="sr-only" role="status">
-        {overtime ? `Tiempo cumplido; llevas ${Math.floor(shown / 60)} minutos extra.` : ''}
+        {overtime ? 'Tiempo cumplido. El reloj sigue contando el tiempo extra.' : ''}
       </p>
       <div className="flex flex-wrap gap-3">
         <ServerButton action={finishFocus.bind(null, active.id)} tone="primary" pendingLabel="Guardando…">
@@ -286,9 +308,13 @@ export function FocusTimer({ active }: { active: ActiveFocus | null }) {
         <ServerButton action={addInterruption.bind(null, active.id)} pendingLabel="Anotando…">
           + Interrupción
         </ServerButton>
-        <ServerButton action={deleteFocusSession.bind(null, active.id)} tone="danger" pendingLabel="Descartando…">
-          Descartar
-        </ServerButton>
+        {/* Descartar borra la sesión en curso: en dos pasos, como cualquier borrado. */}
+        <DeleteForm
+          action={deleteFocusSession.bind(null, active.id)}
+          label="Descartar"
+          confirmLabel="Sí, descartar"
+          pendingLabel="Descartando…"
+        />
       </div>
     </div>
   );

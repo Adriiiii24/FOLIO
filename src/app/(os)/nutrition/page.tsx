@@ -8,7 +8,9 @@ import { BrutalistCard } from '@/components/ui/BrutalistCard';
 import { ButtonLink } from '@/components/ui/Button';
 import { DisplayNumeral } from '@/components/ui/DisplayNumeral';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { DeleteForm, PrefillButton } from '@/components/ui/RowActions';
+import { editButtonId } from '@/components/ui/focus';
+import { Icon } from '@/components/ui/Icon';
+import { CancelEditLink, DeleteForm, PrefillButton } from '@/components/ui/RowActions';
 import { Signal } from '@/components/ui/Signal';
 import { localDate, localTime, utcIsoToZonedInput } from '@/lib/dates';
 import { number, shortDate, weekdayShort } from '@/lib/format';
@@ -99,7 +101,12 @@ export default async function NutritionPage({ searchParams }: PageProps<'/nutrit
                     {dish.servings > 1 ? ` · receta para ${dish.servings}` : ''}
                   </p>
                 </div>
-                <DeleteForm action={deleteDish.bind(null, dish.dishId)} label="Borrar" quiet />
+                <DeleteForm
+                  action={deleteDish.bind(null, dish.dishId)}
+                  label="Borrar"
+                  context={`plato ${dish.name}`}
+                  quiet
+                />
               </li>
             ))}
           </ul>
@@ -159,11 +166,7 @@ export default async function NutritionPage({ searchParams }: PageProps<'/nutrit
                       }}
                       picker={!hasEstimatedItems(meal.items)}
                       doneHref="/nutrition"
-                      secondaryAction={
-                        <ButtonLink href="/nutrition" scroll={false} tone="quiet">
-                          Cancelar
-                        </ButtonLink>
-                      }
+                      secondaryAction={<CancelEditLink href="/nutrition" rowId={meal.id} />}
                     />
                     <DeleteForm action={deleteMeal.bind(null, meal.id)} label="Borrar comida" />
                   </li>
@@ -186,16 +189,22 @@ export default async function NutritionPage({ searchParams }: PageProps<'/nutrit
                       {number(Number(meal.carbs_g))} · G {number(Number(meal.fat_g))}
                     </p>
                     {warning ? (
-                      // Marca corta por fila; la explicación completa sale al guardar (FormMessage) y en el title.
-                      <p className="mt-1 font-mono text-label text-signal-warn uppercase" title={warning}>
-                        <span aria-hidden="true">! </span>
-                        Kcal y macros no cuadran
-                      </p>
+                      // Marca corta por fila; la explicación completa sale al guardar (FormMessage) y al desplegarla,
+                      // con el ratón, el teclado o el dedo (un title solo lo enseña el ratón).
+                      <details className="group">
+                        <summary className="inline-flex min-h-8 cursor-pointer list-none items-center gap-1.5 font-mono text-label text-signal-warn uppercase [&::-webkit-details-marker]:hidden">
+                          <span aria-hidden="true">!</span>
+                          Kcal y macros no cuadran
+                          <Icon name="chevron-down" className="size-3 group-open:rotate-180" />
+                        </summary>
+                        <p className="max-w-[65ch] pb-1 text-small text-ash">{warning}</p>
+                      </details>
                     ) : null}
                   </div>
                   <div className="text-right">
                     <p className="font-mono text-label">{number(meal.calories_kcal)} kcal</p>
                     <ButtonLink
+                      id={editButtonId(meal.id)}
                       href={`/nutrition?edit=${meal.id}`}
                       scroll={false}
                       tone="quiet"

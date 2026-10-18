@@ -4,7 +4,7 @@ import type { ChatStatus, InferUITools, UIDataTypes, UIMessage } from 'ai';
 import { AnimatePresence } from 'motion/react';
 import * as m from 'motion/react-m';
 import Link from 'next/link';
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode, type Ref } from 'react';
 import { CATEGORY_LABEL } from '@/lib/ai/schemas/ticket';
 import type { FolioTools } from '@/lib/ai/tools';
 import { money, plural, shortDate } from '@/lib/format';
@@ -51,11 +51,22 @@ const EVIDENCE: Record<string, string> = {
 export function ChatPanel({ messages, status, error, onStop, onClose }: ChatPanelProps) {
   const titleId = useId();
   const end = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const busy = status === 'submitted' || status === 'streaming';
+  // Lo que oye el lector de pantalla: no cada trozo mientras llega (ni la propia pregunta, ni «Buscando…»), sino
+  // «Respondiendo…» y, al terminar, la respuesta entera en texto. Un error lo anuncia su propia alerta.
+  const last = messages[messages.length - 1];
+  const answer = !busy && last?.role === 'assistant' ? textOf(last).trim() || 'Respuesta lista.' : '';
 
   useEffect(() => {
     end.current?.scrollIntoView({ block: 'end' });
   }, [messages, status]);
+
+  // PARAR desaparece al acabar la respuesta: si tenía el foco, pasa a CERRAR.
+  useEffect(() => {
+    const active = document.activeElement;
+    if (!busy && (!active || active === document.body)) closeRef.current?.focus();
+  }, [busy]);
 
   return (
     <section
@@ -72,11 +83,16 @@ export function ChatPanel({ messages, status, error, onStop, onClose }: ChatPane
         </h2>
         <div className="flex gap-2">
           {busy ? <PanelButton onClick={onStop}>Parar</PanelButton> : null}
-          <PanelButton onClick={onClose}>Cerrar</PanelButton>
+          <PanelButton ref={closeRef} onClick={onClose}>
+            Cerrar
+          </PanelButton>
         </div>
       </header>
 
-      <ol aria-live="polite" className="grid gap-5">
+      <p role="status" className="sr-only">
+        {busy ? 'Respondiendo…' : answer}
+      </p>
+      <ol aria-busy={busy} className="grid gap-5">
         <AnimatePresence initial={false}>
           {messages.map((message) => (
             <m.li
@@ -107,9 +123,18 @@ export function ChatPanel({ messages, status, error, onStop, onClose }: ChatPane
   );
 }
 
-function PanelButton({ onClick, children }: { onClick: () => void; children: ReactNode }) {
+function PanelButton({
+  ref,
+  onClick,
+  children,
+}: {
+  ref?: Ref<HTMLButtonElement>;
+  onClick: () => void;
+  children: ReactNode;
+}) {
   return (
     <button
+      ref={ref}
       type="button"
       onClick={onClick}
       className="min-h-11 border-2 border-steel px-3 font-mono text-label uppercase hover:border-white"

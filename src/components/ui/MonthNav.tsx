@@ -27,7 +27,9 @@ export function MonthNav({
   const next = shift(month, 1);
 
   return (
-    <nav aria-label="Cambiar de mes" className="flex items-center gap-2">
+    // El mes ocupa lo que dejan las flechas, hasta 20rem: con un mínimo fijo de 160 px, a 320 px de ancho la fila no
+    // cabía en la ficha (WCAG 1.4.10). Con el mismo ancho, las flechas no bailan al cambiar de mes.
+    <nav aria-label="Cambiar de mes" className="flex max-w-xs items-center gap-2">
       <Link
         href={`${basePath}?${param}=${previous}`}
         scroll={false}
@@ -36,7 +38,7 @@ export function MonthNav({
       >
         <Icon name="chevron-left" />
       </Link>
-      <p className="min-w-40 text-center font-mono text-label uppercase" aria-live="polite">
+      <p className="min-w-0 flex-1 text-center font-mono text-label uppercase" aria-live="polite">
         {monthName(`${month}-01`)}
       </p>
       {month < currentMonth ? (

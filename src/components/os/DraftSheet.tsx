@@ -1,7 +1,7 @@
 'use client';
 
 import * as m from 'motion/react-m';
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { NoteForm } from '@/components/modules/brain/NoteForm';
 import { SetForm } from '@/components/modules/gym/GymForms';
 import { MediaForm } from '@/components/modules/media/MediaForm';
@@ -31,6 +31,8 @@ const KIND_LABEL: Record<InterpretedDraft['kind'], string> = {
 
 export type Undo = () => Promise<FormState>;
 
+const FIELD = 'input:not([type="hidden"]), textarea, select';
+
 type DraftSheetProps = {
   draft: InterpretedDraft;
   onSaved: (message: string, undo: Undo | null) => void;
@@ -40,25 +42,56 @@ type DraftSheetProps = {
 /**
  * El borrador (§5.7): papel blanco, porque te toca decidir. Todos los campos se editan en el sitio y nada
  * se guarda hasta pulsar GUARDAR. El foco inicial va al primer campo, nunca al botón: Intro no guarda
- * por accidente. Escape descarta.
+ * por accidente. Escape descarta; si el borrador viene de una foto o de la voz, antes pregunta.
  */
 export function DraftSheet({ draft, onSaved, onDiscard }: DraftSheetProps) {
   const ref = useRef<HTMLElement>(null);
   const titleId = useId();
+  const warningId = useId();
+  // Un borrador de foto o de voz costó un uso de IA y su archivo se borra al descartarlo: Escape, que se pulsa por
+  // costumbre para «cerrar», no lo tira sin preguntar. Otro Escape, o SEGUIR REVISANDO, lo deja como estaba.
+  const [confirming, setConfirming] = useState(false);
+  const returnTo = useRef<HTMLElement | null>(null);
+  const { context, ai } = draft;
+  const aiMeta = ai?.meta ?? undefined;
+
+  const firstField = () => ref.current?.querySelector<HTMLElement>(FIELD) ?? null;
 
   useEffect(() => {
-    ref.current?.querySelector<HTMLElement>('input:not([type="hidden"]), textarea, select')?.focus();
+    ref.current?.querySelector<HTMLElement>(FIELD)?.focus();
   }, [draft]);
 
-  const discard = (
+  function askDiscard() {
+    returnTo.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setConfirming(true);
+  }
+
+  function keepDraft() {
+    const back = returnTo.current;
+    setConfirming(false);
+    // El foco vuelve a donde estaba al pulsar Escape (SÍ, DESCARTAR, que lo tiene, desaparece).
+    (back?.isConnected ? back : firstField())?.focus();
+  }
+
+  const discard = confirming ? (
+    <>
+      <Button tone="danger" surface="paper" autoFocus aria-describedby={warningId} onClick={onDiscard}>
+        Sí, descartar
+      </Button>
+      <Button tone="secondary" surface="paper" onClick={keepDraft}>
+        Seguir revisando
+      </Button>
+      <p id={warningId} className="basis-full text-small font-semibold">
+        Descartarlo borra lo que ha {ai?.origin === 'Voz' ? 'oído' : 'leído'} la IA; repetirlo gasta otro uso del día.
+      </p>
+    </>
+  ) : (
     <Button tone="secondary" surface="paper" onClick={onDiscard}>
       Descartar
     </Button>
   );
   const saved = (undo: (id: string) => Promise<FormState>) => (state: Saved) =>
     onSaved(state.message, state.id ? () => undo(state.id as string) : null);
-  const { context, ai } = draft;
-  const aiMeta = ai?.meta ?? undefined;
 
   let form;
   switch (draft.kind) {
@@ -151,7 +184,10 @@ export function DraftSheet({ draft, onSaved, onDiscard }: DraftSheetProps) {
       data-surface="paper"
       aria-labelledby={titleId}
       onKeyDown={(event) => {
-        if (event.key === 'Escape') onDiscard();
+        if (event.key !== 'Escape') return;
+        if (!ai) onDiscard();
+        else if (confirming) keepDraft();
+        else askDiscard();
       }}
       className="draft-sheet @container max-h-[min(68dvh,42rem)] overflow-y-auto overscroll-contain border-2 border-black bg-white p-4 text-black shadow-hard"
     >

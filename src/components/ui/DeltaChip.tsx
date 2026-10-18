@@ -27,14 +27,11 @@ export function DeltaChip({ value, storageKey, format, upIsGood }: DeltaChipProp
     }
     if (previous === null || Number.isNaN(previous) || previous === value) return;
 
-    // El chip aparece en el siguiente fotograma, no dentro del efecto: evita un render en cascada.
+    // El chip aparece en el siguiente fotograma, no dentro del efecto: evita un render en cascada. No se va por
+    // tiempo (WCAG 2.2.1): se lee a tu ritmo y sigue ahí hasta que sales de la lámina.
     const change = previous;
     const show = requestAnimationFrame(() => setDelta(value - change));
-    const hide = setTimeout(() => setDelta(null), 4000);
-    return () => {
-      cancelAnimationFrame(show);
-      clearTimeout(hide);
-    };
+    return () => cancelAnimationFrame(show);
   }, [storageKey, value]);
 
   const favourable = delta !== null && delta > 0 === upIsGood;

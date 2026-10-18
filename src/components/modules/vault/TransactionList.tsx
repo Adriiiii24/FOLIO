@@ -1,6 +1,7 @@
 import { ButtonLink } from '@/components/ui/Button';
 import { EditHeading } from '@/components/ui/EditHeading';
-import { DeleteForm } from '@/components/ui/RowActions';
+import { editButtonId } from '@/components/ui/focus';
+import { CancelEditLink, DeleteForm } from '@/components/ui/RowActions';
 import { localTime, utcIsoToZonedInput } from '@/lib/dates';
 import { money, shortDate } from '@/lib/format';
 import type { Database } from '@/lib/supabase/database.types';
@@ -59,11 +60,7 @@ export function TransactionList({
                 defaultOccurredAt={defaultOccurredAt}
                 currency={currency}
                 doneHref={baseHref}
-                secondaryAction={
-                  <ButtonLink href={baseHref} scroll={false} tone="quiet">
-                    Cancelar
-                  </ButtonLink>
-                }
+                secondaryAction={<CancelEditLink href={baseHref} rowId={tx.id} />}
               />
               <div className="mt-4 border-t-2 border-line pt-4">
                 <DeleteForm action={deleteTransaction.bind(null, tx.id)} label="Borrar movimiento" />
@@ -97,6 +94,7 @@ export function TransactionList({
             </p>
             <div className="col-start-2 @md:col-start-auto">
               <ButtonLink
+                id={editButtonId(tx.id)}
                 href={`${baseHref}${separator}edit=${tx.id}`}
                 scroll={false}
                 tone="quiet"

@@ -7,6 +7,7 @@ import { formatIndex, TABS } from '@/config/tabs';
 import { safeNextPath } from '@/lib/auth/safe-next';
 import { createClient, requireUserId } from '@/lib/supabase/server';
 import { signInWithGoogle } from '@/modules/auth/actions';
+import { LoginNotice } from './login-notice';
 import { MagicLinkForm } from './magic-link-form';
 
 export const metadata: Metadata = { title: 'Entrar' };
@@ -58,14 +59,12 @@ export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
             Entrar o crear cuenta
           </h2>
           {message ? (
-            <p
-              role={message.tone === 'error' ? 'alert' : 'status'}
-              className="border-2 border-black px-3 py-2 text-small font-semibold"
-            >
+            <LoginNotice id="acceso-aviso" tone={message.tone}>
               {message.text}
-            </p>
+            </LoginNotice>
           ) : null}
-          <MagicLinkForm next={next} />
+          {/* Un error de acceso describe también el campo del email: se oye al llegar a él. */}
+          <MagicLinkForm next={next} describedBy={message?.tone === 'error' ? 'acceso-aviso' : undefined} />
           <div className="flex items-center gap-3 font-mono text-micro text-steel uppercase">
             <span aria-hidden="true" className="h-0.5 flex-1 bg-black" />o
             <span aria-hidden="true" className="h-0.5 flex-1 bg-black" />

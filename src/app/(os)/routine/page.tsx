@@ -8,7 +8,8 @@ import { BrutalistCard } from '@/components/ui/BrutalistCard';
 import { ButtonLink } from '@/components/ui/Button';
 import { DisplayNumeral } from '@/components/ui/DisplayNumeral';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { DeleteForm, PrefillButton } from '@/components/ui/RowActions';
+import { editButtonId } from '@/components/ui/focus';
+import { CancelEditLink, DeleteForm, PrefillButton } from '@/components/ui/RowActions';
 import { localTime } from '@/lib/dates';
 import { minutes, plural, shortDate, weekdayShort } from '@/lib/format';
 import { archiveHabit, deleteHabit } from '@/modules/routine/actions';
@@ -151,11 +152,7 @@ export default async function RoutinePage({ searchParams }: PageProps<'/routine'
                         targetPerPeriod: String(habit.target_per_period),
                       }}
                       doneHref="/routine"
-                      secondaryAction={
-                        <ButtonLink href="/routine" scroll={false} tone="quiet">
-                          Cancelar
-                        </ButtonLink>
-                      }
+                      secondaryAction={<CancelEditLink href="/routine" rowId={habit.id} />}
                     />
                     <div className="flex flex-wrap gap-3">
                       <DeleteForm
@@ -175,6 +172,7 @@ export default async function RoutinePage({ searchParams }: PageProps<'/routine'
                       </span>
                     </p>
                     <ButtonLink
+                      id={editButtonId(habit.id)}
                       href={`/routine?edit=${habit.id}`}
                       scroll={false}
                       tone="quiet"
