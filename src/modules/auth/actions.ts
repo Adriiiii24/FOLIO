@@ -3,11 +3,9 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
+import { failure, success, type FormState } from '@/lib/action-result';
 import { safeNextPath } from '@/lib/auth/safe-next';
 import { createClient } from '@/lib/supabase/server';
-
-export type MagicLinkState =
-  { status: 'idle' } | { status: 'sent'; email: string } | { status: 'error'; message: string };
 
 const EmailSchema = z.email();
 
@@ -27,10 +25,11 @@ function nextFrom(formData: FormData): string {
 /**
  * Envía el enlace mágico. La plantilla de correo añade `&token_hash=…&type=email` a emailRedirectTo,
  * y /auth/confirm lo canjea. El origen debe estar en la lista de redirecciones permitidas de Supabase.
+ * Devuelve un FormState, como los formularios de los módulos: el de acceso usa también useFormAction.
  */
-export async function sendMagicLink(_previous: MagicLinkState, formData: FormData): Promise<MagicLinkState> {
+export async function sendMagicLink(_previous: FormState, formData: FormData): Promise<FormState> {
   const email = EmailSchema.safeParse(String(formData.get('email') ?? '').trim());
-  if (!email.success) return { status: 'error', message: 'Escribe un email válido.' };
+  if (!email.success) return failure('Escribe un email válido.', { email: 'Escribe un email válido.' });
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({
@@ -39,10 +38,9 @@ export async function sendMagicLink(_previous: MagicLinkState, formData: FormDat
       emailRedirectTo: `${await requestOrigin()}/auth/confirm?next=${encodeURIComponent(nextFrom(formData))}`,
     },
   });
-  if (error)
-    return { status: 'error', message: 'No se ha podido enviar el enlace. Inténtalo de nuevo en unos minutos.' };
+  if (error) return failure('No se ha podido enviar el enlace. Inténtalo de nuevo en unos minutos.');
 
-  return { status: 'sent', email: email.data };
+  return success('Enlace enviado.');
 }
 
 export async function signInWithGoogle(formData: FormData) {

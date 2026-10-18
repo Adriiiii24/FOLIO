@@ -110,6 +110,10 @@
   --shadow-none: 0 0 #0000;
 }
 
+/* Un botón pendiente («Guardando…») lleva aria-disabled y no disabled: el desactivado pierde el foco y el lector de
+   pantalla vuelve al principio (WCAG 2.4.3). La variante disabled: lo pinta igual en los dos casos. */
+@custom-variant disabled (&:is(:disabled, [aria-disabled='true']));
+
 /* ─────────────────────────────────────────────────────────────────
    3 · BASE Y SUPERFICIES
    ───────────────────────────────────────────────────────────────── */
@@ -123,7 +127,8 @@
     --duration-base: 240ms;
     --duration-exit: 200ms;
     --duration-sheet: 400ms;
-    /* Lo que asoman las pestañas de la barra de entrada, con aire: la última ficha nunca queda debajo. */
+    /* Lo que tapa la barra de entrada, con aire: lo que asoman sus pestañas o, con una ficha, un borrador o la
+       conversación abiertos, su alto real, que mide QuickInputBar. La última ficha nunca queda debajo. */
     --quick-bar-height: 56px;
   }
 
@@ -482,6 +487,13 @@
   .field-error {
     color: var(--color-signal-down);
   }
+  /* Resultado de un formulario (FormMessage), con su glifo: rosa o verde en la carpeta. */
+  .form-error {
+    color: var(--color-signal-down);
+  }
+  .form-success {
+    color: var(--color-signal-up);
+  }
 
   [data-surface='paper'] .control {
     border-color: var(--color-black);
@@ -499,7 +511,9 @@
   [data-surface='paper'] .field-hint {
     color: var(--color-steel);
   }
-  [data-surface='paper'] .field-error {
+  [data-surface='paper'] .field-error,
+  [data-surface='paper'] .form-error,
+  [data-surface='paper'] .form-success {
     color: var(--color-black);
     font-weight: 600;
   }
@@ -629,17 +643,27 @@
     white-space: nowrap;
     pointer-events: none;
   }
+  /* El nombre que sale al pasar por encima se puede recorrer con el puntero sin que se esconda (WCAG 1.4.13): la
+     franja invisible de debajo cubre los 8 px hasta la pestaña. El de la ficha abierta sigue dejando pasar los clics. */
+  .quick-tab__name[data-hover] {
+    pointer-events: auto;
+  }
+  .quick-tab__name[data-hover]::after {
+    content: '';
+    position: absolute;
+    inset-inline: -2px;
+    top: 100%;
+    height: 10px;
+  }
 
-  /* Campo de la ficha: una línea de escritura sobre el papel. Al enfocarse pasa de acero a negro; el anillo
-     alrededor de toda la barra chocaba con su sombra dura y quedaba descuadrado. */
+  /* Campo de la ficha: una línea de escritura sobre el papel que pasa de acero a negro al enfocarse, con el anillo de
+     foco del sistema por dentro de la ficha (3 px y 2 de separación caben en sus 8 px de relleno). Alrededor de toda
+     la barra chocaba con su sombra dura y quedaba descuadrado. */
   .quick-field {
     border-bottom: 2px solid var(--color-steel);
-    outline: none;
   }
-  .quick-field:focus,
-  .quick-field:focus-visible {
+  .quick-field:focus {
     border-bottom-color: var(--color-black);
-    outline: none;
   }
 }
 

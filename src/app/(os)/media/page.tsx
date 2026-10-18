@@ -9,7 +9,8 @@ import { BrutalistCard } from '@/components/ui/BrutalistCard';
 import { ButtonLink } from '@/components/ui/Button';
 import { DisplayNumeral } from '@/components/ui/DisplayNumeral';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { DeleteForm, PrefillButton } from '@/components/ui/RowActions';
+import { editButtonId } from '@/components/ui/focus';
+import { CancelEditLink, DeleteForm, PrefillButton } from '@/components/ui/RowActions';
 import { plural, shortDate } from '@/lib/format';
 import { deleteMediaItem, finishMediaItem } from '@/modules/media/actions';
 import { MEDIA_KIND_LABEL } from '@/modules/media/form';
@@ -94,11 +95,7 @@ export default async function MediaPage({ searchParams }: PageProps<'/media'>) {
                       review: item.review ?? '',
                     }}
                     doneHref={baseHref}
-                    secondaryAction={
-                      <ButtonLink href={baseHref} scroll={false} tone="quiet">
-                        Cancelar
-                      </ButtonLink>
-                    }
+                    secondaryAction={<CancelEditLink href={baseHref} rowId={item.id} />}
                   />
                   <DeleteForm action={deleteMediaItem.bind(null, item.id)} label="Borrar ficha" />
                 </li>
@@ -124,6 +121,7 @@ export default async function MediaPage({ searchParams }: PageProps<'/media'>) {
                       </p>
                     ) : null}
                     <ButtonLink
+                      id={editButtonId(item.id)}
                       href={`${baseHref}${baseHref.includes('?') ? '&' : '?'}edit=${item.id}`}
                       scroll={false}
                       tone="quiet"
@@ -135,7 +133,11 @@ export default async function MediaPage({ searchParams }: PageProps<'/media'>) {
                   </div>
                   {item.status === 'in_progress' ? (
                     <div className="col-span-2">
-                      <ActionButton action={finishMediaItem.bind(null, item.id)} pendingLabel="Guardando…">
+                      <ActionButton
+                        action={finishMediaItem.bind(null, item.id)}
+                        pendingLabel="Guardando…"
+                        aria-label={`Marcar terminado «${item.title}»`}
+                      >
                         Marcar terminado
                       </ActionButton>
                     </div>

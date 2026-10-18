@@ -9,7 +9,8 @@ import { ButtonLink, buttonClass } from '@/components/ui/Button';
 import { DisplayNumeral } from '@/components/ui/DisplayNumeral';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SelectField } from '@/components/ui/Field';
-import { DeleteForm, PrefillButton } from '@/components/ui/RowActions';
+import { editButtonId } from '@/components/ui/focus';
+import { CancelEditLink, DeleteForm, PrefillButton } from '@/components/ui/RowActions';
 import { Signal } from '@/components/ui/Signal';
 import { localDate, localTime, utcIsoToZonedInput } from '@/lib/dates';
 import { number, plural, shortDate } from '@/lib/format';
@@ -70,7 +71,7 @@ export default async function GymPage({ searchParams }: PageProps<'/gym'>) {
                   <li key={exercise} className="py-3">
                     <p className="text-body font-semibold">{exercise}</p>
                     <ul className="mt-2 flex flex-wrap gap-2">
-                      {sets.map((set) => (
+                      {sets.map((set, index) => (
                         <li
                           key={set.id}
                           className={`flex items-center gap-2 border-2 py-1 pr-1 pl-2 font-mono text-label ${set.is_warmup ? 'border-line text-ash' : 'border-steel'}`}
@@ -84,6 +85,7 @@ export default async function GymPage({ searchParams }: PageProps<'/gym'>) {
                             action={deleteSet.bind(null, set.id)}
                             label="Quitar"
                             confirmLabel="Sí, quitar"
+                            context={`serie ${index + 1} de ${exercise}: ${set.reps} × ${kg(Number(set.weight_kg))}`}
                             quiet
                           />
                         </li>
@@ -190,6 +192,7 @@ export default async function GymPage({ searchParams }: PageProps<'/gym'>) {
                   formatted: kg(Number(row.best_e1rm_kg)),
                   current: index === gym.progress.length - 1,
                 }))}
+                currentLabel="última"
               />
             ) : (
               <EmptyState>Sin series de trabajo de {gym.exercise} en los últimos seis meses.</EmptyState>
@@ -220,11 +223,7 @@ export default async function GymPage({ searchParams }: PageProps<'/gym'>) {
                       notes: workout.notes ?? '',
                     }}
                     doneHref="/gym"
-                    secondaryAction={
-                      <ButtonLink href="/gym" scroll={false} tone="quiet">
-                        Cancelar
-                      </ButtonLink>
-                    }
+                    secondaryAction={<CancelEditLink href="/gym" rowId={workout.id} />}
                   />
                   <DeleteForm action={deleteWorkout.bind(null, workout.id)} label="Borrar sesión" />
                 </li>
@@ -239,6 +238,7 @@ export default async function GymPage({ searchParams }: PageProps<'/gym'>) {
                     </p>
                   </div>
                   <ButtonLink
+                    id={editButtonId(workout.id)}
                     href={`/gym?edit=${workout.id}`}
                     scroll={false}
                     tone="quiet"

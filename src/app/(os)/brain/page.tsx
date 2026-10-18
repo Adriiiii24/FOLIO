@@ -8,7 +8,8 @@ import { ButtonLink, buttonClass } from '@/components/ui/Button';
 import { DisplayNumeral } from '@/components/ui/DisplayNumeral';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { TextField } from '@/components/ui/Field';
-import { DeleteForm, PrefillButton } from '@/components/ui/RowActions';
+import { editButtonId } from '@/components/ui/focus';
+import { CancelEditLink, DeleteForm, PrefillButton } from '@/components/ui/RowActions';
 import { plural, shortDate } from '@/lib/format';
 import { deleteNote } from '@/modules/brain/actions';
 import { MOOD_LABEL } from '@/modules/brain/form';
@@ -84,11 +85,7 @@ export default async function BrainPage({ searchParams }: PageProps<'/brain'>) {
                       tags: note.tags.join(', '),
                     }}
                     doneHref={baseHref}
-                    secondaryAction={
-                      <ButtonLink href={baseHref} scroll={false} tone="quiet">
-                        Cancelar
-                      </ButtonLink>
-                    }
+                    secondaryAction={<CancelEditLink href={baseHref} rowId={note.id} />}
                   />
                   <DeleteForm action={deleteNote.bind(null, note.id)} label="Borrar entrada" />
                 </li>
@@ -100,6 +97,7 @@ export default async function BrainPage({ searchParams }: PageProps<'/brain'>) {
                         {note.title ?? shortDate(note.entry_date)}
                       </h3>
                       <ButtonLink
+                        id={editButtonId(note.id)}
                         href={`${baseHref}${baseHref.includes('?') ? '&' : '?'}edit=${note.id}`}
                         scroll={false}
                         tone="quiet"

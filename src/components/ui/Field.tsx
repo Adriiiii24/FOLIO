@@ -16,47 +16,75 @@ type FieldProps = {
   name: string;
   error?: string;
   hint?: string;
+  /**
+   * Se puede dejar vacío, y la etiqueta lo dice: «Nota (opcional)». Es el único criterio de todos los formularios:
+   * lo que no lo lleva hay que rellenarlo (o ya viene con valor, como un selector sin opción vacía).
+   */
+  optional?: boolean;
+  /** Ids de otros textos que describen el control (un aviso de la página), además de su error y su ayuda. */
+  describedBy?: string;
   className?: string;
   children: (props: { id: string; 'aria-invalid'?: true; 'aria-describedby'?: string }) => ReactNode;
 };
 
-/** Etiqueta + control + ayuda o error, conectados por id para lectores de pantalla. */
-export function Field({ label, name, error, hint, className = '', children }: FieldProps) {
+/** Etiqueta + control + ayuda y error, conectados por id para lectores de pantalla. */
+export function Field({ label, name, error, hint, optional, describedBy, className = '', children }: FieldProps) {
   // Único por instancia: el mismo campo puede aparecer a la vez en el formulario de alta y en un borrador.
   const id = `f-${name}-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
-  const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
+  // El error no sustituye a la ayuda («Código de tres letras»): se ven y se anuncian los dos, el error primero.
+  const description = [error && `${id}-error`, hint && `${id}-hint`, describedBy].filter(Boolean).join(' ');
 
   return (
     <div className={`flex min-w-0 flex-col gap-1.5 ${className}`}>
       <label htmlFor={id} className="field-label font-mono text-label uppercase">
         {label}
+        {optional ? ' (opcional)' : null}
       </label>
-      {children({ id, 'aria-invalid': error ? true : undefined, 'aria-describedby': describedBy })}
+      {children({ id, 'aria-invalid': error ? true : undefined, 'aria-describedby': description || undefined })}
+      {hint ? (
+        <p id={`${id}-hint`} className="field-hint text-small">
+          {hint}
+        </p>
+      ) : null}
       {error ? (
         <p id={`${id}-error`} className="field-error text-small">
           {error}
-        </p>
-      ) : hint ? (
-        <p id={`${id}-hint`} className="field-hint text-small">
-          {hint}
         </p>
       ) : null}
     </div>
   );
 }
 
-type WithLabel = { label: string; name: string; error?: string; hint?: string; className?: string };
+type WithLabel = {
+  label: string;
+  name: string;
+  error?: string;
+  hint?: string;
+  optional?: boolean;
+  describedBy?: string;
+  className?: string;
+};
 
 export function TextField({
   label,
   name,
   error,
   hint,
+  optional,
+  describedBy,
   className,
   ...input
 }: WithLabel & InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <Field label={label} name={name} error={error} hint={hint} className={className}>
+    <Field
+      label={label}
+      name={name}
+      error={error}
+      hint={hint}
+      optional={optional}
+      describedBy={describedBy}
+      className={className}
+    >
       {(control) => <input name={name} className={`${CONTROL} h-11`} {...control} {...input} />}
     </Field>
   );
@@ -67,11 +95,21 @@ export function TextAreaField({
   name,
   error,
   hint,
+  optional,
+  describedBy,
   className,
   ...textarea
 }: WithLabel & TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
-    <Field label={label} name={name} error={error} hint={hint} className={className}>
+    <Field
+      label={label}
+      name={name}
+      error={error}
+      hint={hint}
+      optional={optional}
+      describedBy={describedBy}
+      className={className}
+    >
       {(control) => (
         <textarea name={name} className={`${CONTROL} min-h-32 py-2.5 leading-normal`} {...control} {...textarea} />
       )}
@@ -86,12 +124,22 @@ export function SelectField({
   name,
   error,
   hint,
+  optional,
+  describedBy,
   className,
   options,
   ...select
 }: WithLabel & { options: readonly Option[] } & SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <Field label={label} name={name} error={error} hint={hint} className={className}>
+    <Field
+      label={label}
+      name={name}
+      error={error}
+      hint={hint}
+      optional={optional}
+      describedBy={describedBy}
+      className={className}
+    >
       {(control) => (
         <div className="relative">
           <select name={name} className={`${CONTROL} h-11 appearance-none pr-10`} {...control} {...select}>

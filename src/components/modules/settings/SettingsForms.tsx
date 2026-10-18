@@ -1,6 +1,6 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useId, useSyncExternalStore } from 'react';
 import { buttonClass } from '@/components/ui/Button';
 import { SelectField, TextField } from '@/components/ui/Field';
 import { FormShell } from '@/components/ui/FormShell';
@@ -38,6 +38,7 @@ export function ProfileForm({ profile, timeZones }: { profile: Profile; timeZone
             autoComplete="nickname"
             defaultValue={profile.display_name ?? ''}
             error={errors.displayName}
+            optional
           />
           <TextField
             label="Moneda"
@@ -47,6 +48,7 @@ export function ProfileForm({ profile, timeZones }: { profile: Profile; timeZone
             error={errors.currency}
             hint="Código de tres letras: EUR, USD…"
             maxLength={3}
+            required
           />
           <SelectField
             label="Zona horaria"
@@ -75,6 +77,7 @@ export function TargetsForm({ profile }: { profile: Profile }) {
             defaultValue={text(profile.daily_kcal_target)}
             error={errors.dailyKcalTarget}
             className="col-span-2 @lg:col-span-1"
+            optional
           />
           <TextField
             label="Proteína (g)"
@@ -82,6 +85,7 @@ export function TargetsForm({ profile }: { profile: Profile }) {
             inputMode="numeric"
             defaultValue={text(profile.daily_protein_g_target)}
             error={errors.dailyProteinGTarget}
+            optional
           />
           <TextField
             label="Carbohidratos (g)"
@@ -89,6 +93,7 @@ export function TargetsForm({ profile }: { profile: Profile }) {
             inputMode="numeric"
             defaultValue={text(profile.daily_carbs_g_target)}
             error={errors.dailyCarbsGTarget}
+            optional
           />
           <TextField
             label="Grasa (g)"
@@ -96,6 +101,7 @@ export function TargetsForm({ profile }: { profile: Profile }) {
             inputMode="numeric"
             defaultValue={text(profile.daily_fat_g_target)}
             error={errors.dailyFatGTarget}
+            optional
           />
           <TextField
             label={`Presupuesto mensual (${profile.currency})`}
@@ -105,6 +111,7 @@ export function TargetsForm({ profile }: { profile: Profile }) {
             error={errors.monthlyBudget}
             hint="Mide el ritmo de gasto en 03 // FINANZAS. Vacío: sin presupuesto."
             className="col-span-2 @lg:col-span-4"
+            optional
           />
         </>
       )}
@@ -154,6 +161,8 @@ function readShortcuts(): boolean {
 /** Atajos de una tecla (1–8, /). Se pueden desactivar (WCAG 2.1.4). La preferencia vive en este navegador. */
 export function ShortcutsToggle() {
   const enabled = useSyncExternalStore(subscribeShortcuts, readShortcuts, () => true);
+  const labelId = useId();
+  const hintId = useId();
 
   function toggle() {
     try {
@@ -164,18 +173,25 @@ export function ShortcutsToggle() {
     window.dispatchEvent(new Event(SHORTCUTS_EVENT));
   }
 
+  // El interruptor se llama siempre igual (su etiqueta visible); si está activado lo dice aria-checked. El texto del
+  // botón repite el estado para quien lo ve.
   return (
     <div className="flex flex-wrap items-center gap-4">
+      <span id={labelId} className="field-label font-mono text-label uppercase">
+        Atajos de una tecla
+      </span>
       <button
         type="button"
         role="switch"
         aria-checked={enabled}
+        aria-labelledby={labelId}
+        aria-describedby={hintId}
         onClick={toggle}
         className={buttonClass({ tone: enabled ? 'primary' : 'secondary' })}
       >
-        {enabled ? 'Activados' : 'Desactivados'}
+        <span aria-hidden="true">{enabled ? 'Activados' : 'Desactivados'}</span>
       </button>
-      <p className="max-w-[55ch] text-small text-ash">
+      <p id={hintId} className="max-w-[55ch] text-small text-ash">
         <kbd className="font-mono">1</kbd>–<kbd className="font-mono">8</kbd> cambian de pestaña y{' '}
         <kbd className="font-mono">/</kbd> abre REGISTRAR en la barra de entrada. Desactívalos si usas control por voz o
         un lector de pantalla que los active sin querer.
@@ -220,6 +236,7 @@ export function DeleteAccountForm() {
             autoCapitalize="characters"
             error={errors.confirmation}
             className="max-w-xs"
+            required
           />
         </>
       )}

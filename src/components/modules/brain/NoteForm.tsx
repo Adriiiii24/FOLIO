@@ -64,14 +64,16 @@ export function NoteForm({
             options={MOOD_OPTIONS}
             defaultValue={initial?.mood ?? ''}
             error={errors.mood}
+            optional
           />
           <TextField
-            label="Título (opcional)"
+            label="Título"
             name="title"
             autoComplete="off"
             defaultValue={initial?.title ?? ''}
             error={errors.title}
             className="@md:col-span-2"
+            optional
           />
           <TextAreaField
             label="Entrada"
@@ -91,6 +93,7 @@ export function NoteForm({
             defaultValue={initial?.tags ?? ''}
             error={errors.tags}
             className="@md:col-span-2"
+            optional
           />
         </>
       )}

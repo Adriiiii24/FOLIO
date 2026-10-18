@@ -1,5 +1,9 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { buttonClass } from '@/components/ui/Button';
+
+// Con la plantilla del layout: «Carpeta no encontrada · FOLIO», no un «FOLIO» a secas que no dice qué ha pasado.
+export const metadata: Metadata = { title: 'Carpeta no encontrada' };
 
 export default function NotFound() {
   return (

@@ -202,6 +202,7 @@ export function MealForm({
               autoComplete="off"
               {...totalField('proteinG')}
               error={errors.proteinG}
+              required
             />
             <TextField
               label="Carbohidratos (g)"
@@ -209,6 +210,7 @@ export function MealForm({
               autoComplete="off"
               {...totalField('carbsG')}
               error={errors.carbsG}
+              required
             />
             <TextField
               label="Grasa (g)"
@@ -217,6 +219,7 @@ export function MealForm({
               {...totalField('fatG')}
               error={errors.fatG}
               className="col-span-2 @lg:col-span-2"
+              required
             />
           </>
         )}

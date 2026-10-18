@@ -72,6 +72,7 @@ export function TransactionForm({
             placeholder="Mercadona"
             defaultValue={initial?.merchant ?? ''}
             error={errors.merchant}
+            optional
           />
           <SelectField
             label="Categoría"
@@ -94,6 +95,7 @@ export function TransactionForm({
             options={PAYMENT_OPTIONS}
             defaultValue={initial?.paymentMethod ?? ''}
             error={errors.paymentMethod}
+            optional
           />
           <TextField
             label="Nota"
@@ -102,6 +104,7 @@ export function TransactionForm({
             defaultValue={initial?.description ?? ''}
             error={errors.description}
             className="@md:col-span-2"
+            optional
           />
         </>
       )}

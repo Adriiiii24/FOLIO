@@ -74,11 +74,16 @@ export function QuickInputDock() {
   useEffect(() => clearTimer, []);
 
   const prefill = (text: string) => window.dispatchEvent(new CustomEvent('folio:prefill', { detail: text }));
+  // El borrador que tenía el foco desaparece: vuelve a lo principal de la ficha abierta (el campo, ELEGIR FOTO o
+  // GRABAR), que sí existe aunque la ficha no sea la de texto.
+  const focusBar = () => document.querySelector<HTMLElement>('[data-quick-primary]')?.focus();
 
   function begin(next: QuickStatus) {
     clearTimer();
     setRetry(null);
     setPendingPhoto(null);
+    // Lo siguiente que haces cierra la oferta de DESHACER.
+    undoRef.current = null;
     setStatus(next);
   }
 
@@ -224,9 +229,10 @@ export function QuickInputDock() {
     setDraft(null);
     undoRef.current = undo;
     setStatus({ kind: 'saved', message, undoable: Boolean(undo) });
-    // Con registros mencionados pendientes, el aviso se queda hasta que la persona decida.
-    if (followUps.length === 0) settleAfter(5000);
-    document.getElementById('quick-input')?.focus();
+    // El aviso con DESHACER no caduca (WCAG 2.2.1): se queda hasta lo siguiente que hagas o hasta cerrar la ficha.
+    // Tampoco el de los registros mencionados, que espera a que decidas. Solo se va solo un aviso sin acciones.
+    if (!undo && followUps.length === 0) settleAfter(5000);
+    focusBar();
   }
 
   async function onUndo() {
@@ -240,12 +246,14 @@ export function QuickInputDock() {
         ? { kind: 'error', message: result.message }
         : { kind: 'saved', message: 'Deshecho.', undoable: false },
     );
-    settleAfter(3000);
+    // «Deshecho.» informa y se va; un error se queda, como todos los de la barra.
+    if (result.status !== 'error') settleAfter(3000);
   }
 
   function onDiscard() {
     const upload = draft?.ai?.upload;
     if (upload) void discardUpload(upload.bucket, upload.path);
+    focusBar();
     setDraft(null);
     setFollowUps([]);
     setStatus({ kind: 'idle' });
